@@ -666,16 +666,12 @@ int kinectPixelWatcher::classify_pixel(int x,int y,debug_t &debug) const
 	const float max_distance=9.0; // meters to farthest possible target
 	const float min_distance=0.5; // meters to closest possible target
 	
-	const float normal_Y_max=0.90; // surface normal Y component (above here is floor)
+	const float normal_Y_max=0.95; // surface normal Y component (above here is floor)
 	
 	const float top_shiftY=-0.7; // meters to look on top
 	const float top_shiftZ=0.3; // meters shift to demand (clear space behind top)
 	const float bot_shiftY=+0.6; // meters to look below
 	const float bot_shiftZ=-0.2; // meters shift to demand
-	
-	/* The bump threshold (small==smoother).  Measured in data numbers, not depth.
-	   Not only is this faster (fewer conversions), it automatically distance-adapts. */
-	const int bump_thresh=15;
 	
 	const int delx=9/decimate,dely=9/decimate; // pixel shifts for neighbor search	
 	
