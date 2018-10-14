@@ -44,6 +44,15 @@ bool simulate_only=false; // -sim flag
 bool nodrive=false; // -nodrive flag (for testing indoors)
 bool big_field=false; // -big flag
 
+
+
+/** X,Y field target location where we drive to, before finally backing up */
+vec2 dump_drive_loc(0,100);
+
+/** X,Y field target location where we drive to, before finally backing up */
+vec2 mine_target_loc(field_x_max,field_y_middle);
+
+
 /* Convert this unsigned char difference into a float difference */
 float fix_wrap256(unsigned char diff) {
 	if (diff>128) return diff-256;
@@ -270,7 +279,7 @@ private:
 		}
 	}
 
-	// Autonomous driving: set powers to drive toward this field X,Y location
+	// Greedy local autonomous driving: set powers to drive toward this field X,Y location
 	//  Returns true once we're basically at the target location.
 	bool autonomous_drive(vec2 target) {
 		if (!drive_posture()) return false; // don't drive yet
@@ -332,8 +341,6 @@ private:
 	}
 };
 
-/** X,Y field target location where we drive to, before finally backing up */
-vec2 dump_drive_loc(0,100);
 
 // Return true if the mining head is stalled (according to our sensors
 bool is_stalled(const robot_base &robot) {
@@ -452,32 +459,20 @@ void robot_manager_t::autonomous_state()
 		}
 	}
 
-	///< autonomous: drive backwards to contact lunabin for initial orientation
-	///  DISABLED STATE in 2015 version
-	else if (robot.state==state_align_back) {
-		if (back_up() || time_in_state>30.0)
-		{
-			enter_state(state_drive_to_mine);
-		}
-	}
-
 	//state_drive_to_mine: Drive to mining area
 	//TODO:Currently proportional drive. We can go high power to avoid obstacles
 	else if (robot.state==state_drive_to_mine)
 	{
 		if (drive_posture()) {
 			
-			double target_Y=field_y_mine_zone+20; // mining area distance (plus buffer)
-			double err_Y=target_Y-robot_distance;
-			robot.power.left=power_drive_fw;
-			robot.power.right=power_drive_fw;
-			if (err_Y<0.0)  // we're there now
+			double target_X=field_x_mine+20; // mining area distance (plus buffer)
+			double distance=target_X-fabs(robot_distance);
+			autonomous_drive(mine_target_loc);
+			if (distance<0.0)  // we're there now
 			{
 				enter_state(state_mine_lower); // start mining!
 			}
-			check_angle();
-
-			if (time_in_state>20.0) { // stuck?  high power mode!
+			if (time_in_state>30.0) { // stuck?  high power mode!
 				robot.power.left=robot.power.right=power_stuck_fw;
 			}
 		}
@@ -508,7 +503,7 @@ void robot_manager_t::autonomous_state()
 		double mine_time=cur_time-mine_start_time;
 		double mine_duration=12.0;
 		if(	big_field || (
-			robot_distance<field_y_size-50 && // field left to mine
+			robot_distance<field_x_max && // field left to mine
 			mine_time<mine_duration)) // and there's room in the bin
 		{ // keep mining
 
@@ -796,7 +791,7 @@ void robot_manager_t::update(void) {
 		autonomous_state();
 	}
 
-	//Variables to determine if you can raise or lower storage thingy
+	//Variables to determine if you can raise or lower box
 	bool can_raise_up=true;
 	bool can_raise_down=true;
 
@@ -911,7 +906,9 @@ void robot_manager_t::update(void) {
     vec2 shift(field_x_size/2.0,0.0);
     vec2 target(0,40);
     if (robot.state>=state_align_turnout && robot.state<state_drive_to_dump)
-      target=vec2(0.0,field_y_size-100); // target is mining area
+      target=vec2(field_x_hsize+field_x_max,field_y_middle); // target is right side mining area
+
+    printf("Planning path to target %.0f,%.0f\n",target.x,target.y);
 
     // Start position: robot's position
     rmc_navigator::fposition fstart(robot.loc.x+shift.x,robot.loc.y+shift.y,90-robot.loc.angle);
@@ -982,7 +979,7 @@ int main(int argc,char *argv[])
 	glutCreateWindow("Robot Backend");
 
 	robot_manager=new robot_manager_t;
-	robot_manager->robot.loc.y=field_y_start_zone/2;
+	robot_manager->robot.loc.y=100;
 	robotMainSetup();
 
 	glutDisplayFunc(display);

@@ -91,7 +91,7 @@ inline vec2 rotate(const vec2 &src,float ang_deg) {
 }
 
 inline float state_to_Y(int state) {
-	return 0+field_y_size*(state_last-state)*(1.0/state_last);
+	return 500+field_y_size*(state_last-state)*(1.0/state_last);
 }
 
 /* Called at start of user's OpenGL display function */
@@ -125,8 +125,8 @@ void robot_display_setup(const robot_base &robot) {
 	// Scale to showing the whole field, in centimeter units
 	float xShift=-0.5, yShift=-0.85; // GL-coordinates start of field
 	glTranslatef(xShift,yShift,0.0);
-	float yScale=1.8/field_y_size;
-	float xScale=yScale*ht/wid;
+	float xScale=2.0*0.4/field_x_size;
+	float yScale=xScale*wid/ht;
 	glScalef(xScale, yScale, 0.1);
 	robotPrintf_y=(1.0-yShift)/yScale+robotPrintf_line;
 
@@ -153,13 +153,13 @@ void robot_display_setup(const robot_base &robot) {
 	glEnd();
 	*/
 
-// Delineate the start and mine zones
+// Delineate the start and mine bays
 	glBegin(GL_LINES);
 	glColor4f(0.3,0.3,0.5,1.0);
-	glVertex2i(-field_x_hsize,field_y_start_zone);
-	glVertex2i(+field_x_hsize,field_y_start_zone);
-	glVertex2i(-field_x_hsize,field_y_mine_zone);
-	glVertex2i(+field_x_hsize,field_y_mine_zone);
+	glVertex2i(-0.5*field_x_bay,0);
+	glVertex2i(-0.5*field_x_bay,field_y_size);
+	glVertex2i(+0.5*field_x_bay,0);
+	glVertex2i(+0.5*field_x_bay,field_y_size);
 
 // Draw the lunabin
 	glColor4f(0.3,1.0,1.0,1.0);
@@ -177,7 +177,8 @@ void robot_display_setup(const robot_base &robot) {
 	glEnd();
 
 
-// Draw xmitters
+/*
+// Draw blinky xmitters
 	glBegin(GL_LINES);
 	for (int xmit=0;xmit<3;xmit++) {
 		float color[4]={0.2,0.2,0.2,1.0};
@@ -188,6 +189,7 @@ void robot_display_setup(const robot_base &robot) {
 		glVertex2fv(start+vec2(5.0,0.0));
 	}
 	glEnd();
+*/
 
 // Draw current robot configuration (side view)
 	glBegin(GL_TRIANGLES);
@@ -245,7 +247,7 @@ void robot_display_setup(const robot_base &robot) {
 
 // Draw the current autonomy state
 	robotPrintf_enable=false;
-	double state_display_x=3*field_x_hsize;
+	double state_display_x=30; // 3*field_x_hsize;
 	for (robot_state_t state=state_STOP;state<state_last;state=(robot_state_t)(state+1))
 	{
 		glColor4f(0.0,0.0,0.0,1.0); // black inactive
@@ -294,7 +296,6 @@ void robot_display_setup(const robot_base &robot) {
 	robotPrintln("Track front encoder ticks %d L %d R", robot.sensor.DL1count, robot.sensor.DR1count);
 	robotPrintln("Track back encoder ticks %d L %d R", robot.sensor.DL2count, robot.sensor.DR2count);
 	robotPrintln("Roll motor encoder ticks %d", robot.sensor.Rcount);
-	robotPrintln("\"The Box\" limit ticks %d %d", robot.sensor.limit_top, robot.sensor.limit_bottom);
 
 
 	std::string box_status = "";
@@ -311,8 +312,8 @@ void robot_display_setup(const robot_base &robot) {
 	{
 		box_status = "in motion";
 	}
-	robotPrintln("\"The Box\" is %s", box_status.c_str());
-
+	robotPrintln("Box %s limit ticks %d %d", box_status.c_str(),
+	    robot.sensor.limit_top, robot.sensor.limit_bottom);
 
 	std::string encoder_str("Encoder Raw ");
 	for(int ii=12-1;ii>=0;--ii)
@@ -338,8 +339,8 @@ void robot_display_setup(const robot_base &robot) {
 
 	// Analog voltage dividers:
 	// Linear actuators:
-		robotPrintln("  bucket %.1f%% (%d) up",
-			(robot.sensor.bucket-179.0)*100.0/(920-179.0),robot.sensor.bucket);
+		//robotPrintln("  bucket %.1f%% (%d) up",
+		//	(robot.sensor.bucket-179.0)*100.0/(920-179.0),robot.sensor.bucket);
 
 		//robotPrintln("  battery %.2f V (%d)",
 		//	robot.sensor.battery*AD_DN2high_voltage,robot.sensor.battery);

@@ -13,7 +13,6 @@ const char *state_to_string(robot_state_t state)
 	"align_turnout",
 	"align_drive", ///< drive to start area
 	"align_turnin",
-	"align_back",
 
 	"drive_to_mine", ///< autonomous: drive to mining area
 

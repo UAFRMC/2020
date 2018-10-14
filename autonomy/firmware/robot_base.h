@@ -106,26 +106,31 @@ public:
 };
 
 
-// ***** LEGACY STUFF FOR COMPATIBILITY ***** //
 /**
   These are the field dimensions, in centimeters.
-  Y runs up the field, from collection bin to mining area.  It's always positive.
-  X runs across the field, from left to right side.  It's signed.
+  Y runs up the field, trough at Y==0.  It's always positive.
+  X runs across the field, from left to right side.  It's signed, trough at X==0.
 */
 enum {
-	field_y_size=738, // Y-length of field, in centimeters
+	field_y_size=369, // Y-length of field, in centimeters
+	field_y_middle=field_y_size/2, // generic middle of field
 //	field_y_size=500, // Y-length of field, in centimeters for the test arena
-	field_y_start_zone=183, // y end of start area, in centimeters
-	field_y_mine_zone=field_y_start_zone+294, // y start of mining area
-	field_y_xmit=-47, // y coordinate of IR transmitters behind bin
-	field_x_xmit=70, // x coordinate between IR transmitters
+//	field_y_start_zone=183, // y end of start area, in centimeters
+//	field_y_mine_zone=field_y_start_zone+294, // y start of mining area
+//	field_y_xmit=-47, // y coordinate of IR transmitters behind bin
+//	field_x_xmit=70, // x coordinate between IR transmitters
 //	field_y_mine_zone=field_y_start_zone+100, // y start of mining area for the test arena
 
-	field_x_size=378, // X-width of field, in centimeters
-	field_x_hsize=field_x_size/2,
+  field_x_bay=269, // X-width of one "bay", in cm
+	field_x_size=3*field_x_bay, // Displayed X-width of field, in centimeters
+	field_x_max=(int)(field_x_size/2-30), // maximum X coordinate
+	field_x_hsize=(int)(1.5*field_x_bay), // Centerline for bin
 	field_x_GUI=field_x_hsize+10, // start X for GUI display
-	field_x_bin=156, // X-width of collection bin, in centimeters
-	field_x_hbin=field_x_bin/2
+
+	field_x_bin=156, // X-width of collection trough, in centimeters
+	field_x_hbin=field_x_bin/2, // half of field_x_bin
+	
+	field_x_mine=(int)(0.6*field_x_bay) // minimum absolute magnitude for X when mining
 };
 
 enum {
@@ -171,7 +176,6 @@ typedef enum {
 	state_align_turnout, ///< autonomous: pivot to face start position
 	state_align_drive, ///< autonomous: initial drive to start position
 	state_align_turnin, ///< autonomous: turn to face lunabin
-	state_align_back, ///< autonomous: drive back to contact lunabin
 
 	state_drive_to_mine, ///< autonomous: drive to mining area
 
@@ -185,7 +189,7 @@ typedef enum {
 
 	/* Semiauto dump mode entry point: */
 	state_dump_contact, ///< final dock-and-dump mode: drive to contact bin
-	state_dump_raise, ///< raising bucket
+	state_dump_raise, ///< raise box
 	state_dump_pull, ///< pull box up
 	state_dump_rattle, ///< rattle mode to empty bucket
 	state_dump_push, ///< push box back down

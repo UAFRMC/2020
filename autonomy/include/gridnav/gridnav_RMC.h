@@ -15,9 +15,9 @@
 class rmc_navigator : public gridnav::robot_geometry {
 public:
   // RMC-plausible navigation grid dimensions:
-  enum {GRIDSIZE=10}; // cm per grid cell
-  enum {GRIDX=(378+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
-  enum {GRIDY=(738+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDSIZE=16}; // cm per grid cell
+  enum {GRIDX=(807+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
+  enum {GRIDY=(369+GRIDSIZE-1)/GRIDSIZE};
   enum {GRIDA=36}; // angular slices around 360 degrees
   enum {ROBOTSIZE=(150+GRIDSIZE-1)/GRIDSIZE};
 
