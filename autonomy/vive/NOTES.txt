@@ -1,0 +1,21 @@
+In file included from libsurvive/include/libsurvive/poser.h:4:0,
+                 from libsurvive/include/libsurvive/survive.h:4,
+                 from libsurvive/src/survive_internal.h:10,
+                 from libsurvive/src/survive_config.h:9,
+                 from libsurvive/src/survive_config.c:2:
+libsurvive/include/libsurvive/survive_types.h:40:9: error: unknown type name ‘LinmathPose’
+ typedef LinmathPose SurvivePose;
+
+
+libsurvive/src/driver_usbmon.c:10:10: fatal error: pcap/usb.h: No such file or directory
+ #include "pcap/usb.h"
+          ^~~~~~~~~~~~
+sudo apt install libpcap-dev
+
+
+libsurvive/redist/CNFGEGLDriver.c:31:10: fatal error: GLES2/gl2.h: No such file or directory
+ #include <GLES2/gl2.h>
+sudo apt-get install libgles2-mesa-dev
+
+
+

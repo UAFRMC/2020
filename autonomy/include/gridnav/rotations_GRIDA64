@@ -1,0 +1,2279 @@
+Setting up grid
+Robot geometry at grid angle 0
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                      000000000000000000                     
+                      000000000000000000                     
+                      000000000000000000                     
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDyDDDDDDDD                      
+                       DDDDDDD+xDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                      000000000000000000                     
+                      000000000000000000                     
+                      000000000000000000                     
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 5.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                000000                       
+                     00000000000000000                       
+                     00000000000000000                       
+                     000000000000000000                      
+                      00000DDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                       DDDDDDDyDDDDDDDD                      
+                       DDDDDDD+xDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDDD000000                     
+                       000000000000000000                    
+                        00000000000000000                    
+                        00000000000000000                    
+                        00000                                
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 11.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                              0000000                        
+                     0000000000000000                        
+                    00000000000000000                        
+                    000000000000000000                       
+                     0000000DDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDyDDDDDDDD                      
+                       DDDDDDD+xDDDDDDD                      
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDDDDDDDDD                     
+                        DDDDDDDDDDDDDDDDD                    
+                        DDDDDDDDD00000000                    
+                        000000000000000000                   
+                         00000000000000000                   
+                         0000000000000000                    
+                         000000                              
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 16.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                             000000                          
+                      00000000000000                         
+                  000000000000000000                         
+                   00000000000000000D                        
+                    00000000DDDDDDDDD                        
+                    00DDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                      DDDDDDDDyDDDDDDDD                      
+                      DDDDDDDD+xDDDDDDDD                     
+                       DDDDDDDDDDDDDDDDD                     
+                        DDDDDDDDDDDDDDDDD                    
+                        DDDDDDDDDDDDDDD000                   
+                         DDDDDDDD0000000000                  
+                         000000000000000000                  
+                          00000000000000000                  
+                          0000000000000                      
+                           00000                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 22.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                            000000                           
+                       000000000000                          
+                  00000000000000000                          
+                 00000000000000000DD                         
+                  0000000000DDDDDDDDD                        
+                   00000DDDDDDDDDDDDDD                       
+                    DDDDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDyDDDDDDDD                      
+                      DDDDDDDD+xDDDDDDDD                     
+                       DDDDDDDDDDDDDDDDDD                    
+                        DDDDDDDDDDDDDDDDDD                   
+                         DDDDDDDDDDDD000000                  
+                         DDDDDDDD00000000000                 
+                          D000000000000000000                
+                           0000000000000000                  
+                           00000000000                       
+                            00000                            
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 28.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                           000000                            
+                       0000000000                            
+                   000000000000000                           
+                 000000000000000DDD                          
+                 00000000000DDDDDDDD                         
+                  000000DDDDDDDDDDDDD                        
+                   00DDDDDDDDDDDDDDDDD                       
+                    DDDDDDDDDDyDDDDDDDD                      
+                      DDDDDDDD+xDDDDDDDDD                    
+                       DDDDDDDDDDDDDDDDDDD                   
+                        DDDDDDDDDDDDDDDD000                  
+                         DDDDDDDDDDDD0000000                 
+                          DDDDDDD000000000000                
+                           DD0000000000000000                
+                            00000000000000                   
+                             000000000                       
+                              0000                           
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 33.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                          00000                              
+                       000000000                             
+                    0000000000000                            
+                 00000000000000DDDD                          
+                000000000000DDDDDDDD                         
+                000000000DDDDDDDDDDDD                        
+                  0000DDDDDDDDDDDDDDDD                       
+                   DDDDDDDDDDDyDDDDDDDDD                     
+                     DDDDDDDDD+xDDDDDDDDD                    
+                      DDDDDDDDDDDDDDDDDDDD0                  
+                        DDDDDDDDDDDDDDD00000                 
+                         DDDDDDDDDDD0000000000               
+                          DDDDDDD0000000000000               
+                            DD00000000000000                 
+                             000000000000                    
+                              00000000                       
+                               0000                          
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 39.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                         0000                                
+                       00000000                              
+                    000000000000                             
+                  000000000000DDDD                           
+               000000000000DDDDDDDD                          
+               0000000000DDDDDDDDDDDD                        
+                0000000DDDDDDDDDDDDDDDD                      
+                  00DDDDDDDDDDyDDDDDDDDD                     
+                    DDDDDDDDDD+xDDDDDDDDDD                   
+                      DDDDDDDDDDDDDDDDDDD000                 
+                        DDDDDDDDDDDDDD00000000               
+                         DDDDDDDDDDD00000000000              
+                           DDDDDDD000000000000               
+                            DDD000000000000                  
+                              00000000000                    
+                               0000000                       
+                                 000                         
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 45
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                        0000                                 
+                      00000000                               
+                    00000000000                              
+                  00000000000DDDD                            
+                00000000000DDDDDDDD                          
+               0000000000DDDDDDDDDDDD                        
+               00000000DDDDDDDDDDDDDDDD                      
+                 0000DDDDDDDDDyDDDDDDDDDD                    
+                   DDDDDDDDDDD+xDDDDDDDDDD0                  
+                     DDDDDDDDDDDDDDDDDDD000000               
+                       DDDDDDDDDDDDDDD000000000              
+                          DDDDDDDDDD00000000000              
+                           DDDDDDD00000000000                
+                             DDD00000000000                  
+                               0000000000                    
+                                 000000                      
+                                   0                         
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 50.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                       000                                   
+                     0000000                                 
+                    0000000000                               
+                  0000000000DDDD                             
+                 0000000000DDDDDDDD                          
+               0000000000DDDDDDDDDDDD                        
+              000000000DDDDDDDDDDDDDDDDD                     
+               0000000DDDDDDDDyDDDDDDDDDDD                   
+                  00DDDDDDDDDD+xDDDDDDDDD0000                
+                    DDDDDDDDDDDDDDDDDDD000000000             
+                       DDDDDDDDDDDDDDD0000000000             
+                          DDDDDDDDDD0000000000               
+                            DDDDDD0000000000                 
+                              DDD0000000000                  
+                                000000000                    
+                                  000000                     
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 56.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                     00000                                   
+                   0000000000                                
+                  0000000000DDDD                             
+                 000000000DDDDDDDD                           
+               0000000000DDDDDDDDDDDD                        
+              000000000DDDDDDDDDDDDDDDDDD                    
+              00000000DDDDDDDDyDDDDDDDDDD000                 
+                00000DDDDDDDDD+xDDDDDDDD0000000              
+                   DDDDDDDDDDDDDDDDDDDD000000000             
+                      DDDDDDDDDDDDDDDD000000000              
+                          DDDDDDDDDD0000000000               
+                            DDDDDDD000000000                 
+                               DD0000000000                  
+                                  00000000                   
+                                    0000                     
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 61.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                    0000                                     
+                   00000000                                  
+                  000000000DDDD                              
+                 000000000DDDDDDDD                           
+                00000000DDDDDDDDDDDDDD                       
+               00000000DDDDDDDDDDDDDDDDDDD                   
+              00000000DDDDDDDDyDDDDDDDDDD000000              
+              0000000DDDDDDDDD+xDDDDDDDD00000000             
+                 000DDDDDDDDDDDDDDDDDDD000000000             
+                     DDDDDDDDDDDDDDDDD00000000               
+                         DDDDDDDDDDDD00000000                
+                             DDDDDD000000000                 
+                                DD000000000                  
+                                    000000                   
+                                       0                     
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 67.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                    0                                        
+                  0000000                                    
+                 000000000DDDD                               
+                 00000000DDDDDDDDD                           
+                00000000DDDDDDDDDDDDDDD                      
+               00000000DDDDDDDDDDDDDDDDDD0000                
+              00000000DDDDDDDDyDDDDDDDDD00000000             
+              00000000DDDDDDDD+xDDDDDDD000000000             
+              0000000DDDDDDDDDDDDDDDDDD00000000              
+                   DDDDDDDDDDDDDDDDDDD00000000               
+                         DDDDDDDDDDDD00000000                
+                             DDDDDDD00000000                 
+                                  D000000000                 
+                                      00000                  
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 73.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                  00000                                      
+                 00000000DDD                                 
+                00000000DDDDDDDDDD                           
+                00000000DDDDDDDDDDDDDDDDD0                   
+               00000000DDDDDDDDDDDDDDDDD0000000              
+               0000000DDDDDDDDyDDDDDDDDD00000000             
+              00000000DDDDDDDD+xDDDDDDD00000000              
+              0000000DDDDDDDDDDDDDDDDDD0000000               
+               000000DDDDDDDDDDDDDDDDD00000000               
+                       DDDDDDDDDDDDDD00000000                
+                              DDDDDDD00000000                
+                                    00000000                 
+                                         00                  
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 78.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                00000000DD                                   
+                00000000DDDDDDDDDDD                          
+                0000000DDDDDDDDDDDDDDDDD0000000              
+               00000000DDDDDDDDDDDDDDDDD0000000              
+               0000000DDDDDDDDyDDDDDDDD00000000              
+              00000000DDDDDDDD+xDDDDDDD00000000              
+              00000000DDDDDDDDDDDDDDDDD0000000               
+              0000000DDDDDDDDDDDDDDDDD00000000               
+                   00DDDDDDDDDDDDDDDDD0000000                
+                               DDDDDD00000000                
+                                       00000                 
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 84.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                00000                                        
+               00000000DDDDDDDDDDDDDDDD00                    
+               00000000DDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00000000              
+               0000000DDDDDDDDyDDDDDDDD00000000              
+               0000000DDDDDDDD+xDDDDDDD0000000               
+              00000000DDDDDDDDDDDDDDDDD0000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+                                 DDDDD00000000               
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 90
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDyDDDDDDDD0000000               
+               0000000DDDDDDDD+xDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               000000                   000000               
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 95.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                        00000                
+                    00DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDyDDDDDDDD0000000               
+               0000000DDDDDDDD+xDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00000000              
+               00000000DDDDD                                 
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 101.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                   DD00000000                
+                          DDDDDDDDDDD00000000                
+              0000000DDDDDDDDDDDDDDDDD0000000                
+              0000000DDDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDyDDDDDDDD0000000               
+              00000000DDDDDDDD+xDDDDDDD00000000              
+               0000000DDDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDDD0000000              
+                0000000DDDDDDDDDDDDDDDDD00                   
+                00000000DDDDDD                               
+                 00000                                       
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 106.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                      00000                  
+                                 DDD00000000                 
+                           DDDDDDDDDD00000000                
+                   0DDDDDDDDDDDDDDDDD00000000                
+              0000000DDDDDDDDDDDDDDDDD00000000               
+             00000000DDDDDDDDDyDDDDDDDD0000000               
+              00000000DDDDDDDD+xDDDDDDD00000000              
+               0000000DDDDDDDDDDDDDDDDDD0000000              
+               00000000DDDDDDDDDDDDDDDDD000000               
+                00000000DDDDDDDDDDDDDD                       
+                00000000DDDDDDD                              
+                 00000000                                    
+                  00                                         
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 112.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                        0                    
+                                    0000000                  
+                               DDDD000000000                 
+                           DDDDDDDDD00000000                 
+                      DDDDDDDDDDDDDDD00000000                
+                0000DDDDDDDDDDDDDDDDDD00000000               
+             00000000DDDDDDDDDyDDDDDDDD00000000              
+             000000000DDDDDDDD+xDDDDDDD00000000              
+              00000000DDDDDDDDDDDDDDDDDD0000000              
+               00000000DDDDDDDDDDDDDDDDDDD                   
+                00000000DDDDDDDDDDDD                         
+                 00000000DDDDDDD                             
+                 000000000D                                  
+                  00000                                      
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 118.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                     0000                    
+                                  00000000                   
+                              DDDD000000000                  
+                           DDDDDDDD000000000                 
+                       DDDDDDDDDDDDDD00000000                
+                   DDDDDDDDDDDDDDDDDDD00000000               
+              000000DDDDDDDDDDyDDDDDDDD00000000              
+             00000000DDDDDDDDD+xDDDDDDDD0000000              
+             000000000DDDDDDDDDDDDDDDDDDD000                 
+               00000000DDDDDDDDDDDDDDDDD                     
+                00000000DDDDDDDDDDDD                         
+                 000000000DDDDDD                             
+                  000000000DD                                
+                   000000                                    
+                     0                                       
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 123.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                   00000                     
+                                0000000000                   
+                             DDDD0000000000                  
+                           DDDDDDDD000000000                 
+                        DDDDDDDDDDDD0000000000               
+                    DDDDDDDDDDDDDDDDDD000000000              
+                 000DDDDDDDDDDyDDDDDDDD00000000              
+              0000000DDDDDDDDD+xDDDDDDDD00000                
+             000000000DDDDDDDDDDDDDDDDDDDD                   
+              000000000DDDDDDDDDDDDDDDD                      
+               0000000000DDDDDDDDDD                          
+                 000000000DDDDDDD                            
+                  0000000000DD                               
+                   00000000                                  
+                     0000                                    
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 129.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                   000                       
+                                 0000000                     
+                               0000000000                    
+                             DDDD0000000000                  
+                          DDDDDDDD0000000000                 
+                        DDDDDDDDDDDD0000000000               
+                     DDDDDDDDDDDDDDDDD000000000              
+                   DDDDDDDDDDDyDDDDDDDD0000000               
+                0000DDDDDDDDDD+xDDDDDDDDD00                  
+             000000000DDDDDDDDDDDDDDDDDDD                    
+             0000000000DDDDDDDDDDDDDDD                       
+               0000000000DDDDDDDDDD                          
+                 0000000000DDDDDD                            
+                  0000000000DDD                              
+                    000000000                                
+                     000000                                  
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 135
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                 0000                        
+                               00000000                      
+                              00000000000                    
+                            DDDD00000000000                  
+                          DDDDDDDD00000000000                
+                        DDDDDDDDDDDD0000000000               
+                      DDDDDDDDDDDDDDDD00000000               
+                    DDDDDDDDDDyDDDDDDDDD0000                 
+                  0DDDDDDDDDDD+xDDDDDDDDDD                   
+               000000DDDDDDDDDDDDDDDDDDD                     
+              000000000DDDDDDDDDDDDDDD                       
+              00000000000DDDDDDDDDD                          
+                00000000000DDDDDDD                           
+                  00000000000DDD                             
+                    0000000000                               
+                      000000                                 
+                         0                                   
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 140.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                0000                         
+                              00000000                       
+                             000000000000                    
+                           DDDD000000000000                  
+                          DDDDDDDD000000000000               
+                        DDDDDDDDDDDD0000000000               
+                      DDDDDDDDDDDDDDDD0000000                
+                     DDDDDDDDDyDDDDDDDDDD00                  
+                   DDDDDDDDDDD+xDDDDDDDDD                    
+                 000DDDDDDDDDDDDDDDDDDD                      
+               00000000DDDDDDDDDDDDDD                        
+              00000000000DDDDDDDDDDD                         
+               000000000000DDDDDDD                           
+                  000000000000DDD                            
+                    00000000000                              
+                       0000000                               
+                         000                                 
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 146.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                              00000                          
+                             000000000                       
+                            0000000000000                    
+                          DDDD00000000000000                 
+                         DDDDDDDD000000000000                
+                        DDDDDDDDDDDD000000000                
+                       DDDDDDDDDDDDDDDD0000                  
+                     DDDDDDDDDyDDDDDDDDDDD                   
+                    DDDDDDDDDD+xDDDDDDDD                     
+                  0DDDDDDDDDDDDDDDDDDDD                      
+                 00000DDDDDDDDDDDDDDD                        
+               0000000000DDDDDDDDDDD                         
+               0000000000000DDDDDDD                          
+                 00000000000000DD                            
+                    000000000000                             
+                       00000000                              
+                          0000                               
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 151.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                            000000                           
+                            0000000000                       
+                           000000000000000                   
+                          DDD000000000000000                 
+                         DDDDDDDD00000000000                 
+                        DDDDDDDDDDDDD000000                  
+                       DDDDDDDDDDDDDDDDD00                   
+                      DDDDDDDDyDDDDDDDDDD                    
+                    DDDDDDDDDD+xDDDDDDD                      
+                   DDDDDDDDDDDDDDDDDDD                       
+                  000DDDDDDDDDDDDDDDD                        
+                 0000000DDDDDDDDDDDD                         
+                000000000000DDDDDDD                          
+                0000000000000000DD                           
+                   00000000000000                            
+                       000000000                             
+                           0000                              
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 157.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                           000000                            
+                          000000000000                       
+                          00000000000000000                  
+                         DD00000000000000000                 
+                        DDDDDDDDD0000000000                  
+                       DDDDDDDDDDDDDD00000                   
+                       DDDDDDDDDDDDDDDDDD                    
+                      DDDDDDDDyDDDDDDDDD                     
+                     DDDDDDDDD+xDDDDDDD                      
+                    DDDDDDDDDDDDDDDDDD                       
+                   DDDDDDDDDDDDDDDDDD                        
+                  000000DDDDDDDDDDDD                         
+                 00000000000DDDDDDDD                         
+                000000000000000000D                          
+                  0000000000000000                           
+                       00000000000                           
+                            00000                            
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 163.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                          000000                             
+                         00000000000000                      
+                         000000000000000000                  
+                        D00000000000000000                   
+                        DDDDDDDDD00000000                    
+                       DDDDDDDDDDDDDDDD00                    
+                       DDDDDDDDDDDDDDDDD                     
+                      DDDDDDDDyDDDDDDDD                      
+                     DDDDDDDDD+xDDDDDDD                      
+                     DDDDDDDDDDDDDDDDD                       
+                    DDDDDDDDDDDDDDDDD                        
+                   000DDDDDDDDDDDDDDD                        
+                  0000000000DDDDDDDD                         
+                  000000000000000000                         
+                  00000000000000000                          
+                      0000000000000                          
+                             00000                           
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 168.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                        0000000                              
+                        0000000000000000                     
+                        00000000000000000                    
+                       000000000000000000                    
+                       DDDDDDDDDD0000000                     
+                       DDDDDDDDDDDDDDDDD                     
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDyDDDDDDDD                      
+                      DDDDDDDD+xDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                    DDDDDDDDDDDDDDDDD                        
+                    00000000DDDDDDDDD                        
+                   000000000000000000                        
+                   00000000000000000                         
+                    0000000000000000                         
+                              000000                         
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 174.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                       000000                                
+                       00000000000000000                     
+                       00000000000000000                     
+                      000000000000000000                     
+                      DDDDDDDDDDDD00000                      
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDyDDDDDDD                       
+                      DDDDDDDD+xDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                     000000DDDDDDDDDDD                       
+                    000000000000000000                       
+                    00000000000000000                        
+                    00000000000000000                        
+                                00000                        
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 180
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                     000000000000000000                      
+                     000000000000000000                      
+                     000000000000000000                      
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDyDDDDDDD                       
+                      DDDDDDDD+xDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                     000000000000000000                      
+                     000000000000000000                      
+                     000000000000000000                      
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 185.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                00000                        
+                    00000000000000000                        
+                    00000000000000000                        
+                    000000000000000000                       
+                     000000DDDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDDDDDDDDD                       
+                      DDDDDDDDyDDDDDDD                       
+                      DDDDDDDD+xDDDDDD                       
+                      DDDDDDDDDDDDDDDD                       
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDD00000                      
+                      000000000000000000                     
+                       00000000000000000                     
+                       00000000000000000                     
+                       000000                                
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 191.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                              000000                         
+                    0000000000000000                         
+                   00000000000000000                         
+                   000000000000000000                        
+                    00000000DDDDDDDDD                        
+                    DDDDDDDDDDDDDDDDD                        
+                     DDDDDDDDDDDDDDDDD                       
+                     DDDDDDDDDyDDDDDDD                       
+                      DDDDDDDD+xDDDDDD                       
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDD0000000                     
+                       000000000000000000                    
+                        00000000000000000                    
+                        0000000000000000                     
+                        0000000                              
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 196.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                             00000                           
+                      0000000000000                          
+                  00000000000000000                          
+                  000000000000000000                         
+                  0000000000DDDDDDDD                         
+                   000DDDDDDDDDDDDDDD                        
+                    DDDDDDDDDDDDDDDDD                        
+                     DDDDDDDDDyDDDDDDD                       
+                     DDDDDDDDD+xDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDDDDDDDD00                    
+                        DDDDDDDDD00000000                    
+                        D00000000000000000                   
+                         000000000000000000                  
+                         00000000000000                      
+                          000000                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 202.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                            00000                            
+                       00000000000                           
+                  0000000000000000                           
+                000000000000000000D                          
+                 00000000000DDDDDDDD                         
+                  000000DDDDDDDDDDDD                         
+                   DDDDDDDDDDDDDDDDDD                        
+                    DDDDDDDDDDyDDDDDDD                       
+                     DDDDDDDDD+xDDDDDDD                      
+                      DDDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDDDDDDDDDD                    
+                       DDDDDDDDDDDDDD00000                   
+                        DDDDDDDDD0000000000                  
+                         DD00000000000000000                 
+                          00000000000000000                  
+                          000000000000                       
+                           000000                            
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 208.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                           0000                              
+                       000000000                             
+                   00000000000000                            
+                0000000000000000DD                           
+                000000000000DDDDDDD                          
+                 0000000DDDDDDDDDDDD                         
+                  000DDDDDDDDDDDDDDDD                        
+                   DDDDDDDDDDDyDDDDDDD                       
+                    DDDDDDDDDD+xDDDDDDD                      
+                      DDDDDDDDDDDDDDDDDDD                    
+                       DDDDDDDDDDDDDDDDD00                   
+                        DDDDDDDDDDDDD000000                  
+                         DDDDDDDD00000000000                 
+                          DDD000000000000000                 
+                           000000000000000                   
+                            0000000000                       
+                            000000                           
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 213.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                          0000                               
+                       00000000                              
+                    000000000000                             
+                 00000000000000DD                            
+               0000000000000DDDDDDD                          
+               0000000000DDDDDDDDDDD                         
+                 00000DDDDDDDDDDDDDDD                        
+                  0DDDDDDDDDDDyDDDDDDDD                      
+                    DDDDDDDDDD+xDDDDDDDD                     
+                     DDDDDDDDDDDDDDDDDDDDD                   
+                       DDDDDDDDDDDDDDDD0000                  
+                        DDDDDDDDDDDD000000000                
+                         DDDDDDDD000000000000                
+                          DDDD00000000000000                 
+                            0000000000000                    
+                             000000000                       
+                              00000                          
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 219.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                         000                                 
+                       0000000                               
+                    00000000000                              
+                  000000000000DDD                            
+               000000000000DDDDDDD                           
+              00000000000DDDDDDDDDDD                         
+               00000000DDDDDDDDDDDDDD                        
+                 000DDDDDDDDDDyDDDDDDDD                      
+                   DDDDDDDDDDD+xDDDDDDDDD                    
+                     DDDDDDDDDDDDDDDDDDDD00                  
+                      DDDDDDDDDDDDDDDD0000000                
+                        DDDDDDDDDDDD0000000000               
+                          DDDDDDDD000000000000               
+                           DDDD000000000000                  
+                             000000000000                    
+                              00000000                       
+                                0000                         
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 225
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                         0                                   
+                      000000                                 
+                    0000000000                               
+                  00000000000DDD                             
+                00000000000DDDDDDD                           
+              00000000000DDDDDDDDDD                          
+              000000000DDDDDDDDDDDDDDD                       
+               000000DDDDDDDDDyDDDDDDDDD                     
+                  0DDDDDDDDDDD+xDDDDDDDDDD                   
+                    DDDDDDDDDDDDDDDDDDDD0000                 
+                      DDDDDDDDDDDDDDDD00000000               
+                        DDDDDDDDDDDD0000000000               
+                          DDDDDDDD00000000000                
+                            DDDD00000000000                  
+                              00000000000                    
+                               00000000                      
+                                 0000                        
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 230.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                     000000                                  
+                    000000000                                
+                  0000000000DDD                              
+                 0000000000DDDDDD                            
+               0000000000DDDDDDDDDD                          
+             0000000000DDDDDDDDDDDDDDD                       
+             000000000DDDDDDDDyDDDDDDDDDD                    
+                0000DDDDDDDDDD+xDDDDDDDDD00                  
+                   DDDDDDDDDDDDDDDDDDDD0000000               
+                     DDDDDDDDDDDDDDDDD000000000              
+                        DDDDDDDDDDDD0000000000               
+                          DDDDDDDD0000000000                 
+                             DDDD0000000000                  
+                               0000000000                    
+                                 0000000                     
+                                   000                       
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 236.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                     0000                                    
+                   00000000                                  
+                  0000000000DD                               
+                 000000000DDDDDDD                            
+               0000000000DDDDDDDDDD                          
+              000000000DDDDDDDDDDDDDDDD                      
+             000000000DDDDDDDDyDDDDDDDDDDD                   
+              0000000DDDDDDDDD+xDDDDDDDD00000                
+                 000DDDDDDDDDDDDDDDDDDD00000000              
+                    DDDDDDDDDDDDDDDDDD000000000              
+                        DDDDDDDDDDDD0000000000               
+                           DDDDDDDD000000000                 
+                             DDDD0000000000                  
+                                0000000000                   
+                                   00000                     
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 241.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                     0                                       
+                   000000                                    
+                  000000000DD                                
+                 000000000DDDDDD                             
+                00000000DDDDDDDDDDDD                         
+               00000000DDDDDDDDDDDDDDDDD                     
+             000000000DDDDDDDDyDDDDDDDDDD000                 
+             00000000DDDDDDDDD+xDDDDDDDD0000000              
+              000000DDDDDDDDDDDDDDDDDDD00000000              
+                   DDDDDDDDDDDDDDDDDDD00000000               
+                       DDDDDDDDDDDDDD00000000                
+                           DDDDDDDD000000000                 
+                              DDDD000000000                  
+                                  00000000                   
+                                     0000                    
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 247.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                  00000                                      
+                 000000000D                                  
+                 00000000DDDDDDD                             
+                00000000DDDDDDDDDDDD                         
+               00000000DDDDDDDDDDDDDDDDDDD                   
+              00000000DDDDDDDDyDDDDDDDDD0000000              
+             000000000DDDDDDDD+xDDDDDDD00000000              
+             00000000DDDDDDDDDDDDDDDDDD00000000              
+                0000DDDDDDDDDDDDDDDDDD00000000               
+                      DDDDDDDDDDDDDDD00000000                
+                           DDDDDDDDD00000000                 
+                               DDDD000000000                 
+                                    0000000                  
+                                        0                    
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 253.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                  00                                         
+                 00000000                                    
+                00000000DDDDDDD                              
+                00000000DDDDDDDDDDDDDD                       
+               00000000DDDDDDDDDDDDDDDDD000000               
+               0000000DDDDDDDDyDDDDDDDDD0000000              
+              00000000DDDDDDDD+xDDDDDDD00000000              
+             00000000DDDDDDDDDDDDDDDDDD0000000               
+              0000000DDDDDDDDDDDDDDDDD00000000               
+                   0DDDDDDDDDDDDDDDDD00000000                
+                           DDDDDDDDDD00000000                
+                                 DDD00000000                 
+                                      00000                  
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 258.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                 00000                                       
+                00000000DDDDDD                               
+                0000000DDDDDDDDDDDDDDDDD00                   
+               00000000DDDDDDDDDDDDDDDDD0000000              
+               0000000DDDDDDDDyDDDDDDDD00000000              
+              00000000DDDDDDDD+xDDDDDDD00000000              
+              00000000DDDDDDDDDDDDDDDDD0000000               
+              0000000DDDDDDDDDDDDDDDDD00000000               
+              0000000DDDDDDDDDDDDDDDDD0000000                
+                          DDDDDDDDDDD00000000                
+                                   DD00000000                
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 264.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+               00000000DDDDD                                 
+               00000000DDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00000000              
+               0000000DDDDDDDDyDDDDDDDD00000000              
+               0000000DDDDDDDD+xDDDDDDD0000000               
+              00000000DDDDDDDDDDDDDDDDD0000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+                    00DDDDDDDDDDDDDDDD00000000               
+                                        00000                
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 270
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+               000000                   000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDyDDDDDDDD0000000               
+               0000000DDDDDDDD+xDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD0000000               
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 275.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                 DDDDD00000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDyDDDDDDDD0000000               
+               0000000DDDDDDDD+xDDDDDDD0000000               
+               0000000DDDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDD00                    
+                00000                                        
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 281.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                       00000                 
+                               DDDDDD00000000                
+                   00DDDDDDDDDDDDDDDDD0000000                
+              0000000DDDDDDDDDDDDDDDDD00000000               
+              00000000DDDDDDDDyDDDDDDDD0000000               
+              00000000DDDDDDDD+xDDDDDDD00000000              
+               0000000DDDDDDDDDDDDDDDDD00000000              
+               00000000DDDDDDDDDDDDDDDDD0000000              
+                0000000DDDDDDDDDDDDDDDDD0000000              
+                00000000DDDDDDDDDDD                          
+                00000000DD                                   
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 286.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                         00                  
+                                    00000000                 
+                              DDDDDDD00000000                
+                       DDDDDDDDDDDDDD00000000                
+               000000DDDDDDDDDDDDDDDDD00000000               
+              0000000DDDDDDDDDyDDDDDDDD0000000               
+              00000000DDDDDDDD+xDDDDDDD00000000              
+               0000000DDDDDDDDDDDDDDDDDD00000000             
+               00000000DDDDDDDDDDDDDDDDD0000000              
+                00000000DDDDDDDDDDDDDDDDD0                   
+                00000000DDDDDDDDDD                           
+                 00000000DDD                                 
+                  00000                                      
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 292.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                      00000                  
+                                  D000000000                 
+                             DDDDDDD00000000                 
+                         DDDDDDDDDDDD00000000                
+                   DDDDDDDDDDDDDDDDDDD00000000               
+              0000000DDDDDDDDDyDDDDDDDD00000000              
+              00000000DDDDDDDD+xDDDDDDD000000000             
+              00000000DDDDDDDDDDDDDDDDDD00000000             
+               00000000DDDDDDDDDDDDDDDDDD0000                
+                00000000DDDDDDDDDDDDDDD                      
+                 00000000DDDDDDDDD                           
+                 000000000DDDD                               
+                  0000000                                    
+                    0                                        
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 298.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                       0                     
+                                    000000                   
+                                DD000000000                  
+                             DDDDDD000000000                 
+                         DDDDDDDDDDDD00000000                
+                     DDDDDDDDDDDDDDDDD00000000               
+                 000DDDDDDDDDDyDDDDDDDD000000000             
+              0000000DDDDDDDDD+xDDDDDDDD00000000             
+              00000000DDDDDDDDDDDDDDDDDDD000000              
+               00000000DDDDDDDDDDDDDDDDDDD                   
+                00000000DDDDDDDDDDDDDD                       
+                 000000000DDDDDDDD                           
+                  000000000DDDD                              
+                   00000000                                  
+                    0000                                     
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 303.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                    0000                     
+                                  00000000                   
+                               DD0000000000                  
+                            DDDDDDD000000000                 
+                          DDDDDDDDDD0000000000               
+                      DDDDDDDDDDDDDDDD000000000              
+                   DDDDDDDDDDDyDDDDDDDD000000000             
+                00000DDDDDDDDD+xDDDDDDDD0000000              
+              00000000DDDDDDDDDDDDDDDDDDD000                 
+              000000000DDDDDDDDDDDDDDDDDD                    
+               0000000000DDDDDDDDDDDD                        
+                 000000000DDDDDDDD                           
+                  0000000000DDDD                             
+                   0000000000                                
+                     00000                                   
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 309.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                  000000                     
+                                000000000                    
+                              DDD0000000000                  
+                            DDDDDD0000000000                 
+                          DDDDDDDDDD0000000000               
+                       DDDDDDDDDDDDDDD0000000000             
+                    DDDDDDDDDDyDDDDDDDD000000000             
+                  00DDDDDDDDDD+xDDDDDDDDD0000                
+               0000000DDDDDDDDDDDDDDDDDDDD                   
+              000000000DDDDDDDDDDDDDDDDD                     
+               0000000000DDDDDDDDDDDD                        
+                 0000000000DDDDDDDD                          
+                  0000000000DDDD                             
+                    0000000000                               
+                     0000000                                 
+                       000                                   
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 315
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                   0                         
+                                 000000                      
+                               0000000000                    
+                             DDD00000000000                  
+                           DDDDDDD00000000000                
+                          DDDDDDDDDD00000000000              
+                       DDDDDDDDDDDDDDD000000000              
+                     DDDDDDDDDyDDDDDDDDD000000               
+                   DDDDDDDDDDD+xDDDDDDDDDD0                  
+                 0000DDDDDDDDDDDDDDDDDDDD                    
+               00000000DDDDDDDDDDDDDDDD                      
+               0000000000DDDDDDDDDDDD                        
+                00000000000DDDDDDDD                          
+                  00000000000DDDD                            
+                    00000000000                              
+                      00000000                               
+                        0000                                 
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 320.625
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                 000                         
+                               0000000                       
+                              00000000000                    
+                            DDD000000000000                  
+                           DDDDDDD000000000000               
+                         DDDDDDDDDDD00000000000              
+                        DDDDDDDDDDDDDD00000000               
+                      DDDDDDDDyDDDDDDDDDD000                 
+                    DDDDDDDDDD+xDDDDDDDDDD                   
+                  00DDDDDDDDDDDDDDDDDDDD                     
+                0000000DDDDDDDDDDDDDDDD                      
+               0000000000DDDDDDDDDDDD                        
+               000000000000DDDDDDDD                          
+                  000000000000DDDD                           
+                    000000000000                             
+                       00000000                              
+                         0000                                
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 326.25
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                               0000                          
+                              00000000                       
+                             000000000000                    
+                            DD00000000000000                 
+                          DDDDDDD0000000000000               
+                         DDDDDDDDDDD0000000000               
+                        DDDDDDDDDDDDDDD00000                 
+                      DDDDDDDDyDDDDDDDDDDD0                  
+                     DDDDDDDDD+xDDDDDDDDD                    
+                   DDDDDDDDDDDDDDDDDDDDD                     
+                  0000DDDDDDDDDDDDDDDD                       
+                000000000DDDDDDDDDDDD                        
+                000000000000DDDDDDDD                         
+                 00000000000000DDDD                          
+                    0000000000000                            
+                       000000000                             
+                          00000                              
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 331.875
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                              0000                           
+                             000000000                       
+                            00000000000000                   
+                           DD0000000000000000                
+                          DDDDDDD000000000000                
+                         DDDDDDDDDDDD0000000                 
+                        DDDDDDDDDDDDDDDD000                  
+                       DDDDDDDyDDDDDDDDDDD                   
+                      DDDDDDDD+xDDDDDDDDD                    
+                    DDDDDDDDDDDDDDDDDDD                      
+                   00DDDDDDDDDDDDDDDDD                       
+                  000000DDDDDDDDDDDDD                        
+                 00000000000DDDDDDDD                         
+                 000000000000000DDD                          
+                   000000000000000                           
+                       0000000000                            
+                           000000                            
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 337.5
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                            00000                            
+                           00000000000                       
+                           0000000000000000                  
+                          D000000000000000000                
+                         DDDDDDDD00000000000                 
+                         DDDDDDDDDDDD000000                  
+                        DDDDDDDDDDDDDDDDDD                   
+                       DDDDDDDyDDDDDDDDDD                    
+                      DDDDDDDD+xDDDDDDDD                     
+                     DDDDDDDDDDDDDDDDDD                      
+                    DDDDDDDDDDDDDDDDDD                       
+                   00000DDDDDDDDDDDDDD                       
+                  0000000000DDDDDDDDD                        
+                 00000000000000000DD                         
+                  00000000000000000                          
+                       000000000000                          
+                            000000                           
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 343.125
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                           00000                             
+                          0000000000000                      
+                          00000000000000000                  
+                         000000000000000000                  
+                         DDDDDDDD0000000000                  
+                        DDDDDDDDDDDDDDD000                   
+                        DDDDDDDDDDDDDDDDD                    
+                       DDDDDDDyDDDDDDDDD                     
+                      DDDDDDDD+xDDDDDDDD                     
+                      DDDDDDDDDDDDDDDDD                      
+                     DDDDDDDDDDDDDDDDD                       
+                    00DDDDDDDDDDDDDDDD                       
+                    00000000DDDDDDDDD                        
+                   00000000000000000D                        
+                  000000000000000000                         
+                      00000000000000                         
+                             000000                          
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 348.75
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                         000000                              
+                         0000000000000000                    
+                         00000000000000000                   
+                        000000000000000000                   
+                        DDDDDDDDD00000000                    
+                        DDDDDDDDDDDDDDDDD                    
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDyDDDDDDDDD                     
+                       DDDDDDD+xDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                     DDDDDDDDDDDDDDDDD                       
+                     0000000DDDDDDDDDD                       
+                    000000000000000000                       
+                    00000000000000000                        
+                     0000000000000000                        
+                              0000000                        
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Robot geometry at grid angle 354.375
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                        00000                                
+                        00000000000000000                    
+                        00000000000000000                    
+                       000000000000000000                    
+                       DDDDDDDDDDD000000                     
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDDDDDDDDDDD                     
+                       DDDDDDDyDDDDDDDD                      
+                       DDDDDDD+xDDDDDDD                      
+                       DDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                      DDDDDDDDDDDDDDDDD                      
+                      00000DDDDDDDDDDDD                      
+                     000000000000000000                      
+                     00000000000000000                       
+                     00000000000000000                       
+                                000000                       
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+                                                             
+Setting up obstacles
+Planning path
+Plan position:  {xy 70 600  ang 20 }  drive  {forward 0  turn 0 } 
+Plan position:  {xy 75.1 602  ang 20 }  drive  {forward 1  turn 0 } 
+Plan position:  {xy 80.1 604  ang 20 }  drive  {forward 1  turn 0 } 
+Plan position:  {xy 85.2 606  ang 20 }  drive  {forward 1  turn 0 } 
+Plan position:  {xy 85.2 606  ang 25.6 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 31.2 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 36.9 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 42.5 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 48.1 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 53.8 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 59.4 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 65 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 70.6 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 76.2 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 81.9 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 87.5 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 93.1 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 98.8 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 104 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 110 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 85.2 606  ang 116 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 87.8 601  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 90.5 596  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 93.2 591  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 95.9 586  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 98.6 581  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 101 576  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 104 571  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 107 566  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 109 561  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 112 556  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 115 551  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 118 546  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 120 541  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 123 536  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 126 531  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 128 525  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 131 520  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 134 515  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 136 510  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 139 505  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 142 500  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 145 495  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 147 490  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 150 485  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 153 480  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 155 475  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 158 470  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 161 465  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 163 460  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 166 455  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 169 450  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 172 445  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 174 440  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 177 435  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 180 430  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 182 424  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 185 419  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 188 414  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 190 409  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 193 404  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 196 399  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 199 394  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 201 389  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 204 384  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 207 379  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 209 374  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 212 369  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 215 364  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 217 359  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 220 354  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 223 349  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 226 344  ang 116 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 226 344  ang 110 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 226 344  ang 104 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 339  ang 104 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 339  ang 98.8 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 339  ang 93.1 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 339  ang 87.5 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 334  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 329  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 323  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 318  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 313  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 308  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 303  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 298  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 293  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 288  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 283  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 278  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 273  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 268  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 263  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 258  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 253  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 248  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 243  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 238  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 233  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 228  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 222  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 217  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 212  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 207  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 202  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 197  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 192  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 187  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 182  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 177  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 172  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 167  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 162  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 157  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 152  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 147  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 142  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 137  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 132  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 127  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 121  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 116  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 111  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 106  ang 87.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 227 106  ang 81.9 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 76.2 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 70.6 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 65 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 59.4 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 53.8 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 48.1 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 227 106  ang 42.5 }  drive  {forward 0  turn -1 } 
+Plan position:  {xy 222 101  ang 42.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 217 96.2  ang 42.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 212 91.2  ang 42.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 207 86.1  ang 42.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 202 81.1  ang 42.5 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 202 81.1  ang 48.1 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 198 76  ang 48.1 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 198 76  ang 53.8 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 194 71  ang 53.8 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 194 71  ang 59.4 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 194 71  ang 65 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 192 65.9  ang 65 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 192 65.9  ang 70.6 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 191 60.9  ang 70.6 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 191 60.9  ang 76.2 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 190 55.8  ang 76.2 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 189 50.8  ang 76.2 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 189 50.8  ang 81.9 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 188 45.7  ang 81.9 }  drive  {forward -1  turn 0 } 
+Plan position:  {xy 188 45.7  ang 87.5 }  drive  {forward 0  turn 1 } 
+Plan position:  {xy 188 40.7  ang 87.5 }  drive  {forward -1  turn 0 } 
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                ..........................                                  
+                ........................  .                                 
+                .............................                               
+                ..................................... .......               
+           ................................................                 
+         ........................................................           
+         ..................................................                 
+         ...............................................                    
+         .......##...................................                       
+         .........#................................                         
+         ..........#...............................                         
+         ...........#..............................                         
+         ............#.............................                         
+         .............#.............................                        
+         ...............#.............................                      
+         ................#............................                      
+         .................#............................                     
+         ..................#.............................                   
+         ...................#.............................                  
+         ....................#............................                  
+         .....................#.............................                
+         ......................#............................                
+         .......................#............................               
+         ........................#............................              
+         .........................#...........................              
+         ..........................#..........................              
+         ...........................#.........................              
+         .............................#.......................              
+         ..............................#......................              
+         ...............................#......................             
+         ................................#......................            
+                ..........................#.....................            
+                ...........................#....................            
+                ............................#...................            
+                .............................#..................            
+                                 ............#..................            
+                                   ..........#..................            
+                                     ........#...................           
+                                      .......#...................           
+                                      .......#...................           
+                                       ......#...................           
+                                        .....#...................           
+                                        .....#...................           
+                                        .....#...................           
+                                        .....#...................           
+                                        .....#...................           
+                                      ............................          
+                                    .........#....................          
+                                  ...........#...................           
+                                .............#..............                
+                              ...............#..............                
+                            .................#..............                
+                           ..................#..............                
+                         ....................#..............                
+                         ....................#..............                
+                         ....................#..............                
+                          ...................#..............                
+                          ...................#..............                
+                          ...................#..............                
+                           ................#................                
+                            .............#..................                
+                              ..........#...................                
+                                .. ...#..... ...............                
+                                   ...#....  ...............                
+                                     .#....  ...............                
+                                                                            
+                                                                            
+                                                                            
+                                                                            

@@ -1,0 +1,19 @@
+#!/bin/sh
+#  Start up robot camera and backend programs.
+
+# Kill old ones first
+killall -q backend kinect vive_robot
+
+#Over SSH, still use local screen (to save bandwidth)
+export DISPLAY=:0 
+
+now=`date +'%F_%T'`
+
+# Start in this script's directory:
+cd `dirname $0`
+
+(cd vive; ./vive_robot > "log.vive.$now" ) &
+(cd kinect; ./kinect > "log.kinect.$now" ) &
+(cd backend; ./backend > "log.backend.$now") &
+echo "Backend and camera running."
+

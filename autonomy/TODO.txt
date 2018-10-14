@@ -1,0 +1,14 @@
+
+TODO items (plausible goals):
+- Make mine mode drive while mining
+- Review and add or change states 
+- Test distance recorded by encoders
+- Fine tune pid control (Maybe add some i and d)
+- Add SW limits to roll and unroll
+
+
+Maybe Unrealistic:
+- New blinky based autonomy 
+- Integrate encoders and blinky
+- Figure out new autonomous startup sequence 
+

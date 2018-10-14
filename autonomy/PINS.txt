@@ -1,0 +1,51 @@
+
+
+
+On each side:
+	- Bin sensor
+	- Drive motor encoder
+	- Mine motor encoder
+	- Mine head encoder
+	- Side up/down tilt resistor (variable resistance)
+
+-----------------------
+Optical input CAT5:
+
+LED supply bus, ideally fixed at 1.3VDC,
+probably just limited to 100mA with a 50ohm to 5VDC.
+	Power (50ohm to 5VDC) on orange, ground on Worange
+
+brown: Analog 5V soft reference, for low-current sources
+
+pulled-down resistance measuring lines x5:
+	Wgreen	A0	A6	Rwheel - DN 108
+	blue	A1	A7	Bucket rheostat - 
+		DN 949 fully up
+		DN 330 mining head will drag on bar
+		DN 260 mining starts on level ground
+		DN 240 conservative mining depth
+		DN 180 fully down
+	Wblue	A2	A8	-spare-
+	green	A3	A9	Mine - DN 912
+	Wbrown	A4	A10	Lwheel - DN 91
+
+Each of these has a 100 ohm input filter, and 2K ohm pull-down (2.5mA draw at 5V).
+They're designed to take optical diode input, or a potentiometer in the Kohm range.
+
+
+-------------------
+Power input:
+
+Common gnd with battery
+Battery in feeds 7805 (style) 3-pin regulator.
+Idle draw of mega is about 110mA from battery.  Adding one LED bumps this to 175mA.
+The regulator does get hot in operation.
+
+Analog A12 is fed with battery voltage through a 1:11 voltage divider (20Kohm and 2Kohm resistances, idle current 1mA at 22VDC).  
+	unsigned int mV=(analogRead(A12)*long(11)*5000)/1024;
+On USB power: 12.09V -> DN 235
+On USB power: 24.18V -> DN 474
+23.25V -> DN 458
+
+
+
