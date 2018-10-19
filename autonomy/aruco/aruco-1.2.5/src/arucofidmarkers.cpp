@@ -1,7 +1,5 @@
 /**
 
-Modified 2015-05 by Dr. Orion Lawlor (changes are public domain)
-
 Copyright 2011 Rafael Muñoz Salinas. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are
@@ -278,42 +276,41 @@ Mat FiducidalMarkers::rotate(const Mat  &in)
  *
  *
  ************************************/
-    //Markers  are divided in OUTERxOUTER regions, of which the inner INNERxINNER belongs to marker info
-    //the external border shoould be entirely black
-    enum {INNER=3}; // bits in inner region
-    enum {OUTER=INNER+2}; // bits in outer region (includes black border)
-
-
 int FiducidalMarkers::hammDistMarker(Mat  bits)
 {
-    int ids[INNER-1][INNER]=
+    int ids[4][5]=
     {
-    // These are the unique rows from which our symbols are built
-    //  For 3x3, 100 and 101 work OK, although 3007 can't be oriented vertically
-    //   Most other encodings (e.g., 010) result in rotational ambiguity
         {
-            1,0,0
+            1,0,0,0,0
         }
         ,
         {
-            1,0,1
+            1,0,1,1,1
+        }
+        ,
+        {
+            0,1,0,0,1
+        }
+        ,
+        {
+            0, 1, 1, 1, 0
         }
     };
     int dist=0;
 
-    for (int y=0;y<INNER;y++)
+    for (int y=0;y<5;y++)
     {
         int minSum=1e5;
         //hamming distance to each possible word
-        for (int p=0;p<INNER-1;p++)
+        for (int p=0;p<4;p++)
         {
             int sum=0;
             //now, count
-            for (int x=0;x<INNER;x++)
+            for (int x=0;x<5;x++)
                 sum+=  bits.at<uchar>(y,x) == ids[p][x]?0:1;
             if (minSum>sum) minSum=sum;
         }
-        // combine counts
+        //do the and
         dist+=minSum;
     }
 
@@ -328,12 +325,16 @@ int FiducidalMarkers::hammDistMarker(Mat  bits)
  ************************************/
 int FiducidalMarkers::analyzeMarkerImage(Mat &grey,int &nRotations)
 {
-    int swidth=grey.rows/OUTER;
-    for (int y=0;y<OUTER;y++)
+
+    //Markers  are divided in 7x7 regions, of which the inner 5x5 belongs to marker info
+    //the external border shoould be entirely black
+
+    int swidth=grey.rows/7;
+    for (int y=0;y<7;y++)
     {
-        int inc=OUTER-1;
-        if (y==0 || y==OUTER-1) inc=1;//for first and last row, check the whole border
-        for (int x=0;x<OUTER;x+=inc)
+        int inc=6;
+        if (y==0 || y==6) inc=1;//for first and last row, check the whole border
+        for (int x=0;x<7;x+=inc)
         {
             int Xstart=(x)*(swidth);
             int Ystart=(y)*(swidth);
@@ -346,15 +347,15 @@ int FiducidalMarkers::analyzeMarkerImage(Mat &grey,int &nRotations)
         }
     }
 
-    //now, copy out actual marker values
-    vector<int> markerInfo(INNER);
-    Mat _bits=Mat::zeros(INNER,INNER,CV_8UC1);
+    //now,
+    vector<int> markerInfo(5);
+    Mat _bits=Mat::zeros(5,5,CV_8UC1);
     //get information(for each inner square, determine if it is  black or white)
 
-    for (int y=0;y<INNER;y++)
+    for (int y=0;y<5;y++)
     {
 
-        for (int x=0;x<INNER;x++)
+        for (int x=0;x<5;x++)
         {
             int Xstart=(x+1)*(swidth);
             int Ystart=(y+1)*(swidth);
@@ -393,17 +394,65 @@ int FiducidalMarkers::analyzeMarkerImage(Mat &grey,int &nRotations)
     else {//Get id of the marker
         int MatID=0;
         cv::Mat bits=Rotations [ minDist.second];
-        for (int y=0;y<INNER;y++)
+        for (int y=0;y<5;y++)
         {
             MatID<<=1;
-            if ( bits.at<uchar>(y,2)) MatID|=1;
-            //MatID<<=1;
-            //if ( bits.at<uchar>(y,3)) MatID|=1;
+            if ( bits.at<uchar>(y,1)) MatID|=1;
+            MatID<<=1;
+            if ( bits.at<uchar>(y,3)) MatID|=1;
         }
-        return INNER*1000+MatID;
+        return MatID;
     }
 }
 
+
+/************************************
+ *
+ *
+ *
+ *
+ ************************************/
+bool FiducidalMarkers::correctHammMarker(Mat &bits)
+{
+    //detect this lines with errors
+    bool errors[4];
+    int ids[4][5]=
+    {
+        {
+            0,0,0,0,0
+        }
+        ,
+        {
+            0,0,1,1,1
+        }
+        ,
+        {
+            1,1,0,0,1
+        }
+        ,
+        {
+            1, 1, 1, 1, 0
+        }
+    };
+
+    for (int y=0;y<5;y++)
+    {
+        int minSum=1e5;
+        //hamming distance to each possible word
+        for (int p=0;p<4;p++)
+        {
+            int sum=0;
+            //now, count
+            for (int x=0;x<5;x++)
+                sum+=  bits.at<uchar>(y,x) == ids[p][x]?0:1;
+            if (minSum>sum) minSum=sum;
+        }
+        if (minSum!=0) errors[y]=true;
+        else errors[y]=false;
+    }
+
+    return true;
+}
 
 /************************************
  *
