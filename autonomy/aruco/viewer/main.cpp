@@ -47,8 +47,7 @@ or implied, of Rafael Muñoz Salinas.
 
 using namespace cv;
 using namespace aruco;
-
-
+using namespace std;
 
 
 // Store info about how this marker is scaled, positioned and oriented
@@ -389,7 +388,6 @@ int main(int argc,char **argv)
 	int camNo=1;
 	float TheMarkerSize=-1;
 	int ThePyrDownLevel=0;
-	MarkerDetector MDetector;
 	VideoCapture vidcap;
 	vector<Marker> TheMarkers;
 	CameraParameters cam_param;
@@ -432,12 +430,14 @@ int main(int argc,char **argv)
 		cam_param.resize(TheInputImage.size());
 	}
 	//Configure other parameters
-	if (ThePyrDownLevel>0)
-		MDetector.pyrDown(ThePyrDownLevel);
-//	MDetector.setCornerRefinementMethod(MarkerDetector::SUBPIX); // more accurate
-	MDetector.setCornerRefinementMethod(MarkerDetector::LINES); // more reliable?
-	MDetector.setMinMaxSize(minSize,1.0); // for distant/small markers (smaller values == smaller markers, but slower too)
-	// MDetector.setCornerMethod(SUBPIX); // bounces around more than "LINES"
+	aruco::MarkerDetector::Params params;
+	
+//	if (ThePyrDownLevel>0)
+//		params.pyrDown(ThePyrDownLevel);
+//	params.setCornerRefinementMethod(MarkerDetector::CORNER_SUBPIX); // more accurate
+	params.setCornerRefinementMethod(aruco::CORNER_LINES); // more reliable?
+	params.setDetectionMode(aruco::DM_FAST,0.1); // for distant/small markers (smaller values == smaller markers, but slower too)
+	MarkerDetector MDetector("ARUCO"); // dictionary of tags recognized
 
 	if (showGUI) {
 		//Create gui
@@ -465,7 +465,7 @@ int main(int argc,char **argv)
 
 		double tick = (double)getTickCount();//for checking the speed
 		//Detection of markers in the image passed
-		MDetector.detect(TheInputImage,TheMarkers,cam_param,1.0);
+		MDetector.detect(TheInputImage,TheMarkers,cam_param,1.0,true);
 		
 		//check the speed by calculating the mean speed of all iterations
 		AvrgTime.first+=((double)getTickCount()-tick)/getTickFrequency();
@@ -517,7 +517,7 @@ int main(int argc,char **argv)
 		fclose(fbin);
 
 		bool vidcap=false;
-		if ((framecount++%32) == 0) vidcap=true;
+		// if ((framecount++%32) == 0) vidcap=true;
 		if (showGUI || vidcap) {
 			//print marker info and draw the markers in image
 			TheInputImage.copyTo(TheInputImageCopy);
@@ -528,7 +528,7 @@ int main(int argc,char **argv)
 
 				//draw a 3d cube on each marker if there is 3d info
 				if (  cam_param.isValid()) {
-					CvDrawingUtils::draw3dCube(TheInputImageCopy,marker,cam_param);
+					CvDrawingUtils::draw3dCube(TheInputImageCopy,marker,cam_param,1,true);
 					CvDrawingUtils::draw3dAxis(TheInputImageCopy,marker,cam_param);
 					//draw_marker_gui_2D(TheInputImageCopy,Scalar(255,255,0),marker);
 				}
