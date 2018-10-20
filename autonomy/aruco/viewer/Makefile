@@ -1,4 +1,4 @@
-OPTS=-g -O3
+OPTS=-g -O3 -std=c++14
 ARUCO=/usr/local
 OPENCV=/usr/lib/x86_64-linux-gnu
 CFLAGS=$(OPTS) -L$(OPENCV) -I$(ARUCO)/include/aruco 
