@@ -28,7 +28,7 @@ endif()
 
 if(BUILD_UTILS)
   add_subdirectory(utils)
-  add_subdirectory(utils_markermap)
+#  add_subdirectory(utils_markermap)
   add_subdirectory(utils_calibration)
 endif()
 include(cmake/printInfo.cmake)
