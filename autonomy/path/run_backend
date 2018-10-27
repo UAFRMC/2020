@@ -2,11 +2,11 @@
 
 export DISPLAY=:0
 
-# Run from backend directory
-cd `dirname $0`
+# Run from autonomy backend directory
+cd `dirname $0`/../backend
 
 # Kill off other old copies of this script first:
-./stop_backend
+../path/stop_backend
 
 # Save off old log file
 mv log.txt old_logs/log.`date +"%Y__%H_%M_%S"

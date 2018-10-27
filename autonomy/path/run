@@ -10,7 +10,7 @@ export DISPLAY=:0
 now=`date +'%F_%T'`
 
 # Start in this script's directory:
-cd `dirname $0`
+cd `dirname $0`/..
 
 (cd vive; ./vive_robot > "log.vive.$now" ) &
 (cd kinect; ./kinect > "log.kinect.$now" ) &
