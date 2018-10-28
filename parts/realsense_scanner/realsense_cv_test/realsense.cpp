@@ -16,7 +16,7 @@ int main()
     cfg.enable_stream(RS2_STREAM_COLOR, 1280, 720, RS2_FORMAT_BGR8, 6);  
     cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 720, RS2_FORMAT_Z16, 6);  
   
-    pipe.start(cfg);  
+    rs2::pipeline_profile selection = pipe.start(cfg);  
   
     rs2::frameset frames;  
     while (true)  
@@ -39,14 +39,16 @@ int main()
         Mat color(Size(c_w, c_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
   
         Mat filtered_0(Size(d_w, d_h), CV_8U, cv::Scalar(0));  
-        Mat filtered_65535(Size(d_w, d_h), CV_8U, cv::Scalar(0));  
-        filtered_0.setTo(255, depth_raw == 0);  
-        filtered_65535.setTo(255, depth_raw == 65535);  
+        // filtered_0.setTo(255, depth_raw == 0);  
+	
+        auto sensor = selection.get_device().first<rs2::depth_sensor>();
+        float scale =  sensor.get_depth_scale();
+	printf("Scale: %.3f\n",scale);
+	depth_raw.convertTo(filtered_0,CV_8U,255.0*scale/4.0);
   
         // Display  
         imshow("Image", color);  
         imshow("Filtered 0", filtered_0);  
-        imshow("Filtered 65535", filtered_65535);  
   
         int k = waitKey(10);  
         if (k == 27)  
