@@ -35,7 +35,10 @@ int main()
     double depth2screen=255.0*scale/4.5;
   
     Mat depth_sum(Size(depth_w,depth_h), CV_32S, cv::Scalar(0.0));  
+    Mat depth_ssq(Size(depth_w,depth_h), CV_64F, cv::Scalar(0.0));  
     Mat depth_count(Size(depth_w,depth_h), CV_32S, cv::Scalar(0.0));  
+    Mat depth_max(Size(depth_w,depth_h), CV_8U, cv::Scalar(0.0));  
+    Mat depth_min(Size(depth_w,depth_h), CV_8U, cv::Scalar(255.0));  
     int framecount=0;
     int nextwrite=1;
 
@@ -63,6 +66,8 @@ int main()
         Mat filtered_0(Size(d_w, d_h), CV_8U, cv::Scalar(0));  
 	
 	depth_raw.convertTo(filtered_0,CV_8U,depth2screen);
+	cv::max(depth_max,filtered_0,depth_max);
+	// cv::min(depth_min,filtered_0,depth_min);
 
 	if (false && bigmode) {
 	  // Shrink images (for small screens)
@@ -78,14 +83,39 @@ int main()
 	// add rolling per-pixel depth averages
 	for (int r=0;r<depth_raw.rows;r++)
 	for (int c=0;c<depth_raw.cols;c++) {
-		int d=depth_raw.at<uint16_t>(r,c);
+		uint16_t d=depth_raw.at<uint16_t>(r,c);
 		if (d>0) {
 			depth_sum.at<int32_t>(r,c)+=d;
+			depth_ssq.at<double>(r,c)+=d*d;
+			uint8_t &dm=depth_min.at<uint8_t>(r,c);
+			dm=std::min(dm,(uint8_t)(d*depth2screen));
 			depth_count.at<int32_t>(r,c)++;
 		}
 	}
   
         int k = waitKey(10);  
+	if (k=='m') {
+		imwrite("depth_min.png",depth_min);
+		imwrite("depth_max.png",depth_max);
+	        Mat filtered_1(Size(d_w, d_h), CV_8U, cv::Scalar(0));  
+
+	for (int r=0;r<depth_raw.rows;r++)
+	for (int c=0;c<depth_raw.cols;c++) {
+		double sum=depth_sum.at<int32_t>(r,c);
+		double ssq=depth_ssq.at<double>(r,c);
+		int count=depth_count.at<int32_t>(r,c);
+		filtered_0.at<uint8_t>(r,c)= depth2screen * 
+			sum / count;
+		double st=sqrt((ssq-sum*sum/count) / (count-1));
+		double stmax=250; // mm maximum visible std deviation
+		if (st>stmax) st=stmax;
+		filtered_1.at<uint8_t>(r,c)= 255.0 * st / stmax;
+		if (r==100 && c==100) printf("sum %f, ssq %f, count %f, st %f\n",
+			sum,ssq,(double)count,st);
+	}
+		imwrite("depth_stdev.png",filtered_1);
+		imwrite("depth_mean.png",filtered_0);
+	}
         if (k== 'w' || (framecount>=nextwrite)) {
             char name[1024];
 
@@ -103,6 +133,7 @@ int main()
             imwrite(name,filtered_0);
             nextwrite=nextwrite*2;
             printf("Wrote frame images to '%s'\n",name);
+if (nextwrite>=1024) break;
         }
         if (k == 27)  
             break;  
