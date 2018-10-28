@@ -13,25 +13,29 @@ int main()
     rs2::pipeline pipe;  
     rs2::config cfg;  
   
-    bool bigmode=false;
-    int fps=15;
-    if (bigmode) { // high res
-      cfg.enable_stream(RS2_STREAM_COLOR, 1280, 720, RS2_FORMAT_BGR8, 6);  
-      cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 720, RS2_FORMAT_Z16, 6);  
+    bool bigmode=true;
+
+    int fps=6;
+    int depth_w=1280, depth_h=720; // high res mode
+    int color_w=1280, color_h=720; 
+    if (!bigmode) { // low res
+      fps=15;
+      depth_w=424; depth_h=240;
+      color_w=480; color_h=270;
     }
-    else
-    { // low res
-      cfg.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8, fps);  
-      cfg.enable_stream(RS2_STREAM_DEPTH, 480, 270, RS2_FORMAT_Z16, fps);  
-    }
+
+    cfg.enable_stream(RS2_STREAM_DEPTH, depth_w,depth_h, RS2_FORMAT_Z16, fps);  
+    cfg.enable_stream(RS2_STREAM_COLOR, color_w,color_h, RS2_FORMAT_BGR8, fps);  
   
     rs2::pipeline_profile selection = pipe.start(cfg);  
 
     auto sensor = selection.get_device().first<rs2::depth_sensor>();
     float scale =  sensor.get_depth_scale();
     printf("Depth scale: %.3f\n",scale);
+    double depth2screen=255.0*scale/4.5;
   
-    Mat depth_sum(Size(480, 270), CV_32S, cv::Scalar(0.0));  
+    Mat depth_sum(Size(depth_w,depth_h), CV_32S, cv::Scalar(0.0));  
+    Mat depth_count(Size(depth_w,depth_h), CV_32S, cv::Scalar(0.0));  
     int framecount=0;
     int nextwrite=1;
 
@@ -42,6 +46,7 @@ int main()
         frames = pipe.wait_for_frames();  
         rs2::depth_frame depth_frame = frames.get_depth_frame();  
         rs2::video_frame color_frame = frames.get_color_frame();  
+        framecount++;
   
         unsigned int d_w = depth_frame.get_width();  
         unsigned int d_h = depth_frame.get_height();  
@@ -53,15 +58,13 @@ int main()
   
         // Creating OpenCV Matrices  
         Mat depth_raw(Size(d_w, d_h), CV_16U, depth_data, Mat::AUTO_STEP);  
-        cv::add(depth_sum, depth_raw, depth_sum, noArray(), CV_32S);
         Mat color(Size(c_w, c_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
   
         Mat filtered_0(Size(d_w, d_h), CV_8U, cv::Scalar(0));  
-        // filtered_0.setTo(255, depth_raw == 0);  
 	
-	depth_raw.convertTo(filtered_0,CV_8U,255.0*scale/4.5);
+	depth_raw.convertTo(filtered_0,CV_8U,depth2screen);
 
-	if (bigmode) {
+	if (false && bigmode) {
 	  // Shrink images (for small screens)
 	  cv::resize(filtered_0,filtered_0, Size(), 0.5,0.5, CV_INTER_AREA);
 	  cv::resize(color,color, Size(), 0.5,0.5, CV_INTER_AREA);
@@ -70,23 +73,39 @@ int main()
         // Display  
         imshow("Image", color);  
         imshow("Filtered 0", filtered_0);  
+
+
+	// add rolling per-pixel depth averages
+	for (int r=0;r<depth_raw.rows;r++)
+	for (int c=0;c<depth_raw.cols;c++) {
+		int d=depth_raw.at<uint16_t>(r,c);
+		if (d>0) {
+			depth_sum.at<int32_t>(r,c)+=d;
+			depth_count.at<int32_t>(r,c)++;
+		}
+	}
   
         int k = waitKey(10);  
         if (k== 'w' || (framecount>=nextwrite)) {
             char name[1024];
 
-            sprintf(name,"depth_%d.png",framecount);
+            sprintf(name,"depth_%04d.png",framecount);
             imwrite(name,filtered_0);
 
-            depth_sum.convertTo(filtered_0,CV_8U,255.0*scale/4.5/(1+framecount));
-            sprintf(name,"sum_%d.png",framecount);
+	for (int r=0;r<depth_raw.rows;r++)
+	for (int c=0;c<depth_raw.cols;c++) {
+		filtered_0.at<uint8_t>(r,c)= depth2screen * 
+			depth_sum.at<int32_t>(r,c) / 
+			depth_count.at<int32_t>(r,c);
+	}
+
+            sprintf(name,"sum_%04d.png",framecount);
             imwrite(name,filtered_0);
-            nextwrite=nextwrite*8;
+            nextwrite=nextwrite*2;
             printf("Wrote frame images to '%s'\n",name);
         }
         if (k == 27)  
             break;  
-        framecount++;
     }  
   
   
