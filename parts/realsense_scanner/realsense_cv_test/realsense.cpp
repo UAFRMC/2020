@@ -20,8 +20,8 @@ int main()
     int color_w=1280, color_h=720; 
     if (!bigmode) { // low res
       fps=15;
-      depth_w=424; depth_h=240;
-      color_w=480; color_h=270;
+      depth_w=480; depth_h=270;
+      color_w=424; color_h=240;
     }
 
     cfg.enable_stream(RS2_STREAM_DEPTH, depth_w,depth_h, RS2_FORMAT_Z16, fps);  
