@@ -1,4 +1,5 @@
 /**
+  Compute depth statistics from RealSense data.
 
   Modified from tiny example by BjarneG at https://communities.intel.com/thread/121826
 */
@@ -94,7 +95,7 @@ int main()
 	}
   
         int k = waitKey(10);  
-	if (k=='m') {
+	if (k=='m') { /* 'm' key dumps so-far min and max as images */
 		imwrite("depth_min.png",depth_min);
 		imwrite("depth_max.png",depth_max);
 	        Mat filtered_1(Size(d_w, d_h), CV_8U, cv::Scalar(0));  
