@@ -16,9 +16,9 @@ float getMean();
 float getVariance();
 float getMax();
 float getMin();
-}
+};
 
-
+int compare(grid_square a, grid_square b);
 
 
 

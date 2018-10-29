@@ -17,7 +17,7 @@ void grid_square::addPoint(float z)
 	sumSquares+=z*z;
 	if(z<min)
 	{
-		min=z
+		min=z;
 	}
 	if(max<z)
 	{
