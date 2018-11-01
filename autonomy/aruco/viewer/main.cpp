@@ -397,9 +397,11 @@ int main(int argc,char **argv)
 	int skipPhase=0;
 
 	int wid=640, ht=480;
+	const char *dictionary="ARUCO";
 	for (int argi=1; argi<argc; argi++) {
 		if (0==strcmp(argv[argi],"-gui")) showGUI=true;
 		else if (0==strcmp(argv[argi],"-cam")) camNo=atoi(argv[++argi]);
+		else if (0==strcmp(argv[argi],"-dict")) dictionary=argv[++argi];
 		else if (0==strcmp(argv[argi],"-refine")) useRefine=true;
 		else if (0==strcmp(argv[argi],"-sz")) sscanf(argv[++argi],"%dx%d",&wid,&ht);
 		else if (0==strcmp(argv[argi],"-skip")) sscanf(argv[++argi],"%d",&skipCount);
@@ -437,7 +439,7 @@ int main(int argc,char **argv)
 //	params.setCornerRefinementMethod(MarkerDetector::CORNER_SUBPIX); // more accurate
 	params.setCornerRefinementMethod(aruco::CORNER_LINES); // more reliable?
 	params.setDetectionMode(aruco::DM_FAST,0.1); // for distant/small markers (smaller values == smaller markers, but slower too)
-	MarkerDetector MDetector("ARUCO"); // dictionary of tags recognized
+	MarkerDetector MDetector(dictionary); // dictionary of tags recognized
 
 	if (showGUI) {
 		//Create gui
