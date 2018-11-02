@@ -199,7 +199,7 @@ int main()
         for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
         
         for (int h = 0; h < depth_intrinsics.height; h++)
-        for (int w = 0; w < depth_intrinsics.width; w++)
+        for (int w = 50; w < depth_intrinsics.width; w++)
         {
           int i=h*depth_intrinsics.width + w;
           float depth=depth_data[i]*depth2cm;
@@ -208,10 +208,9 @@ int main()
             vec3 world=camera_TF.world_from_camera(cam);
             if (world.z<120.0) {
               // printf("  %.0f  %.0f   %.0f   \n",world.x,world.y,world.z);
-              int x=world.x*(1.0/obstacle_grid::GRIDSIZE);
-              int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
-              if (x>=0 && x<obstacle_grid::GRIDX
-               && y>=0 && y<obstacle_grid::GRIDY)
+              unsigned int x=world.x*(1.0/obstacle_grid::GRIDSIZE);
+              unsigned int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
+              if (x<obstacle_grid::GRIDX && y<obstacle_grid::GRIDY)
               {
                 grid[y*obstacle_grid::GRIDX + x].addPoint(world.z);
                 // world_depth.at<unsigned char>(y,x)=50+world.z;

@@ -318,7 +318,8 @@ public:
         /**
          * @brief setDictionary Specifies the dictionary you want to use for marker decoding
          * @param dict_type dictionary employed for decoding markers @see Dictionary
-         * @param error_correction_rate value indicating the correction error allowed. Is in range [0,1]. 0 means no
+         * @param error_correction_rate value indicating the correction error allowed. Is in 
+         range [0,1]. 0 means no
          * correction at all. So
          * an erroneous bit will result in discarding the marker. 1, mean full correction. The maximum number of bits
          * that can be corrected depends on each ditionary.

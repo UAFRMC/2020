@@ -4,12 +4,17 @@
 
 grid_square::grid_square()
 {
+  clear();
+}
+void grid_square::clear() 
+{
 	count=0;
-	max=0;
-	min=0;
+	max=-1000;
+	min=1000;
 	sum=0;
 	sumSquares=0;
 }
+
 void grid_square::addPoint(float z)
 {
 	++count;
@@ -45,7 +50,7 @@ float grid_square::getMin()
 
 int compare(grid_square a, grid_square b)
 {
-	if(std::abs(a.getMean() - b.getMean())>3)
+	if(std::abs(a.getMean() - b.getMean())>5)
 	{
 		return 1;
 	}
