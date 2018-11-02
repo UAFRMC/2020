@@ -72,6 +72,7 @@ public:
   enum {GRIDSIZE=10}; // cm per grid cell
   enum {GRIDX=(50+807+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
   enum {GRIDY=(50+369+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
   
   obstacle_grid() {
     
@@ -134,6 +135,7 @@ int main()
 
     std::vector<float> depth_xdir(depth_w*depth_h);
     std::vector<float> depth_ydir(depth_w*depth_h);
+    std::vector<grid_square> grid(obstacle_grid::GRIDTOTAL);
     camera_transform camera_TF;
     
     rs2::frameset frames;  
@@ -193,7 +195,8 @@ int main()
         typedef unsigned short depth_t;
         depth_t *depth_data = (depth_t*)depth_frame.get_data();  
         void *color_data = (void*)color_frame.get_data();  
-        cv::Mat world_depth(cv::Size(obstacle_grid::GRIDX,obstacle_grid::GRIDY), CV_8U, cv::Scalar(0,0,0));
+        
+        for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
         
         for (int h = 0; h < depth_intrinsics.height; h++)
         for (int w = 0; w < depth_intrinsics.width; w++)
@@ -209,11 +212,29 @@ int main()
               int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
               if (x>=0 && x<obstacle_grid::GRIDX
                && y>=0 && y<obstacle_grid::GRIDY)
-                world_depth.at<unsigned char>(y,x)=50+world.z;
+              {
+                grid[y*obstacle_grid::GRIDX + x].addPoint(world.z);
+                // world_depth.at<unsigned char>(y,x)=50+world.z;
+              }
             }
           }
         }   
         
+        enum {depthscale=10};
+        cv::Mat world_depth(cv::Size(obstacle_grid::GRIDX*depthscale,obstacle_grid::GRIDY*depthscale), CV_8U, cv::Scalar(0,0,0));
+        for (int h = 0; h < obstacle_grid::GRIDY; h++)
+        for (int w = 0; w < obstacle_grid::GRIDX; w++)
+        {
+          grid_square &g=grid[h*obstacle_grid::GRIDX + w];
+          for (int dy=0; dy<depthscale;dy++)
+          for (int dx=0; dx<depthscale;dx++)
+          {
+            int x=w*depthscale+dx;
+            int y=h*depthscale+dy;
+            if (g.getCount()>0)
+              world_depth.at<unsigned char>(y,x)=50+g.getMean();
+          }
+        }
         imshow("Depth",world_depth);
         
   
