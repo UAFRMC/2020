@@ -1,6 +1,9 @@
 /**
-  Compute drivable / non-driveable regions from RealSense data.
-
+  Compute 3D points from RealSense data.
+  
+  This needs librealsense2, from https://github.com/IntelRealSense/librealsense
+  
+  Dr. Orion Lawlor, lawlor@alaska.edu (public domain)
   Modified from tiny example by BjarneG at https://communities.intel.com/thread/121826
 */
 #include <librealsense2/rs.hpp>  
@@ -12,7 +15,10 @@
 using namespace std;  
 using namespace cv;  
 
+/// Make it easy to swap between float (fast for big arrays) and double
 typedef float real_t;
+
+/// Simple 3D vector
 class vec3 {
 public:
   real_t x;
@@ -33,29 +39,30 @@ public:
     :angle(angle_degs*M_PI/180.0), c(cos(angle)), s(sin(angle)) 
   { }
   
-  inline void rotate(real_t &x,real_t &y) {
+  inline void rotate(real_t &x,real_t &y) const {
     real_t new_x = x*c - y*s;
     real_t new_y = x*s + y*c;
     x=new_x; y=new_y;
   }
 };
 
-/// Transforms 3D points from depth camera coords to world coords
+/// Transforms 3D points from depth camera coords to world coords,
+///  by rotating and translating
 class camera_transform {
 public:  
-  vec3 camera; // field-coordinates camera origin position (cm)
+  vec3 camera; // world-coordinates camera origin position (cm)
   coord_rotator camera_tilt; // tilt down
   coord_rotator Z_rotation; // camera panning
   
-  camera_transform()
-    :camera(250.0,50.0,70.0),  // camera position
+  camera_transform(real_t camera_Z_angle=0.0)
+    :camera(0.0,0.0,75.0),  // camera position
      camera_tilt(-20), // X axis rotation (camera mounting tilt)
-     Z_rotation(0) // Z axis rotation
+     Z_rotation(camera_Z_angle) // Z axis rotation
   {
   }
   
   // Project this camera-relative 3D point into world coordinates
-  vec3 world_from_camera(vec3 point) {
+  vec3 world_from_camera(vec3 point) const {
     real_t x=point.x, y=point.z, z=-point.y;
     camera_tilt.rotate(y,z); // tilt up, so camera is level
     Z_rotation.rotate(x,y); // rotate, to align with field
@@ -66,10 +73,65 @@ public:
   }
 };
 
+/* Transforms raw realsense 2D + depth pixels into 3D:
+  Camera X is along sensor's long axis, facing right from sensor point of view
+  Camera Y is facing down
+  Camera Z is positive into the frame
+*/
+class realsense_projector {
+public:
+  // Camera calibration
+  rs2_intrinsics intrinsics;
+  
+  // Cached per-pixel direction vectors: scale by the depth to get to 3D
+  std::vector<float> xdir;
+  std::vector<float> ydir;
+  
+  realsense_projector(const rs2::depth_frame &frame)
+    :xdir(frame.get_width()*frame.get_height()),
+     ydir(frame.get_width()*frame.get_height())
+  {
+    auto stream_profile = frame.get_profile();
+    auto video = stream_profile.as<rs2::video_stream_profile>();
+    intrinsics = video.get_intrinsics();
+    
+    // Precompute per-pixel direction vectors (with distortion)
+    for (int h = 0; h < intrinsics.height; ++h)
+    for (int w = 0; w < intrinsics.width; ++w)
+    {
+      const float pixel[] = { (float)w, (float)h };
+
+      float x = (pixel[0] - intrinsics.ppx) / intrinsics.fx;
+      float y = (pixel[1] - intrinsics.ppy) / intrinsics.fy;
+
+      if (intrinsics.model == RS2_DISTORTION_INVERSE_BROWN_CONRADY)
+      {
+          float r2 = x * x + y * y;
+          float f = 1 + intrinsics.coeffs[0] * r2 + intrinsics.coeffs[1] * r2*r2 + intrinsics.coeffs[4] * r2*r2*r2;
+          float ux = x * f + 2 * intrinsics.coeffs[2] * x*y + intrinsics.coeffs[3] * (r2 + 2 * x*x);
+          float uy = y * f + 2 * intrinsics.coeffs[3] * x*y + intrinsics.coeffs[2] * (r2 + 2 * y*y);
+          x = ux;
+          y = uy;
+      }
+
+      xdir[h*intrinsics.width + w] = x;
+      ydir[h*intrinsics.width + w] = y;
+    }
+  }
+  
+  // Project this depth at this pixel into 3D camera coordinates
+  vec3 lookup(float depth,int x,int y) 
+  {
+    int i=y*intrinsics.width + x;
+    return vec3(xdir[i]*depth, ydir[i]*depth, depth);
+  }
+};
+
+  
 /// Keeps track of location
 class obstacle_grid {
 public:
-  enum {GRIDSIZE=10}; // cm per grid cell
+  enum {GRIDSIZE=2}; // cm per grid cell
   enum {GRIDX=(50+807+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
   enum {GRIDY=(50+369+GRIDSIZE-1)/GRIDSIZE};
   enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
@@ -83,9 +145,6 @@ public:
 };
 
 
-
-
-  
 int main()  
 {  
     rs2::pipeline pipe;  
@@ -94,6 +153,7 @@ int main()
     bool bigmode=true;
 
     int fps=6;
+    fps=30; // USB 3.0 only
     int depth_w=1280, depth_h=720; // high res mode: definitely more detail visible
     int color_w=1280, color_h=720; 
     if (!bigmode) { // low res
@@ -113,30 +173,11 @@ int main()
     double depth2cm = scale * 100.0; 
     double depth2screen=255.0*scale/4.5;
     
-    /*
-    rs2_error* e = nullptr;
-    rs2_intrinsics intr;
-    rs2_get_video_stream_intrinsics(selection, &intr, &e);
-*/
-
-    
-    
-    Mat depth_sum(Size(depth_w,depth_h), CV_32S, cv::Scalar(0.0));  
-    Mat depth_ssq(Size(depth_w,depth_h), CV_64F, cv::Scalar(0.0));  
-    Mat depth_count(Size(depth_w,depth_h), CV_32S, cv::Scalar(0.0));  
-    Mat depth_max(Size(depth_w,depth_h), CV_8U, cv::Scalar(0.0));  
-    Mat depth_min(Size(depth_w,depth_h), CV_8U, cv::Scalar(255.0));  
     int framecount=0;
     int nextwrite=1;
 
-    bool has_depth_intrin=false;
-    rs2_intrinsics depth_intrinsics;
-    rs2_intrinsics color_intrinsics;
-
-    std::vector<float> depth_xdir(depth_w*depth_h);
-    std::vector<float> depth_ydir(depth_w*depth_h);
-    std::vector<grid_square> grid(obstacle_grid::GRIDTOTAL);
     camera_transform camera_TF;
+    std::vector<grid_square> grid(obstacle_grid::GRIDTOTAL);
     
     rs2::frameset frames;  
     while (true)  
@@ -155,72 +196,73 @@ int main()
           std::cerr<<"Realsense capture size mismatch!\n";
           exit(1);
         }
-        
-        if (!has_depth_intrin)
-        { // Extract camera intrinsic calibrations
-          has_depth_intrin=true;
-          
-          auto stream_profile = depth_frame.get_profile();
-          auto video = stream_profile.as<rs2::video_stream_profile>();
-          depth_intrinsics = video.get_intrinsics();
-          
-          stream_profile = color_frame.get_profile();
-          video = stream_profile.as<rs2::video_stream_profile>();
-          color_intrinsics = video.get_intrinsics();
-          
-          // Precompute per-pixel direction vectors (with distortion)
-          for (int h = 0; h < depth_intrinsics.height; ++h)
-          for (int w = 0; w < depth_intrinsics.width; ++w)
-          {
-            const float pixel[] = { (float)w, (float)h };
-
-            float x = (pixel[0] - depth_intrinsics.ppx) / depth_intrinsics.fx;
-            float y = (pixel[1] - depth_intrinsics.ppy) / depth_intrinsics.fy;
-
-            if (depth_intrinsics.model == RS2_DISTORTION_INVERSE_BROWN_CONRADY)
-            {
-                float r2 = x * x + y * y;
-                float f = 1 + depth_intrinsics.coeffs[0] * r2 + depth_intrinsics.coeffs[1] * r2*r2 + depth_intrinsics.coeffs[4] * r2*r2*r2;
-                float ux = x * f + 2 * depth_intrinsics.coeffs[2] * x*y + depth_intrinsics.coeffs[3] * (r2 + 2 * x*x);
-                float uy = y * f + 2 * depth_intrinsics.coeffs[3] * x*y + depth_intrinsics.coeffs[2] * (r2 + 2 * y*y);
-                x = ux;
-                y = uy;
-            }
-
-            depth_xdir[h*depth_intrinsics.width + w] = x;
-            depth_ydir[h*depth_intrinsics.width + w] = y;
-          }
-        }
   
         typedef unsigned short depth_t;
         depth_t *depth_data = (depth_t*)depth_frame.get_data();  
         void *color_data = (void*)color_frame.get_data();  
         
+        // Make OpenCV versions of raw pixels:
+        //Mat depth_raw(Size(depth_w, depth_h), CV_16U, depth_data, Mat::AUTO_STEP);  
+        //Mat color(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
+        
+        // Display raw data onscreen
+        //imshow("Depth", depth_raw);
+        //imshow("RGB", color);
+        
+        // Set up *static* 3D so we don't need to recompute xdir and ydir every frame.
+        static realsense_projector depth_to_3D(depth_frame);
+        
+        Mat debug_image(Size(depth_w, depth_h), CV_8UC3, cv::Scalar(0));
+        
         for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
         
-        for (int h = 0; h < depth_intrinsics.height; h++)
-        for (int w = 50; w < depth_intrinsics.width; w++)
+        const int realsense_left_start=50; // invalid data left of here
+        for (int y = 0; y < depth_h; y++)
+        for (int x = realsense_left_start; x < depth_w; x++)
         {
-          int i=h*depth_intrinsics.width + w;
-          float depth=depth_data[i]*depth2cm;
+          int i=y*depth_w + x;
+          float depth=depth_data[i]*depth2cm; // depth, in cm
+          
+          int depth_color=depth*(255.0/400.0);
+          cv::Vec3b debug_color;
+          if (depth_color<=255) debug_color=cv::Vec3b(depth_color,depth_color,0);
+          
           if (depth>0) {
-            vec3 cam(depth_xdir[i]*depth, depth_ydir[i]*depth, depth);
-            vec3 world=camera_TF.world_from_camera(cam);
-            if (world.z<120.0) {
-              // printf("  %.0f  %.0f   %.0f   \n",world.x,world.y,world.z);
-              unsigned int x=world.x*(1.0/obstacle_grid::GRIDSIZE);
+            vec3 cam = depth_to_3D.lookup(depth,x,y);
+            vec3 world = camera_TF.world_from_camera(cam);
+            
+            if (world.y>0.0 && world.y<200.0) { // green Y stripe
+              const cv::Vec3b green(0,255,0);
+              debug_color=green;
+            }
+            if (world.x>0.0 && world.x<20.0) { // red X stripe
+              const cv::Vec3b red(0,0,255);
+              debug_color=red;
+            }
+            
+            if (world.z<5.0 && world.z>-30.0) { // blue Z stripe
+              const cv::Vec3b blue(255,0,0);
+              debug_color=blue;
+            }
+            
+            if (world.z<150.0 && world.z>-50.0)
+            {
+              unsigned int x=world.x*(1.0/obstacle_grid::GRIDSIZE)+obstacle_grid::GRIDX/2;
               unsigned int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
               if (x<obstacle_grid::GRIDX && y<obstacle_grid::GRIDY)
               {
                 grid[y*obstacle_grid::GRIDX + x].addPoint(world.z);
-                // world_depth.at<unsigned char>(y,x)=50+world.z;
               }
             }
+            
           }
+          debug_image.at<cv::Vec3b>(y,x)=debug_color;
         }   
+        imshow("Depth image",debug_image);
         
-        enum {depthscale=10};
-        cv::Mat world_depth(cv::Size(obstacle_grid::GRIDX*depthscale,obstacle_grid::GRIDY*depthscale), CV_8U, cv::Scalar(0,0,0));
+        enum {depthscale=8};
+        cv::Mat world_depth(cv::Size(obstacle_grid::GRIDX*depthscale,obstacle_grid::GRIDY*depthscale), 
+          CV_8UC3, cv::Scalar(0,0,0));
         for (int h = 0; h < obstacle_grid::GRIDY; h++)
         for (int w = 0; w < obstacle_grid::GRIDX; w++)
         {
@@ -230,87 +272,17 @@ int main()
           {
             int x=w*depthscale+dx;
             int y=h*depthscale+dy;
-            if (g.getCount()>0)
-              world_depth.at<unsigned char>(y,x)=50+g.getMean();
+            if (g.getCount()>0) {
+              cv::Vec3b color(50+g.getMin(), 50+g.getMean(), 50+g.getMax());
+              
+              world_depth.at<cv::Vec3b>(y,x)=color;
+            }
           }
         }
-        imshow("Depth",world_depth);
+        imshow("2D World",world_depth);
         
-  
-        // Create OpenCV Matrices  
-        Mat depth_raw(Size(depth_w, depth_h), CV_16U, depth_data, Mat::AUTO_STEP);  
-        Mat color(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
-        Mat filtered_0(Size(depth_w, depth_h), CV_8U, cv::Scalar(0));
-	
-	      depth_raw.convertTo(filtered_0,CV_8U,depth2screen);
-	      cv::max(depth_max,filtered_0,depth_max);
-	      // cv::min(depth_min,filtered_0,depth_min);
-
-	      if (false && bigmode) {
-	        // Shrink images (for small screens)
-	        cv::resize(filtered_0,filtered_0, Size(), 0.5,0.5, CV_INTER_AREA);
-	        cv::resize(color,color, Size(), 0.5,0.5, CV_INTER_AREA);
-	      }
-  
-        // Display  
-        //imshow("Image", color);
-        imshow("Filtered 0", filtered_0);
-
-	      // add rolling per-pixel depth averages
-	      for (int r=0;r<depth_raw.rows;r++)
-	      for (int c=0;c<depth_raw.cols;c++) {
-		      uint16_t d=depth_raw.at<uint16_t>(r,c);
-		      if (d>0) {
-			      depth_sum.at<int32_t>(r,c)+=d;
-			      depth_ssq.at<double>(r,c)+=d*d;
-			      uint8_t &dm=depth_min.at<uint8_t>(r,c);
-			      dm=std::min(dm,(uint8_t)(d*depth2screen));
-			      depth_count.at<int32_t>(r,c)++;
-		      }
-	      }
         
         int k = waitKey(10);  
-	      if (k=='m') { /* 'm' key dumps so-far min and max as images */
-		      imwrite("depth_min.png",depth_min);
-		      imwrite("depth_max.png",depth_max);
-	              Mat filtered_1(Size(depth_w, depth_h), CV_8U, cv::Scalar(0));  
-
-	        for (int r=0;r<depth_raw.rows;r++)
-	        for (int c=0;c<depth_raw.cols;c++) {
-		        double sum=depth_sum.at<int32_t>(r,c);
-		        double ssq=depth_ssq.at<double>(r,c);
-		        int count=depth_count.at<int32_t>(r,c);
-		        filtered_0.at<uint8_t>(r,c)= depth2screen * 
-			        sum / count;
-		        double st=sqrt((ssq-sum*sum/count) / (count-1));
-		        double stmax=250; // mm maximum visible std deviation
-		        if (st>stmax) st=stmax;
-		        filtered_1.at<uint8_t>(r,c)= 255.0 * st / stmax;
-		        if (r==100 && c==100) printf("sum %f, ssq %f, count %f, st %f\n",
-			        sum,ssq,(double)count,st);
-	        }
-		      imwrite("depth_stdev.png",filtered_1);
-		      imwrite("depth_mean.png",filtered_0);
-	      }
-        if (k== 'w' || (framecount>=nextwrite)) {
-          char name[1024];
-
-          sprintf(name,"depth_%04d.png",framecount);
-          imwrite(name,filtered_0);
-
-          for (int r=0;r<depth_raw.rows;r++)
-          for (int c=0;c<depth_raw.cols;c++) {
-	          filtered_0.at<uint8_t>(r,c)= depth2screen * 
-		          depth_sum.at<int32_t>(r,c) / 
-		          depth_count.at<int32_t>(r,c);
-          }
-
-          sprintf(name,"sum_%04d.png",framecount);
-          imwrite(name,filtered_0);
-          nextwrite=nextwrite*2;
-          printf("Wrote frame images to '%s'\n",name);
-          // if (nextwrite>=1024) break;
-        }
         if (k == 27 || k=='q')  
             break;  
     }  
