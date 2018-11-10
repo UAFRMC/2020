@@ -32,7 +32,7 @@ void grid_square::addPoint(float z)
 float grid_square::getMean()
 {
 	float total=count;
-	return sum/count;
+	return sum/total;
 }
 float grid_square::getVariance()
 {
