@@ -7,9 +7,10 @@
 struct x_y_coord
 {
 x_y_coord() {x=y=0}
-int x;
-int y;
-};;
+x_y_coord(int x, int y) {_x=x; _y=y;}
+int _x;
+int _y;
+};
 
 void terrainMap(vector<grid_square> & terrain)
 {
@@ -54,7 +55,10 @@ void terrainMap(vector<grid_square> & terrain)
 
 
 	//Next, now that we have an idea of groupings of where shadows
-	//are, the goal is to look above and below the 
+	//are, the goal is to look below and to the sides of the groupings
+	//to find if the height of the areas differ. If the areas below 
+	//have a higher height, the obstacle is a rock. If the height is 
+	//the same, or close to the same, it is a hole. 
 }
 
 
