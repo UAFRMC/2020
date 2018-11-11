@@ -4,6 +4,13 @@
 
 
 
+struct x_y_coord
+{
+x_y_coord() {x=y=0}
+int x;
+int y;
+};;
+
 void terrainMap(vector<grid_square> & terrain)
 {
 
@@ -14,8 +21,9 @@ void terrainMap(vector<grid_square> & terrain)
 	//The basic idea of our terrain tracking system is that 
 	//the obstacles we care about, rocks and craters, will each
 	//have shadows in the measurements. First, our goal is to
-	//mark all of them as flags. 
-	int minForShadow;
+	//mark these grid_squares. 
+
+	int minForShadow=0; //To potentially be changed upon experimentation
 	for(int i=0; i<terrain.size(); ++i)
 	{
 		if (terrain[i].getCount()<=minForShadow)
@@ -32,6 +40,21 @@ void terrainMap(vector<grid_square> & terrain)
 	//First, groupings of grid_squares with the shadow flags 
 	//set to true are generated. Next, a number of height 
 	//observations will be taken 
+
+	for(int i=0; i<terrain.size(); ++i)
+	{
+		//try horizontal
+		//square to right is flagged and unincluded
+		//try vertical
+		//square below is flagged and unincluded
+	}
+
+
+
+
+
+	//Next, now that we have an idea of groupings of where shadows
+	//are, the goal is to look above and below the 
 }
 
 
