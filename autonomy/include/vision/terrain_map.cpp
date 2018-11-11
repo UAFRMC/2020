@@ -28,7 +28,10 @@ void terrainMap(vector<grid_square> & terrain)
 
 	//Next, our goal is to determine if the shadow is being cast 
 	//by a rock or a crater. Grid_squares have a mean height
-	//characteristic that 
+	//characteristic that will be used to make the determination.
+	//First, groupings of grid_squares with the shadow flags 
+	//set to true are generated. Next, a number of height 
+	//observations will be taken 
 }
 
 
