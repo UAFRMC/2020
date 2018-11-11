@@ -13,7 +13,7 @@ void grid_square::clear()
 	min=1000;
 	sum=0;
 	sumSquares=0;
-	atOrNearShadow=false;
+	atShadow=false;
 	isHole=false;
 	impassable=false;
 }

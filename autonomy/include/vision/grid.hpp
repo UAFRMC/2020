@@ -25,7 +25,7 @@ public:
   float getVariance();
   float getMax();
   float getMin();
-  bool atOrNearShadow;
+  bool atShadow;
   bool isHole;
   bool impassable;
 };
