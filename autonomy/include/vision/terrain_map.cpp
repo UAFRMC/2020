@@ -42,12 +42,11 @@ void terrainMap(vector<grid_square> & terrain)
 	//set to true are generated. Next, a number of height 
 	//observations will be taken 
 
+	std::vector<vector<x_y_coord>> obstacles;
 	for(int i=0; i<terrain.size(); ++i)
 	{
-		//try horizontal
-		//square to right is flagged and unincluded
-		//try vertical
-		//square below is flagged and unincluded
+		//find first shadow, pushback obstacles, find groupings
+		//repeat, somehow avoid repating shadows
 	}
 
 
@@ -59,8 +58,41 @@ void terrainMap(vector<grid_square> & terrain)
 	//to find if the height of the areas differ. If the areas below 
 	//have a higher height, the obstacle is a rock. If the height is 
 	//the same, or close to the same, it is a hole. 
+
+	for(int i=0; i<obstacles.size(); ++i)
+	{
+
+	}
 }
 
 
+
+
+void findGroupings(x_y_coord start, vector<grid_square> & terrain, vector<x_y_coord> & grouping)
+{
+	if //grid_square to right has shadow marked
+       //if yes and not already in vector add to vector, call function on
+	   //this point
+
+	if //grid_square below has shadow marked
+	   //if not alreay in vector add this to vector, call function on 
+	   //point below
+}
+
+
+
+
+
+bool isInVector(vector<x_y_coord> & toCheckAgainst, x_y_coord toCheck)
+{
+	for(int i=0; i<toCheckAgainst.size(); ++i)
+	{
+		if(toCheckAgainst[i]==toCheck)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 
