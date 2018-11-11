@@ -27,6 +27,7 @@ public:
   float getMin();
   bool atOrNearShadow;
   bool isHole;
+  bool impassable;
 };
 
 int compare(grid_square a, grid_square b);

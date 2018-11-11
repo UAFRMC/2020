@@ -15,6 +15,7 @@ void grid_square::clear()
 	sumSquares=0;
 	atOrNearShadow=false;
 	isHole=false;
+	impassable=false;
 }
 
 void grid_square::addPoint(float z)
