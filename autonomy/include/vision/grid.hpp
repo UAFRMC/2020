@@ -16,6 +16,7 @@ private:
   float sum;
   float sumSquares;
   int count;
+  bool atOrNearShadow;
 public:
   grid_square();
   void clear();

@@ -13,6 +13,7 @@ void grid_square::clear()
 	min=1000;
 	sum=0;
 	sumSquares=0;
+	atOrNearShadow=0;
 }
 
 void grid_square::addPoint(float z)
