@@ -28,6 +28,7 @@ public:
   bool atShadow;
   bool isHole;
   bool impassable;
+  bool beenChecked;
 };
 
 int compare(grid_square a, grid_square b);

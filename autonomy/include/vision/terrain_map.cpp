@@ -42,11 +42,16 @@ void terrainMap(vector<grid_square> & terrain)
 	//set to true are generated. Next, a number of height 
 	//observations will be taken 
 
+	//"region growing"
 	std::vector<vector<x_y_coord>> obstacles;
 	for(int i=0; i<terrain.size(); ++i)
 	{
-		//find first shadow, pushback obstacles, find groupings
-		//repeat, somehow avoid repating shadows
+		if(!terrain[i].beenChecked&&terrain[i].isShadow)
+		{	
+			beenChecked=true;
+			obstacles.push_back();
+			findGroupings(x_y_coord(i/429, i%429), & terrain, obstacles[obstacles.size()-1]);
+		}
 	}
 
 
@@ -67,17 +72,30 @@ void terrainMap(vector<grid_square> & terrain)
 
 
 
+//Recursive backtracking function to find groupings
+//Given a starting x, y coordinate this function finds 
+//adjacent shadowed cells to create a grouping.
 
 void findGroupings(x_y_coord start, vector<grid_square> & terrain, vector<x_y_coord> & grouping)
 {
-	if //grid_square to right has shadow marked
-       //if yes and not already in vector add to vector, call function on
-	   //this point
+	terrain[getPos(start.x, start.y)].beenChecked=true;
+	if (terrain[getPos(start.x+1, start.y)].isShadow)
+	{
+		if(!isInVector(grouping x_y_coord(start.x+1, start.y)))
+		{
+			grouping.push_back(x_y_coord(start.x+1, start.y));
+			findGroupings(x_y_coord(start.x+1, start.y), & terrain, & grouping);
+		}
+	}
 
-	if //grid_square below has shadow marked
-	   //if not alreay in vector add this to vector, call function on 
-	   //point below
-}
+	if (terrain[getPos(start.x, start.y+1)].isShadow)
+	{
+		if(!isInVector(grouping x_y_coord(start.x+1, start.y)))
+		{	
+			grouping.push_back(x_y_coord(start.x, start.y+1));
+			findGroupings(x_y_coord(start.x, start.y+1), & terrain, & grouping);
+		}
+	}
 
 
 
@@ -94,5 +112,15 @@ bool isInVector(vector<x_y_coord> & toCheckAgainst, x_y_coord toCheck)
 	}
 	return false;
 }
+
+
+
+
+int getPos(int x, int y)
+{
+	return x+y*429;
+}
+
+
 
 
