@@ -16,7 +16,6 @@ private:
   float sum;
   float sumSquares;
   int count;
-  bool atOrNearShadow;
 public:
   grid_square();
   void clear();
@@ -26,6 +25,7 @@ public:
   float getVariance();
   float getMax();
   float getMin();
+  bool atOrNearShadow;
 };
 
 int compare(grid_square a, grid_square b);
