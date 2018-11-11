@@ -26,6 +26,7 @@ public:
   float getMax();
   float getMin();
   bool atOrNearShadow;
+  bool isHole;
 };
 
 int compare(grid_square a, grid_square b);
