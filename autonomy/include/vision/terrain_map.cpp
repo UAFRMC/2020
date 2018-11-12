@@ -66,7 +66,13 @@ void terrainMap(vector<grid_square> & terrain)
 
 	for(int i=0; i<obstacles.size(); ++i)
 	{
-		
+		for(int i=0; i<obstacles.size(); ++i)
+		{
+			for(int j=0; j<obstacles[i].size; ++j)
+			{
+				terrain[obstacles[i][j]].impassable=true;
+			}
+		}
 	}
 }
 
