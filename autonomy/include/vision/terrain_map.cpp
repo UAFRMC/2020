@@ -2,17 +2,25 @@
 //Written by Bradley Morton, Jim Samson, George Meier, and Ian Ferguson
 //Started 11/10/18 (public domain)
 
+#include <vector>
+#include "grid.cpp"
+#include "terrain_map.hpp"
 
-
-struct x_y_coord
+x_y_coord::x_y_coord()
 {
-x_y_coord() {x=y=0}
-x_y_coord(int x, int y) {_x=x; _y=y;}
-int _x;
-int _y;
-};
+	_x=_y=0;
+}
+x_y_coord::x_y_coord(int x, int y)
+{
+	_x=x;
+	_y=y;
+}
 
-void terrainMap(vector<grid_square> & terrain)
+
+
+
+
+void terrainMap(std::vector<grid_square> & terrain)
 {
 
 	//This part of the code marks parts of the terrain that
@@ -29,7 +37,7 @@ void terrainMap(vector<grid_square> & terrain)
 	{
 		if (terrain[i].getCount()<=minForShadow)
 		{
-			terrain[i].inShadow=true;
+			terrain[i].atShadow=true;
 		}
 	}
 
@@ -43,15 +51,15 @@ void terrainMap(vector<grid_square> & terrain)
 	//observations will be taken 
 
 	//"region growing"
-	std::vector<vector<x_y_coord>> obstacles;
+	std::vector<std::vector<x_y_coord>> obstacles;
 	for(int i=0; i<terrain.size(); ++i)
 	{
-		if(!terrain[i].beenChecked&&terrain[i].isShadow)
+		if(!terrain[i].beenChecked&&terrain[i].atShadow)
 		{	
-			obstacles.push_back();
-			findGroupings(x_y_coord(i/429, i%429), & terrain, obstacles[obstacles.size()-1]);
+			obstacles.push_back(std::vector<x_y_coord>());
+			findGroupings(x_y_coord(i/429, i%429), terrain,  obstacles[obstacles.size()-1]);
 		}
-		beenChecked=true;
+		terrain[i].beenChecked=true;
 	}
 
 
@@ -64,16 +72,34 @@ void terrainMap(vector<grid_square> & terrain)
 	//have a higher height, the obstacle is a rock. If the height is 
 	//the same, or close to the same, it is a hole. 
 
-	for(int i=0; i<obstacles.size(); ++i)
-	{
-		for(int i=0; i<obstacles.size(); ++i)
-		{
-			for(int j=0; j<obstacles[i].size; ++j)
-			{
-				terrain[obstacles[i][j]].impassable=true;
-			}
-		}
-	}
+	
+
+
+
+
+
+
+
+
+
+
+
+
+	// for(int i=0; i<obstacles.size(); ++i)
+	// {
+	// 	for(int i=0; i<obstacles.size(); ++i)
+	// 	{
+	// 		for(int j=0; j<obstacles[i].size; ++j)
+	// 		{
+	// 			terrain[obstacles[i][j]].impassable=true;
+	// 		}
+	// 	}
+	// }
+
+
+
+
+
 }
 
 
@@ -82,56 +108,57 @@ void terrainMap(vector<grid_square> & terrain)
 //Given a starting x, y coordinate this function finds 
 //adjacent shadowed cells to create a grouping.
 
-void findGroupings(x_y_coord start, vector<grid_square> & terrain, vector<x_y_coord> & grouping)
+void findGroupings(x_y_coord start, std::vector<grid_square> & terrain, std::vector<x_y_coord> & grouping)
 {
-	if(terrain[getPos(start.x, start.y)].beenChecked)
+	if(terrain[getPos(start._x, start._y)].beenChecked)
 	{
 		return;
 	}
-	terrain[getPos(start.x, start.y)].beenChecked=true;
-	if (terrain[getPos(start.x+1, start.y)].isShadow)
+	terrain[getPos(start._x, start._y)].beenChecked=true;
+	if (terrain[getPos(start._x+1, start._y)].atShadow)
 	{
-		if(!isInVector(grouping, x_y_coord(start.x+1, start.y)))
+		if(!isInVector(grouping, x_y_coord(start._x+1, start._y)))
 		{
-			grouping.push_back(x_y_coord(start.x+1, start.y));
-			findGroupings(x_y_coord(start.x+1, start.y), terrain, grouping);
+			grouping.push_back(x_y_coord(start._x+1, start._y));
+			findGroupings(x_y_coord(start._x+1, start._y), terrain, grouping);
 		}
 	}
 
-	if (terrain[getPos(start.x, start.y-1)].isShadow)
+	if (terrain[getPos(start._x, start._y-1)].atShadow)
 	{
-		if(!isInVector(grouping, x_y_coord(start.x, start.y-1)))
+		if(!isInVector(grouping, x_y_coord(start._x, start._y-1)))
 		{	
-			grouping.push_back(x_y_coord(start.x, start.y-1));
-			findGroupings(x_y_coord(start.x, start.y-1), terrain, grouping);
+			grouping.push_back(x_y_coord(start._x, start._y-1));
+			findGroupings(x_y_coord(start._x, start._y-1), terrain, grouping);
 		}
 	}
 
-	if (terrain[getPos(start.x-1, start.y)].isShadow)
+	if (terrain[getPos(start._x-1, start._y)].atShadow)
 	{
-		if(!isInVector(grouping, x_y_coord(start.x-1, start.y)))
+		if(!isInVector(grouping, x_y_coord(start._x-1, start._y)))
 		{
-			grouping.push_back(x_y_coord(start.x-1, start.y));
-			findGroupings(x_y_coord(start.x-1, start.y), terrain, grouping);
+			grouping.push_back(x_y_coord(start._x-1, start._y));
+			findGroupings(x_y_coord(start._x-1, start._y), terrain, grouping);
 		}
 	}
 
-	if (terrain[getPos(start.x, start.y+1)].isShadow)
+	if (terrain[getPos(start._x, start._y+1)].atShadow)
 	{
-		if(!isInVector(grouping, x_y_coord(start.x, start.y+1)))
+		if(!isInVector(grouping, x_y_coord(start._x, start._y+1)))
 		{	
-			grouping.push_back(x_y_coord(start.x, start.y+1));
-			findGroupings(x_y_coord(start.x, start.y+1), terrain, grouping);
+			grouping.push_back(x_y_coord(start._x, start._y+1));
+			findGroupings(x_y_coord(start._x, start._y+1), terrain, grouping);
 		}
 	}
+}
 
 
 
-bool isInVector(vector<x_y_coord> & toCheckAgainst, x_y_coord toCheck)
+bool isInVector(std::vector<x_y_coord> & toCheckAgainst, x_y_coord toCheck)
 {
 	for(int i=0; i<toCheckAgainst.size(); ++i)
 	{
-		if(toCheckAgainst[i]==toCheck)
+		if(toCheckAgainst[i]._x==toCheck._x&&toCheckAgainst[i]._y==toCheck._y)
 		{
 			return true;
 		}
