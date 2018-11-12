@@ -48,10 +48,10 @@ void terrainMap(vector<grid_square> & terrain)
 	{
 		if(!terrain[i].beenChecked&&terrain[i].isShadow)
 		{	
-			beenChecked=true;
 			obstacles.push_back();
 			findGroupings(x_y_coord(i/429, i%429), & terrain, obstacles[obstacles.size()-1]);
 		}
+		beenChecked=true;
 	}
 
 
@@ -66,7 +66,7 @@ void terrainMap(vector<grid_square> & terrain)
 
 	for(int i=0; i<obstacles.size(); ++i)
 	{
-
+		
 	}
 }
 
@@ -78,26 +78,46 @@ void terrainMap(vector<grid_square> & terrain)
 
 void findGroupings(x_y_coord start, vector<grid_square> & terrain, vector<x_y_coord> & grouping)
 {
+	if(terrain[getPos(start.x, start.y)].beenChecked)
+	{
+		return;
+	}
 	terrain[getPos(start.x, start.y)].beenChecked=true;
 	if (terrain[getPos(start.x+1, start.y)].isShadow)
 	{
-		if(!isInVector(grouping x_y_coord(start.x+1, start.y)))
+		if(!isInVector(grouping, x_y_coord(start.x+1, start.y)))
 		{
 			grouping.push_back(x_y_coord(start.x+1, start.y));
-			findGroupings(x_y_coord(start.x+1, start.y), & terrain, & grouping);
+			findGroupings(x_y_coord(start.x+1, start.y), terrain, grouping);
+		}
+	}
+
+	if (terrain[getPos(start.x, start.y-1)].isShadow)
+	{
+		if(!isInVector(grouping, x_y_coord(start.x, start.y-1)))
+		{	
+			grouping.push_back(x_y_coord(start.x, start.y-1));
+			findGroupings(x_y_coord(start.x, start.y-1), terrain, grouping);
+		}
+	}
+
+	if (terrain[getPos(start.x-1, start.y)].isShadow)
+	{
+		if(!isInVector(grouping, x_y_coord(start.x-1, start.y)))
+		{
+			grouping.push_back(x_y_coord(start.x-1, start.y));
+			findGroupings(x_y_coord(start.x-1, start.y), terrain, grouping);
 		}
 	}
 
 	if (terrain[getPos(start.x, start.y+1)].isShadow)
 	{
-		if(!isInVector(grouping x_y_coord(start.x+1, start.y)))
+		if(!isInVector(grouping, x_y_coord(start.x, start.y+1)))
 		{	
 			grouping.push_back(x_y_coord(start.x, start.y+1));
-			findGroupings(x_y_coord(start.x, start.y+1), & terrain, & grouping);
+			findGroupings(x_y_coord(start.x, start.y+1), terrain, grouping);
 		}
 	}
-
-
 
 
 
