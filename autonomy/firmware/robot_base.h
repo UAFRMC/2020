@@ -123,12 +123,14 @@ enum {
 
   field_x_bay=269, // X-width of one "bay", in cm
 	field_x_size=3*field_x_bay, // Displayed X-width of field, in centimeters
-	field_x_max=(int)(field_x_size/2-30), // maximum X coordinate
+	field_x_end_mine=(int)(field_x_bay*0.4), // distance in from end of field to consider mining
+	field_x_max=(int)(field_x_size/2-field_x_end_mine), // maximum X coordinate
 	field_x_hsize=(int)(1.5*field_x_bay), // Centerline for bin
 	field_x_GUI=field_x_hsize+10, // start X for GUI display
 
-	field_x_bin=156, // X-width of collection trough, in centimeters
-	field_x_hbin=field_x_bin/2, // half of field_x_bin
+	field_y_trough=55, // Y-width of collection trough, in centimeters
+	field_x_trough=156, // X-width of collection trough, in centimeters
+	field_x_htrough=field_x_trough/2, // distance from origin of corners of trough
 	
 	field_x_mine=(int)(0.6*field_x_bay) // minimum absolute magnitude for X when mining
 };
@@ -173,9 +175,6 @@ typedef enum {
 	state_autonomy, ///< full autonomy start state
 	state_raise, ///< raise conveyor before driving
 	state_find_camera, ///< turn until camera is visible
-	state_align_turnout, ///< autonomous: pivot to face start position
-	state_align_drive, ///< autonomous: initial drive to start position
-	state_align_turnin, ///< autonomous: turn to face lunabin
 
 	state_drive_to_mine, ///< autonomous: drive to mining area
 
@@ -186,6 +185,7 @@ typedef enum {
 	state_mine_raise, ///< existing mining mode: raise bucket
 
 	state_drive_to_dump, ///< drive back to bin
+	state_dump_align, ///< get lined up
 
 	/* Semiauto dump mode entry point: */
 	state_dump_contact, ///< final dock-and-dump mode: drive to contact bin

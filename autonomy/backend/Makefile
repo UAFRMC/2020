@@ -18,7 +18,8 @@ else
 	endif
 endif
 
-CFLAGS=-O -Wall -Wno-deprecated-declarations -Wno-char-subscripts
+OPTS=-O
+CFLAGS=$(OPTS) -Wall -Wno-deprecated-declarations -Wno-char-subscripts
 
 all: backend
 

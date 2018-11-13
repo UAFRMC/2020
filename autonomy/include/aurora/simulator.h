@@ -89,7 +89,7 @@ public:
 		side[1]=world_from_robot(vec2(+wheelbase,wheelforward));
 
 		float sidepower[2];
-		float topspeed=80.0; // <- speed in cm/sec at 100% power (hypothetical!)
+		float topspeed=130.0; // <- speed in cm/sec at 100% power (hypothetical!)
 		sidepower[0]=power.left-64.0;
 		sidepower[1]=power.right-64.0;
 
@@ -108,7 +108,7 @@ public:
 		loc.angle=atan2(-right.y,right.x)*180.0/M_PI;
 	
 	// Update bag roll counter
-	  float Rcount_per_sec=300.0; // roll motor counts/sec at full speed
+	  float Rcount_per_sec=72*220.0/60.0; // roll motor counts/sec at full speed
   	Rcount+=dt*Rcount_per_sec*(power.roll-64.0)/64.0;
   	
 	// Update mining head counter

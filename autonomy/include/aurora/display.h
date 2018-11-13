@@ -91,7 +91,7 @@ inline vec2 rotate(const vec2 &src,float ang_deg) {
 }
 
 inline float state_to_Y(int state) {
-	return 500+field_y_size*(state_last-state)*(1.0/state_last);
+	return 300+field_y_size*(state_last-state)*(1.0/state_last);
 }
 
 /* Called at start of user's OpenGL display function */
@@ -123,9 +123,9 @@ void robot_display_setup(const robot_base &robot) {
 	glClear(GL_COLOR_BUFFER_BIT+GL_DEPTH_BUFFER_BIT);
 
 	// Scale to showing the whole field, in centimeter units
-	float xShift=-0.5, yShift=-0.85; // GL-coordinates start of field
+	float xShift=-0.3, yShift=-0.85; // GL-coordinates center of field
 	glTranslatef(xShift,yShift,0.0);
-	float xScale=2.0*0.4/field_x_size;
+	float xScale=2.0*0.6/field_x_size;
 	float yScale=xScale*wid/ht;
 	glScalef(xScale, yScale, 0.1);
 	robotPrintf_y=(1.0-yShift)/yScale+robotPrintf_line;
@@ -161,10 +161,10 @@ void robot_display_setup(const robot_base &robot) {
 	glVertex2i(+0.5*field_x_bay,0);
 	glVertex2i(+0.5*field_x_bay,field_y_size);
 
-// Draw the lunabin
+// Draw the scoring trough
 	glColor4f(0.3,1.0,1.0,1.0);
-	glVertex2i(-field_x_hbin,-10);
-	glVertex2i(+field_x_hbin,-10);
+	glVertex2i(-field_x_htrough,field_y_trough);
+	glVertex2i(+field_x_htrough,field_y_trough);
 	glEnd();
 
 // Outline the field
@@ -247,7 +247,7 @@ void robot_display_setup(const robot_base &robot) {
 
 // Draw the current autonomy state
 	robotPrintf_enable=false;
-	double state_display_x=30; // 3*field_x_hsize;
+	double state_display_x=-field_x_hsize; // 3*field_x_hsize;
 	for (robot_state_t state=state_STOP;state<state_last;state=(robot_state_t)(state+1))
 	{
 		glColor4f(0.0,0.0,0.0,1.0); // black inactive

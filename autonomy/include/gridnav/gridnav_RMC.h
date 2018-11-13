@@ -15,11 +15,11 @@
 class rmc_navigator : public gridnav::robot_geometry {
 public:
   // RMC-plausible navigation grid dimensions:
-  enum {GRIDSIZE=16}; // cm per grid cell
-  enum {GRIDX=(807+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
-  enum {GRIDY=(369+GRIDSIZE-1)/GRIDSIZE};
-  enum {GRIDA=36}; // angular slices around 360 degrees
-  enum {ROBOTSIZE=(150+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDSIZE=8}; // cm per grid cell
+  enum {GRIDX=(3*270+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
+  enum {GRIDY=(370+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDA=72}; // angular slices around 360 degrees
+  enum {ROBOTSIZE=(100+GRIDSIZE-1)/GRIDSIZE}; // maximum size measured from middle
 
   // Create the navigator and planner
   typedef gridnav::gridnavigator<GRIDX, GRIDY, GRIDA, GRIDSIZE, ROBOTSIZE> navigator_t;
@@ -52,10 +52,10 @@ public:
   virtual int clearance_height(float x,float y) const 
   {
   // front-back:
-    if (x>40.0 || x<-35.0) return gridnav::OPEN;
+    if (x>35.0 || x<-35.0) return gridnav::OPEN;
     if (y<0) y=-y; // apply Y symmetry
     if (y>75.0) return gridnav::OPEN; // beyond the tracks
-    if (y>45.0) return 0; // tracks
+    if (y>40.0) return 0; // tracks
     return 20; // open area under mining head
   }
 };

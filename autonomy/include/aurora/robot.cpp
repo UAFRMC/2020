@@ -10,9 +10,6 @@ const char *state_to_string(robot_state_t state)
 	"autonomy",
 	"raise",
 	"find_camera",
-	"align_turnout",
-	"align_drive", ///< drive to start area
-	"align_turnin",
 
 	"drive_to_mine", ///< autonomous: drive to mining area
 
@@ -23,6 +20,7 @@ const char *state_to_string(robot_state_t state)
 	"mine_raise", ///< existing mining mode: raise bucket
 
 	"drive_to_dump", ///< drive back to bin
+	"dump_align", ///< get lined up
 
 	/* Semiauto dump mode entry points: */
 	"dump_contact", ///< final dock-and-dump mode: drive to contact bin
