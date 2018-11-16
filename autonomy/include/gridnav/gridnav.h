@@ -269,8 +269,9 @@ public:
       for (gridposition g : robotslice) {
         if (g.a<height) { // robot would hit this obstacle
           gridposition hit(x-g.x, y-g.y, ia);
-          if (hit.valid())
-            navslice.obstacle.at(hit.x,hit.y)=height;
+          int &store=navslice.obstacle.at(hit.x,hit.y);
+          if (hit.valid() && store<height)
+            store=height;
         }
       }
     }
@@ -314,27 +315,19 @@ public:
   class searchposition {
   public:
     double cost; // cost to get here
+    double estimate; // estimate to reach target
     drive_t drive;
     fposition pos; // position of the robot at this point
-    const fposition &target; // target of search (for A* cost)
     const searchposition *last; // preceding search position, or NULL if none.
     
-    searchposition(double cost_,const drive_t &drive_,const fposition &pos_,const fposition &target_,const searchposition *last_)
-      :cost(cost_), drive(drive_), pos(pos_), target(target_), last(last_)
+    searchposition(double cost_,double estimate_, const drive_t &drive_,const fposition &pos_,const searchposition *last_)
+      :cost(cost_), estimate(estimate_), drive(drive_), pos(pos_), last(last_)
     {}
     
-    float angle_dist(float delta) const {
-       delta=fmodplus(delta,GRIDA);
-       if (delta>GRIDA/2) delta=GRIDA-delta; // turn the other way
-       return delta;
-    }
-    
-    // Return the approximate cost to reach the target
+    // Return the approximate cost to reach the target: 
+    //  the cost to get here, plus estimate to reach target
     double total_cost(void) const {
-      double drive_dist=length(pos.v-target.v); // in grid cells
-      double turn_ang=angle_dist(pos.a-target.a); // in discrete angle units
-      enum {TURN_AMPLIFY=1};
-      return cost + drive_dist + TURN_AMPLIFY*turn_ang*TURN_COST_TO_GRID_COST;
+      return cost + estimate;
     }
     
     // Sort so we always grab the best search position first
@@ -352,6 +345,12 @@ public:
     
     // If true, print debug info to the console
     bool verbose;
+    
+    float angle_dist(float delta) const {
+       delta=fmodplus(delta,GRIDA);
+       if (delta>GRIDA/2) delta=GRIDA-delta; // turn the other way
+       return delta;
+    }
     
     
     // This is the active list of searched positions, sorted by distance to target.
@@ -380,7 +379,12 @@ public:
           // Check for obstacles in the way:
           const unsigned char &obs=s.obstacle.at(g.x,g.y);
           if (obs==0) {
-            pool.emplace_back(cost,drive,pos,target,last);
+            // Use heuristic to estimate cost to target
+            double drive_dist=length(pos.v-target.v); // in grid cells
+            double turn_ang=angle_dist(pos.a-target.a); // in discrete angle units
+            enum {TURN_AMPLIFY=1};
+            double estimate = drive_dist + TURN_AMPLIFY*turn_ang*TURN_COST_TO_GRID_COST;
+            pool.emplace_back(cost,estimate, drive,pos,last);
             search.push(pool.back());
           }
         }
@@ -415,19 +419,20 @@ public:
         
         // Find the grid location for this cell
         gridposition gcur(cur.pos);
-        if (!gcur.valid()) {
-          if (verbose) std::cout<<"out of bounds, skip it\n";
-          continue; // out of bounds, don't bother
+        if (verbose && gcur.valid()) {
+          nav.lastpath.at(gcur.x,gcur.y)='.'; // checked
         }
-        nav.lastpath.at(gcur.x,gcur.y)='.'; // checked
         if (gcur==gridposition(target)) 
         { // we're done!  Follow the chain of "last" pointers back to the origin.
           if (verbose) std::cout<<"Target reached!  Reverse path:\n";
           for (const searchposition *p=&cur;p!=NULL;p=p->last) {
-            path.push_front(*p);
-            if (verbose) std::cout<<p->pos<<"\n";
-            gridposition gpath(p->pos);
-            if (gpath.valid()) nav.lastpath.at(gpath.x,gpath.y)='#'; // on path
+            if (p->last!=NULL)
+              path.push_front(*p);
+            if (verbose) {
+              std::cout<<p->pos<<"\n";
+              gridposition gpath(p->pos);
+              if (gpath.valid()) nav.lastpath.at(gpath.x,gpath.y)='#'; // on path
+            }
           }
           
           // Clean out the pool for next time

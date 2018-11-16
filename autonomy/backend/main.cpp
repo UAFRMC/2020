@@ -190,12 +190,14 @@ public:
     int x=120;
     
     //Hard wall
-    // for (int y=0;y<200;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,30);
+    if (true)
+     for (int y=0;y<220;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,30);
     
     // Series of straddle obstacles in middle
-    for (int y=0;y<=20;y+=navigator_res) {
-      for (int dy=0;dy<=field_y_size;dy+=150)
-        navigator.mark_obstacle(x+navigator_xshift,y+dy+navigator_yshift,15);
+    if (false) {
+      for (int y=0;y<=20;y+=navigator_res) 
+        for (int dy=0;dy<=field_y_size;dy+=150)
+          navigator.mark_obstacle(x+navigator_xshift,y+dy+navigator_yshift,15);
     }
     
     
