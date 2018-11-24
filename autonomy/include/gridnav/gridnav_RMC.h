@@ -38,11 +38,9 @@ public:
     navigator.mark_edges(robot);
   }
   
-  // Add an obstacle at this (x,y), in centimeters
+  // Add an obstacle at this (x,y), in centimeters (rounds to navigation grid cell)
   void mark_obstacle(int x,int y,int height) {
-    for (int dy=-GRIDSIZE;dy<=0;dy++)
-    for (int dx=-GRIDSIZE;dx<=0;dx++)
-      navigator.mark_obstacle((dx+x)/GRIDSIZE,(dy+y)/GRIDSIZE,height,robot);
+     navigator.mark_obstacle((x+GRIDSIZE/2)/GRIDSIZE,(y+GRIDSIZE/2)/GRIDSIZE,height,robot);
   }
 
 
@@ -51,12 +49,17 @@ public:
     //    +x is the direction the robot naturally drives forward
   virtual int clearance_height(float x,float y) const 
   {
+  // Special dot under mining head
+    float dx=x-50, dy=y-0;
+    float r=sqrt(dx*dx+dy*dy);
+    if (r<15) return 15; // clearance under mining head
+  
   // front-back:
-    if (x>35.0 || x<-35.0) return gridnav::OPEN;
+    if (x>32.0 || x<-32.0) return gridnav::OPEN;
     if (y<0) y=-y; // apply Y symmetry
-    if (y>75.0) return gridnav::OPEN; // beyond the tracks
-    if (y>40.0) return 0; // tracks
-    return 20; // open area under mining head
+    if (y>70.0) return gridnav::OPEN; // beyond the tracks
+    if (y>50.0) return 0; // tracks
+    return 20; // clearance area under main body (box, etc)
   }
 };
 

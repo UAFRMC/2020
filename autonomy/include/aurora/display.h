@@ -370,7 +370,7 @@ void robot_display(const robot_localization &loc,double alpha=1.0)
 	//float ang=loc.angle*M_PI/180.0;
 	vec2 C=loc.center(); // (loc.x,loc.y); // center of robot
 	vec2 F=75.0/2*loc.forward(); // (+30.0*sin(ang), +30.0*cos(ang)); // robot forward direction
-	vec2 R=128.0/2*loc.right(); // (+70.0*cos(ang), -70.0*sin(ang)); // robot right side
+	vec2 R=140.0/2*loc.right(); // (+70.0*cos(ang), -70.0*sin(ang)); // robot right side
 	double d=1.0; // front wheel deploy?
 
 	glColor4f(0.0,0.8*conf,0.0,alpha); // green center

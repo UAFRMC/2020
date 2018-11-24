@@ -6,6 +6,7 @@
 #define AURORA_IS_BACKEND 1
 
 #include <iostream>
+#include <fstream>
 #include <cmath>
 
 #include "gridnav/gridnav_RMC.h"
@@ -43,6 +44,8 @@ using osl::quadric;
 bool show_GUI=true; 
 bool simulate_only=false; // -sim flag
 bool path_planning=true; // -nodrive flag
+bool driver_test=true; // automated driver testing
+
 bool nodrive=false; // -nodrive flag (for testing indoors)
 bool big_field=false; // -big flag
 
@@ -183,24 +186,41 @@ public:
     
     // Add obstacles around the scoring trough
     for (int x=-field_x_htrough-navigator_res;x<=field_x_htrough+navigator_res;x+=navigator_res)
-    for (int y=0;y<field_y_trough;y+=navigator_res)
+    for (int y=0;y<field_y_trough-1.5*navigator_res;y+=navigator_res)
       navigator.mark_obstacle(x+navigator_xshift, y+navigator_yshift, 55);
 
     // Add a few hardcoded obstacles, to show off path planning
-    int x=120;
+    int x=130;
+    int y=160;
     
     //Hard wall
     if (true)
-     for (int y=0;y<220;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,30);
+     for (int y=0;y<200;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,30);
     
-    // Series of straddle obstacles in middle
-    if (false) {
-      for (int y=0;y<=20;y+=navigator_res) 
-        for (int dy=0;dy<=field_y_size;dy+=150)
-          navigator.mark_obstacle(x+navigator_xshift,y+dy+navigator_yshift,15);
+    // Isolated straddle obstacle in middle
+    if (true) {
+      navigator.mark_obstacle(x+navigator_xshift,y,10);
     }
     
+    // Big spike on left
+    navigator.mark_obstacle(170,y,16);
     
+    
+    // Recompute proximity costs after marking obstacles
+    const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
+    navigator.navigator.compute_proximity(obstacle_proximity);
+    
+    std::ofstream navdebug("debug_nav.txt");
+    navdebug<<"Raw obstacles:\n";
+    navigator.navigator.obstacles.print(navdebug,1000/4);
+    
+    for (int angle=0;angle<=20;angle+=10) {
+      navdebug<<"\n\nAngle "<<angle<<" expanded obstacles:\n";
+      navigator.navigator.slice[angle].obstacle.print(navdebug,10);
+      
+      navdebug<<"Proximity:\n";
+      navigator.navigator.slice[angle].proximity.print(navdebug,1);
+    }
   }
 
   // Do robot work.
@@ -324,24 +344,32 @@ private:
     if (!drive_posture()) return false; // don't drive yet
     
     vec2 cur(sim.loc.x,sim.loc.y); // robot location
+    float cur_angle=90-sim.loc.angle;
     
     bool path_planning_OK=false;
     double drive=0.0; // forward-backward
     double turn=0.0; // left-right
     if (path_planning) 
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
-      const int replan_length=5;
-      const int plan_averaging=3;
-      if (planned_path.size()<replan_length/2) { // refill planned path
+      static int replan_counter=0;
+      const int replan_interval=1; // 1==every frame.  10==every 10 frames.
+      
+      const int plan_averaging=2; // steps in new plan to average together
+      const int replan_length=2*plan_averaging; // distance of new plan to keep
+      static rmc_navigator::navigator_t::drive_t last_drive;
+      if (planned_path.size()>0) last_drive=planned_path[0].drive;
+      
+      if (planned_path.size()<plan_averaging || (--replan_counter)<=0) 
+      { // refill planned path
+        replan_counter=replan_interval;
         while (planned_path.size()>0) planned_path.pop_back(); // flush old planned path
         
         // Start position: robot's position
-        float cur_angle=90-sim.loc.angle;
         rmc_navigator::fposition fstart(cur.x+navigator_xshift,cur.y+navigator_yshift,cur_angle);
         // End position: at target
         rmc_navigator::fposition ftarget(target.x+navigator_xshift,target.y+navigator_yshift,target_angle);
 
-        rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,false);
+        rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
         glBegin(GL_LINE_STRIP);
         //static double smoothdrive=0.0, smoothturn=0.0;
         int steps=0;
@@ -350,8 +378,8 @@ private:
           if (steps<replan_length)
           {
             planned_path.push_back(p);
+            p.print();
           }
-          //std::cout<<"Plan position: "<<p.pos<<" drive "<<p.drive<<"\n";
           glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
           vec2 v=p.pos.v-vec2(navigator_xshift,navigator_yshift);
           glVertex2fv(v);
@@ -360,25 +388,28 @@ private:
         glColor3f(1.0f,1.0f,1.0f);
         glEnd();
         
-        printf("Planning path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
+        printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
             cur.x,cur.y,cur_angle,
             target.x,target.y,target_angle, steps);
+        if (!plan.valid) {
+          printf("Path planning FAILED: searched %zd cells\n",plan.searched);
+          if (true) exit(1);
+        }
       }
       int pathslots=planned_path.size();
       if (pathslots>0) {
         pathslots=std::max(plan_averaging,pathslots);
         for (int slot=0;slot<pathslots;slot++) {
           planned_path_t &p=planned_path[slot];
-          drive += p.drive.forward*0.3;
-          turn += p.drive.turn*0.3;
+          drive += p.drive.forward/pathslots;
+          turn += p.drive.turn/pathslots;
         }
-        static int path_pop=0;
-        if (--path_pop<=0) {
-          planned_path.pop_front();
-          path_pop=3;
-        }
-        path_planning_OK=true;
+      } else { // already basically there
+        drive=last_drive.forward;
+        turn=last_drive.turn;
       }
+      path_planning_OK=true;
+      
       //drive=smoothdrive; turn=smoothturn;
       //smoothdrive*=0.7; smoothturn*=0.7;
     }
@@ -396,7 +427,7 @@ private:
     }
     set_drive_powers(drive,turn);
 
-    return length(cur-target)<navigator_res; // we're basically there
+    return length(cur-target)<2*navigator_res; // we're basically there
   }
 
   // Force this angle (or angle difference) to be between -180 and +180,
@@ -517,12 +548,13 @@ void robot_manager_t::autonomous_state()
   {
     if (drive_posture()) {
       
-      double target_X=field_x_mine+60; // mining area distance (plus buffer)
+      double target_X=field_x_mine+90; // mining area distance (plus buffer)
       double distance=target_X-sim.loc.x;
       if (autonomous_drive(mine_target_loc,90) ||
           fabs(distance)<10.0)  // we're basically there now
       {
-        enter_state(state_mine_lower); // start mining!
+        if (driver_test) enter_state(state_drive_to_dump);
+        else enter_state(state_mine_lower); // start mining!
       }
       if (time_in_state>50.0) { // stuck?  high power mode!
         set_drive_powers(1.0,0.0);
@@ -595,18 +627,23 @@ void robot_manager_t::autonomous_state()
     }
   }
 
-  // Drive back to bin
+  // Drive back to trough
   else if (robot.state==state_drive_to_dump)
   {
     if (autonomous_drive(dump_target_loc,dump_target_angle)
       || (fabs(sim.loc.x)<30 && sim.loc.y<dump_target_loc.y+10) ) 
-      { enter_state(state_dump_align);}
+    { 
+      enter_state(state_dump_align);
+    }
   }
   else if (robot.state==state_dump_align)
   {
     if (autonomous_drive(dump_align_loc,dump_target_angle)
       || (fabs(sim.loc.x)<20 && sim.loc.y<dump_align_loc.y+10) )
-      { enter_state(state_dump_contact);}
+    { 
+      if (driver_test) enter_state(state_drive_to_mine);
+      else enter_state(state_dump_contact);
+    }
   }
 
 
@@ -950,7 +987,7 @@ void robot_manager_t::update(void) {
       robot.loc.confidence*=0.9;
     robot.loc.confidence*=0.9;
 
-    if (robot.loc.y>100 && robot.loc.y<500) { // simulate obstacles
+    if (false && robot.loc.y>100 && robot.loc.y<500) { // simulate obstacles
       if ((rand()%1000)==0) { // crater!
         sim.loc.angle+=3.0;
       }
@@ -992,10 +1029,14 @@ int main(int argc,char *argv[])
   // Set screen size
   int w=1280, h=700;
   for (int argi=1;argi<argc;argi++) {
-    if (0==strcmp(argv[argi],"-sim")) {
+    if (0==strcmp(argv[argi],"--sim")) {
       simulate_only=true;
       if (argi+1<argc) srand(atoi(argv[++argi])); // optional seed argument
       else srand(1);
+    }
+    else if (0==strcmp(argv[argi],"--driver_test")) {
+      simulate_only=true;
+      driver_test=true;
     }
     else if (0==strcmp(argv[argi],"-big")) {
       big_field=true;
@@ -1007,7 +1048,10 @@ int main(int argc,char *argv[])
       nodrive=true;
     }
     else if (2==sscanf(argv[argi],"%dx%d",&w,&h)) {}
-    else printf("Unrecognized argument '%s'!\n",argv[argi]);
+    else {
+      printf("Unrecognized argument '%s'!\n",argv[argi]);
+      exit(1);
+    }
   }
 
   robot_manager=new robot_manager_t;

@@ -134,13 +134,13 @@ public:
     }
     
     // Dump values to the screen
-    void print(void) {
+    void print(std::ostream &out,int scale=1) {
       // for (int y=0;y<GRIDY;y++) {
       for (int y=GRIDY-1;y>=0;y-=2) {
         for (int x=0;x<GRIDX;x++) {
-          std::cout<<data[y][x];
+          out<<(T)(data[y][x]/scale);
         }
-        std::cout<<"\n";
+        out<<"\n";
       }
     }
     
@@ -156,8 +156,13 @@ public:
     //   This is a unit vector = vec2(cos(ang_rad),sin(ang_rad))
     vec2 drive;
     
-    // Nonzero bits here mark persistent obstacles
+    // Zero = no obstacle here
+    // Positive = persistent obstacles
     grid2D<int> obstacle;
+    
+    // Zero = totally safe driving
+    // Higher values = closer to obstacles
+    grid2D<int> proximity;
     
     // Nonzero bits here mark that we've visited this cell
     grid2D<unsigned char> visit;
@@ -178,11 +183,41 @@ public:
       float ang=angle_to_radians(ia);
       s.drive=vec2(cos(ang),sin(ang));
       s.obstacle.clear(0);
+      s.proximity.clear(0);
       s.visit.clear(0);
     }
     obstacles.clear(OPEN);
     lastpath.clear(' ');
   }
+  
+  // After marking obstacles, call this to compute proximity.
+  //   This can be re-called if you mark new obstacles.
+  void compute_proximity(int cells=3) {
+    for (int ia=0;ia<GRIDA;ia++) {
+      gridslice &s=slice[ia];
+      s.proximity.clear(0);
+      for (int y=-1;y<=GRIDY;y++)
+      for (int x=-1;x<=GRIDX;x++)
+      {
+        if (!gridposition(x,y,0).valid() || s.obstacle.at(x,y)!=0) 
+        { // mark all nearby cells as near obstacle
+          for (int dy=-cells;dy<=cells;dy++)
+          for (int dx=-cells;dx<=cells;dx++)
+          {
+            int cy=y+dy;
+            int cx=x+dx;
+            if (gridposition(cx,cy,0).valid())
+            {
+              int dist=cells+1 - std::max(std::abs(dx),std::abs(dy));
+              int &prox=s.proximity.at(cx,cy);
+              if (prox<dist) prox=dist;
+            }
+          }
+        }
+      }
+    }
+  }
+  
 
 /************ Robot Geometry ************************/
   // At a given angle, this lists the discretized grid points relative to the robot origin.
@@ -299,7 +334,8 @@ public:
   public:
     float forward; // -1 backwards, 0 stopped, 1 forwards
     float turn; // -1 left, 0 straight, +1 right
-    drive_t(float f,float t) :forward(f), turn(t) {}
+    drive_t(float f=0.0,float t=0.0) :forward(f), turn(t) {}
+    
     void operator+=(const drive_t &d) { forward+=d.forward; turn+=d.turn; }
     bool operator==(const drive_t &d) const { return forward==d.forward && turn==d.turn; }
     
@@ -334,24 +370,77 @@ public:
     bool operator>(const searchposition &p) const {
       return total_cost() > p.total_cost();
     }
+    
+    void print(void) const {
+      printf(" Drive %.1f turn %.1f at %.0f,%.0f@%.0f cost %.3f estimate %.3f\n",
+        drive.forward,drive.turn,
+        pos.v.x,pos.v.y,pos.get_degrees(),
+        cost,estimate);
+    }
   };
   
-  // Build the sequence of steps needed to move the robot from origin to target.
-  class planner {
-    navigator_t &nav;
+  // A planner_target is basically just a cost function.
+  class planner_target {
+  public:
+    /* Return the estimated cost to reach the target from this position.
+       If you're at the target, return 0. */
+    virtual double get_cost_from(const fposition &from_pos) const =0;
     
-    // This is our search target configuration
-    fposition target;
+    /* Return true if we've reached the target. */
+    virtual bool reached_target(const gridposition &grid) const =0;
     
-    // If true, print debug info to the console
-    bool verbose;
     
+    /* Utility function: return the angular distance */
     float angle_dist(float delta) const {
        delta=fmodplus(delta,GRIDA);
        if (delta>GRIDA/2) delta=GRIDA-delta; // turn the other way
        return delta;
     }
+
+  protected:
+    ~planner_target() {} // only subclasses will get deleted, not these parent classes.
+  };
+  
+  // Planner target is a simple 2D target point
+  class planner_target_2D : public planner_target {
+    // This is our search target configuration
+    fposition target;
+    gridposition gtarget;
+  public:
+    planner_target_2D(const fposition &target_)
+      :target(target_), gtarget(gridposition(target)) {}
     
+    virtual double get_cost_from(const fposition &from_pos) const
+    {
+      double drive_dist=length(from_pos.v-target.v); // in grid cells
+      double turn_ang=this->angle_dist(from_pos.a-target.a); // in discrete angle units
+      double TURN_AMPLIFY=5.0;
+      double estimate = drive_dist + TURN_AMPLIFY*turn_ang*TURN_COST_TO_GRID_COST;
+      return estimate;
+    }
+    
+    virtual bool reached_target(const gridposition &grid) const 
+    {
+      if (false) 
+      { // require exact
+        return grid==gtarget;
+      }
+      else 
+      { // allow a little position error
+        return 
+          std::abs(grid.x-gtarget.x)<=1 &&
+          std::abs(grid.y-gtarget.y)<=1 &&
+          std::abs(grid.a-gtarget.a)<=0;
+      }
+    }
+    
+    ~planner_target_2D() {}
+  };
+  
+  
+  // Build the sequence of steps needed to move the robot from origin to target.
+  class planner {
+    navigator_t &nav;
     
     // This is the active list of searched positions, sorted by distance to target.
     typedef std::priority_queue<std::reference_wrapper<searchposition>,
@@ -364,31 +453,34 @@ public:
     typedef std::deque<searchposition> pool_t;
     pool_t pool; // safely stores our search positions
     
-    // Add this search position to our priority queue
-    void add_search(double cost,const drive_t &drive,const fposition &pos,const searchposition *last) {
+    // Add this search position to our priority queue.
+    //   Returns true if the point was valid and could be added.
+    bool add_search(double cost,const drive_t &lastdrive,const drive_t &drive,const fposition &pos,const planner_target &target,const searchposition *last) {
       // make sure we haven't already visited this point
       gridposition g(pos);
-      if (g.valid())
-      {
-        gridslice &s=nav.slice[g.a];
-        unsigned char &visited=nav.slice[g.a].visit.at(g.x,g.y);
-        if (0==visited)
-        { // create data structure to hold this point
-          visited=1; // mark as visited
-          
-          // Check for obstacles in the way:
-          const unsigned char &obs=s.obstacle.at(g.x,g.y);
-          if (obs==0) {
-            // Use heuristic to estimate cost to target
-            double drive_dist=length(pos.v-target.v); // in grid cells
-            double turn_ang=angle_dist(pos.a-target.a); // in discrete angle units
-            enum {TURN_AMPLIFY=1};
-            double estimate = drive_dist + TURN_AMPLIFY*turn_ang*TURN_COST_TO_GRID_COST;
-            pool.emplace_back(cost,estimate, drive,pos,last);
-            search.push(pool.back());
-          }
-        }
-      }
+      if (!g.valid()) return false; // out of bounds
+      
+      gridslice &s=nav.slice[g.a];
+      unsigned char &visited=nav.slice[g.a].visit.at(g.x,g.y);
+      if (0!=visited) return false; // already visited here
+      
+      // create data structure to hold this point
+      visited=1; // mark as visited
+        
+      // Check for obstacles in the way:
+      const unsigned char &obs=s.obstacle.at(g.x,g.y);
+      if (obs!=0) return false; // has obstacle
+      
+      // Seems legal, so use heuristic to estimate cost to target
+      
+      if (!(lastdrive == drive)) 
+        cost+=10.0; // penalty for swapping drive directions
+      
+      double estimate=target.get_cost_from(pos);
+      pool.emplace_back(cost, estimate, drive,pos,last);
+      search.push(pool.back());
+
+      return true; // OK point
     }
     
   public:
@@ -399,30 +491,64 @@ public:
     // This is the sequence of steps from origin to target
     std::deque<searchposition> path;
     
-    planner(navigator_t &nav_,const fposition &origin_,const fposition &target_,bool verbose_) 
-      :nav(nav_), target(target_), verbose(verbose_)
+    // This is how many cells we expanded
+    size_t searched;
+    
+    
+    planner(navigator_t &nav_,const fposition &origin,const planner_target &target,drive_t last_drive=drive_t(), bool verbose=false) 
+      :nav(nav_)
+    {
+      valid = plan_path(origin,target,last_drive,verbose);
+    } 
+    
+    planner(navigator_t &nav_,const fposition &origin,const fposition &ftarget, drive_t last_drive=drive_t(), bool verbose=false) 
+      :nav(nav_)
+    {
+      planner_target_2D target(ftarget);
+      valid = plan_path(origin,target,last_drive,verbose);
+    }
+    
+    
+    bool plan_path(const fposition &origin,const planner_target &target,drive_t last_drive=drive_t(), bool verbose=false)
     {
       // Clear all previous visit marks
+      searched=0;
       for (int ia=0;ia<GRIDA;ia++) {
         nav.slice[ia].visit.clear(0);
       }
       nav.lastpath.clear(' ');
       
-      // Start search at origin
-      add_search(0.0,drive_t(0.0f,0.0f),origin_,0);
+      // Start search at specified origin
+      if (!add_search(0.0,last_drive,last_drive,origin,target,0)) 
+      { // Start point no good: try nearby points?
+        std::cout<<"Starting point is invalid!\n";
+        fposition start=origin;
+        for (int range=1;range<3;range++)
+        for (int dy=-range;dy<=range;dy++)
+        for (int dx=-range;dx<=range;dx++)
+        {
+          start=origin;
+          start.v.x+=dx; start.v.y+=dy;
+          if (add_search(0.0,last_drive,last_drive,origin,target,0))
+            goto found;
+        }
+      found:
+        std::cout<<"Shifted start position from "<<origin<<" to "<<start<<"\n";
+      }
     
       // Repeatedly visit positions with the cheapest net cost
       while (!search.empty()) {
         const searchposition &cur=search.top(); search.pop();
+        searched++;
         
-        if (verbose) std::cout<<"At "<<cur.pos<<" cost "<<cur.cost<<": ";
+        // if (verbose) std::cout<<"At "<<cur.pos<<" cost "<<cur.cost<<": ";
         
         // Find the grid location for this cell
         gridposition gcur(cur.pos);
         if (verbose && gcur.valid()) {
           nav.lastpath.at(gcur.x,gcur.y)='.'; // checked
         }
-        if (gcur==gridposition(target)) 
+        if (target.reached_target(gcur)) 
         { // we're done!  Follow the chain of "last" pointers back to the origin.
           if (verbose) std::cout<<"Target reached!  Reverse path:\n";
           for (const searchposition *p=&cur;p!=NULL;p=p->last) {
@@ -432,6 +558,7 @@ public:
               std::cout<<p->pos<<"\n";
               gridposition gpath(p->pos);
               if (gpath.valid()) nav.lastpath.at(gpath.x,gpath.y)='#'; // on path
+              nav.lastpath.print(std::cout,1);
             }
           }
           
@@ -439,9 +566,14 @@ public:
           search=search_t();
           pool=pool_t();
           
-          valid=true;
-          return;
+          return true;
         }
+        
+        // Compute 'obstacle proximity cost' scaling factor
+        double turncost=1.0; // extra cost for more turning
+        double proxcost=10.0; // extra cost for driving near obstacles
+        if (gcur.valid())
+          proxcost = 1.0 + nav.slice[gcur.a].proximity.at(gcur.x,gcur.y);
         
         // Check all nearby cells
         vec2 drivedir=nav.slice[gcur.a].drive;
@@ -449,26 +581,26 @@ public:
           // Drive at least into the next grid cell:
           double distance=1.01*GRIDSIZE/std::max(fabs(drivedir.x),fabs(drivedir.y)); 
           
-          double cost=cur.cost+distance;
+          double cost=cur.cost + proxcost * distance;
           fposition next(cur.pos.v+distance*drive*drivedir,cur.pos.a);
-          add_search(cost,drive_t(drive,0.0f),next,&cur);
+          add_search(cost,cur.drive,drive_t(drive,0.0f),next,target,&cur);
         }
         for (float turn=-1.0;turn<=+1.0;turn+=2.0) {
-          double cost=cur.cost+GRIDSIZE*TURN_COST_TO_GRID_COST;
+          double cost=cur.cost + proxcost *turncost * GRIDSIZE*TURN_COST_TO_GRID_COST;
           fposition next(cur.pos.v,fmodplus(cur.pos.a+turn,GRIDA)); // angles wrap around
-          add_search(cost,drive_t(0.0f,turn),next,&cur);
+          add_search(cost,cur.drive,drive_t(0.0f,turn),next,target,&cur);
         }
       }
       
       // If we get here, we ran out of options before reaching the target.
       if (verbose) std::cout<<"Out of search options!\n";
-      valid=false;
-    } // end planner constructor
+      return false;
+    }
   }; // end planner class
 
-};
+}; // end templated class gridnavigator
 
-};
+}; // end namespace gridnav
 
 
 #endif
