@@ -194,15 +194,13 @@ public:
     
     //Hard wall
     if (true)
-     for (int y=0;y<260;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,10);
+     for (int y=0;y<240;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,18);
     
-    // Isolated straddle obstacle in middle
-    if (true) {
-      navigator.mark_obstacle(x+navigator_xshift,y,10);
-    }
+    // Isolated big obstacle in middle
+    navigator.mark_obstacle(x+navigator_xshift,y,25);
     
     // Big spike on left
-    navigator.mark_obstacle(170,y,16);
+    navigator.mark_obstacle(170,y,25);
     
     
     // Recompute proximity costs after marking obstacles
@@ -212,7 +210,7 @@ public:
     // Debug dump obstacles, field, etc.
     std::ofstream navdebug("debug_nav.txt");
     navdebug<<"Raw obstacles:\n";
-    navigator.navigator.obstacles.print(navdebug,1000/4);
+    navigator.navigator.obstacles.print(navdebug,10);
     
     for (int angle=0;angle<=20;angle+=10) {
       navdebug<<"\n\nAngle "<<angle<<" expanded obstacles:\n";
@@ -238,10 +236,11 @@ private:
     for (int x=0;x<rmc_navigator::GRIDX;x++)
     {
       int height=grid.at(x,y);
-      if (height<100) {
+      if (height>0) {
         if (height>50) glColor3f(0.0f,1.0f,1.0f); // cyan trough / walls
-        else if (height<20) glColor3f(1.0f,0.0f,1.1f); // purple short
-        else  glColor3f(1.0f,0.0f,0.0f); // red tall
+        else if (height<15) glColor3f(1.0f,0.5f,1.0f); // purple very short
+        else if (height<20) glColor3f(1.0f,0.0f,0.0f); // red short-ish
+        else  glColor3f(1.0f,1.0f,1.0f); // white tall
         glVertex2f(
           rmc_navigator::GRIDSIZE*x-navigator_xshift,
           rmc_navigator::GRIDSIZE*y-navigator_yshift);
@@ -445,16 +444,22 @@ private:
       static int cycle_count=0;
       cycle_count--;
       if (cycle_count<0) cycle_count=0;
-      if (forward * last_drive.forward <=0 && turn * last_drive.turn <=0) 
+      if (forward * last_drive.forward <0 || turn * last_drive.turn <0) 
       {
         cycle_count+=2;
-        if (cycle_count>5) { // just do what we did before
-          forward=last_drive.forward;
-          turn=last_drive.turn;
-          printf("Path planning CYCLE DETECTED, keeping last drive\n");
+        if (cycle_count>5) { 
+          printf("Path planning CYCLE DETECTED, counter %d, keeping last drive\n",
+            cycle_count);
+          cycle_count=0;
+          
+          // don't replan, just drive for a bit
+          replan_counter=10; 
+          
+          //forward=last_drive.forward;
+          //turn=last_drive.turn;
         }
       }
-      
+      printf("Path planning forward %.1f, turn %.1f\n",forward,turn);
       // Update last_drive for next time
       if (planned_path.size()>0) last_drive=planned_path[0].drive;
       

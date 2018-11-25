@@ -73,7 +73,7 @@ public:
     gridposition(const fposition &p) {
       x=(int)floor(p.v.x*(1.0/GRIDSIZE)+0.5);
       y=(int)floor(p.v.y*(1.0/GRIDSIZE)+0.5);
-      a=(int)floor(p.a+0.5);
+      a=(int)floor(p.a+0.5); if (a==GRIDA) a=0;
     }
     
     bool operator==(const gridposition &p) const { 
@@ -186,7 +186,7 @@ public:
       s.proximity.clear(0);
       s.visit.clear(0);
     }
-    obstacles.clear(OPEN);
+    obstacles.clear(0);
     lastpath.clear(' ');
   }
   
@@ -281,6 +281,7 @@ public:
   
   
   // This grid records all known obstacles on the field.
+  //   zero indicates no known obstacles
   //   They're kept here to avoid redundant obstacle updates.
   grid2D<int> obstacles;
   
@@ -292,7 +293,7 @@ public:
   void mark_obstacle(int x,int y,int height, const robot_grid_geometry &robot) {
     if (gridposition(x,y,0).valid()) {
       int &old=obstacles.at(x,y);
-      if (old<=height) return; // redundant obstacle
+      if (old>=height) return; // redundant obstacle
       else old=height;
     }
     
