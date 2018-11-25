@@ -421,7 +421,7 @@ public:
     
     virtual bool reached_target(const gridposition &grid) const 
     {
-      if (false) 
+      if (true) 
       { // require exact
         return grid==gtarget;
       }
@@ -458,7 +458,7 @@ public:
     bool add_search(double cost,const drive_t &lastdrive,const drive_t &drive,const fposition &pos,const planner_target &target,const searchposition *last) {
       // make sure we haven't already visited this point
       gridposition g(pos);
-      if (!g.valid()) return false; // out of bounds
+      if (!g.valid()) return false; // out of bounds of our grid
       
       gridslice &s=nav.slice[g.a];
       unsigned char &visited=nav.slice[g.a].visit.at(g.x,g.y);
@@ -469,12 +469,13 @@ public:
         
       // Check for obstacles in the way:
       const unsigned char &obs=s.obstacle.at(g.x,g.y);
-      if (obs!=0) return false; // has obstacle
+      //if (obs!=0) return false; // has obstacle
+      if (obs!=0) cost += 10000.0; // hitting obstacle counts as a 10 meter cost
       
       // Seems legal, so use heuristic to estimate cost to target
       
       if (!(lastdrive == drive)) 
-        cost+=10.0; // penalty for swapping drive directions
+        cost+=20.0; // penalty for swapping drive directions
       
       double estimate=target.get_cost_from(pos);
       pool.emplace_back(cost, estimate, drive,pos,last);
@@ -520,20 +521,9 @@ public:
       
       // Start search at specified origin
       if (!add_search(0.0,last_drive,last_drive,origin,target,0)) 
-      { // Start point no good: try nearby points?
-        std::cout<<"Starting point is invalid!\n";
-        fposition start=origin;
-        for (int range=1;range<3;range++)
-        for (int dy=-range;dy<=range;dy++)
-        for (int dx=-range;dx<=range;dx++)
-        {
-          start=origin;
-          start.v.x+=dx; start.v.y+=dy;
-          if (add_search(0.0,last_drive,last_drive,origin,target,0))
-            goto found;
-        }
-      found:
-        std::cout<<"Shifted start position from "<<origin<<" to "<<start<<"\n";
+      { // Start point no good: can't do this.
+        std::cout<<"Starting point is off the grid!?\n";
+        return false;
       }
     
       // Repeatedly visit positions with the cheapest net cost
@@ -573,7 +563,7 @@ public:
         double turncost=1.0; // extra cost for more turning
         double proxcost=10.0; // extra cost for driving near obstacles
         if (gcur.valid())
-          proxcost = 1.0 + nav.slice[gcur.a].proximity.at(gcur.x,gcur.y);
+          proxcost = 1.0 + 0.5*nav.slice[gcur.a].proximity.at(gcur.x,gcur.y);
         
         // Check all nearby cells
         vec2 drivedir=nav.slice[gcur.a].drive;

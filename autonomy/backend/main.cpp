@@ -42,23 +42,22 @@
 using osl::quadric;
 
 bool show_GUI=true; 
-bool simulate_only=false; // -sim flag
-bool path_planning=true; // -nodrive flag
-bool driver_test=true; // automated driver testing
+bool simulate_only=false; // --sim flag
+bool should_plan_paths=true; // --noplan flag
+bool driver_test=false; // --driver_test, path planning testing
 
-bool nodrive=false; // -nodrive flag (for testing indoors)
-bool big_field=false; // -big flag
+bool nodrive=false; // --nodrive flag (for testing indoors)
 
 
 
 /** X,Y field target location where we drive to, before finally backing up */
 vec2 dump_target_loc(0,field_y_trough+80); // rough area
-vec2 dump_align_loc(0,field_y_trough+50); // final alignment
+vec2 dump_align_loc(0,field_y_trough+35); // final alignment
 float dump_target_angle=90; // along +y
 
 /** X,Y field target location where we drive to, before finally backing up */
 vec2 mine_target_loc(field_x_max,field_y_middle);
-float mine_target_angle=0; // along +x
+float mine_target_angle=-30; // along +x
 
 
 /* Convert this unsigned char difference into a float difference */
@@ -186,7 +185,7 @@ public:
     
     // Add obstacles around the scoring trough
     for (int x=-field_x_htrough-navigator_res;x<=field_x_htrough+navigator_res;x+=navigator_res)
-    for (int y=0;y<field_y_trough-1.5*navigator_res;y+=navigator_res)
+    for (int y=0;y<=field_y_trough;y+=navigator_res)
       navigator.mark_obstacle(x+navigator_xshift, y+navigator_yshift, 55);
 
     // Add a few hardcoded obstacles, to show off path planning
@@ -210,6 +209,7 @@ public:
     const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
     navigator.navigator.compute_proximity(obstacle_proximity);
     
+    // Debug dump obstacles, field, etc.
     std::ofstream navdebug("debug_nav.txt");
     navdebug<<"Raw obstacles:\n";
     navigator.navigator.obstacles.print(navdebug,1000/4);
@@ -313,13 +313,13 @@ private:
   // Autonomous drive power from float values:
   //   "drive": forward +1.0, backward -1.0
   //   "turn": left turn +1.0, right turn -1.0 (like angle)
-  void set_drive_powers(double drive,double turn=0.0) 
+  void set_drive_powers(double forward,double turn=0.0) 
   {
     double max_autonomous_drive=1.0; //<- can set a cap for debugging autonomous
     
     double drive_power=drive_speed(+1.0);  
     double t=limit(turn*0.5,drive_power);
-    double d=limit(drive*0.5,drive_power);
+    double d=limit(forward*0.5,drive_power);
     double L=d-t;
     double R=d+t;
     robot.power.left=64+63*limit(L,max_autonomous_drive);
@@ -347,17 +347,17 @@ private:
     float cur_angle=90-sim.loc.angle;
     
     bool path_planning_OK=false;
-    double drive=0.0; // forward-backward
+    double forward=0.0; // forward-backward
     double turn=0.0; // left-right
-    if (path_planning) 
+    if (should_plan_paths) 
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
+      path_planning_OK=true;
       static int replan_counter=0;
       const int replan_interval=1; // 1==every frame.  10==every 10 frames.
       
       const int plan_averaging=2; // steps in new plan to average together
       const int replan_length=2*plan_averaging; // distance of new plan to keep
       static rmc_navigator::navigator_t::drive_t last_drive;
-      if (planned_path.size()>0) last_drive=planned_path[0].drive;
       
       if (planned_path.size()<plan_averaging || (--replan_counter)<=0) 
       { // refill planned path
@@ -392,26 +392,48 @@ private:
             cur.x,cur.y,cur_angle,
             target.x,target.y,target_angle, steps);
         if (!plan.valid) {
+          path_planning_OK=false;
           printf("Path planning FAILED: searched %zd cells\n",plan.searched);
           if (true) exit(1);
         }
       }
-      int pathslots=planned_path.size();
-      if (pathslots>0) {
-        pathslots=std::max(plan_averaging,pathslots);
-        for (int slot=0;slot<pathslots;slot++) {
+      int pathslots=plan_averaging;
+      for (int slot=0;slot<plan_averaging;slot++) {
+        if (slot<(int)planned_path.size()) {
           planned_path_t &p=planned_path[slot];
-          drive += p.drive.forward/pathslots;
-          turn += p.drive.turn/pathslots;
+          forward += p.drive.forward;
+          turn += p.drive.turn;
         }
-      } else { // already basically there
-        drive=last_drive.forward;
-        turn=last_drive.turn;
+        else { // short plan, use last known data
+          forward +=last_drive.forward;
+          turn +=last_drive.turn;
+        }
       }
-      path_planning_OK=true;
+      forward = forward/pathslots;
+      turn = turn/pathslots;
       
-      //drive=smoothdrive; turn=smoothturn;
-      //smoothdrive*=0.7; smoothturn*=0.7;
+      // Cycle detection
+      bool in_cycle=false;
+      static int cycle_count=0;
+      cycle_count--;
+      if (cycle_count<0) cycle_count=0;
+      if (forward * last_drive.forward <=0 && turn * last_drive.turn <=0) 
+      {
+        cycle_count+=2;
+        if (cycle_count>5) { // just do what we did before
+          forward=last_drive.forward;
+          turn=last_drive.turn;
+          in_cycle=true;
+          printf("Path planning CYCLE DETECTED, keeping last drive\n");
+        }
+      }
+      
+      // Update last_drive for next time
+      if (planned_path.size()>0) last_drive=planned_path[0].drive;
+      
+      //forward=smoothforward; turn=smoothturn;
+      //smoothforward*=0.7; smoothturn*=0.7;
+      
     }
     if (!path_planning_OK) 
     {
@@ -422,12 +444,12 @@ private:
       vec2 should=normalize(cur-target); // we should be facing this way
 
       turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
-      drive=-dot(orient,should); // dot product (like distance)
-      printf("Planning path FAILURE: manual greedy mode %.0f,%.0f\n", drive,turn);
+      forward=-dot(orient,should); // dot product (like distance)
+      printf("Planning path FAILURE: manual greedy mode %.0f,%.0f\n", forward,turn);
     }
-    set_drive_powers(drive,turn);
+    set_drive_powers(forward,turn);
 
-    return length(cur-target)<2*navigator_res; // we're basically there
+    return length(cur-target)<=2*navigator_res; // we're basically there
   }
 
   // Force this angle (or angle difference) to be between -180 and +180,
@@ -586,9 +608,9 @@ void robot_manager_t::autonomous_state()
 
     double mine_time=cur_time-mine_start_time;
     double mine_duration=12.0;
-    if(  big_field || (
+    if(
       // sim.loc.x<field_x_max && // field left to mine
-      mine_time<mine_duration)) // and there's room in the bin
+      mine_time<mine_duration) // and there's room in the box
     { // keep mining
 
       if (robot.sensor.bucket<head_mine_start && (fmod(mine_time,2.0)<0.3)) {
@@ -622,24 +644,24 @@ void robot_manager_t::autonomous_state()
     }
     else
     {
-      if (big_field) enter_state(state_drive);
-      else enter_state(state_drive_to_dump);
+      enter_state(state_drive_to_dump);
     }
   }
 
   // Drive back to trough
   else if (robot.state==state_drive_to_dump)
   {
-    if (autonomous_drive(dump_target_loc,dump_target_angle)
-      || (fabs(sim.loc.x)<30 && sim.loc.y<dump_target_loc.y+10) ) 
+    if (autonomous_drive(dump_target_loc,dump_target_angle) ) 
     { 
       enter_state(state_dump_align);
     }
   }
   else if (robot.state==state_dump_align)
   {
-    if (autonomous_drive(dump_align_loc,dump_target_angle)
-      || (fabs(sim.loc.x)<20 && sim.loc.y<dump_align_loc.y+10) )
+    vec2 target=dump_align_loc;
+    target.x=sim.loc.x; // don't try to turn this close
+    if (autonomous_drive(target,dump_target_angle)
+      || (fabs(sim.loc.x-target.x)<20 && sim.loc.y<target.y+10) )
     { 
       if (driver_test) enter_state(state_drive_to_mine);
       else enter_state(state_dump_contact);
@@ -708,8 +730,7 @@ void robot_manager_t::autonomous_state()
     }
     else
     {
-      if (big_field) enter_state(state_drive); // manual
-      else enter_state(state_drive_to_mine);
+      enter_state(state_drive_to_mine);
     } // back to start again
 
   }
@@ -1034,17 +1055,17 @@ int main(int argc,char *argv[])
       if (argi+1<argc) srand(atoi(argv[++argi])); // optional seed argument
       else srand(1);
     }
+    else if (0==strcmp(argv[argi],"--noplan")) {
+      should_plan_paths=false;
+    }
     else if (0==strcmp(argv[argi],"--driver_test")) {
       simulate_only=true;
       driver_test=true;
     }
-    else if (0==strcmp(argv[argi],"-big")) {
-      big_field=true;
-    }
-    else if (0==strcmp(argv[argi],"-nogui")) { // UNTESTED!
+    else if (0==strcmp(argv[argi],"--nogui")) { // UNTESTED!
       show_GUI=false;
     }
-    else if (0==strcmp(argv[argi],"-nodrive")) {
+    else if (0==strcmp(argv[argi],"--nodrive")) {
       nodrive=true;
     }
     else if (2==sscanf(argv[argi],"%dx%d",&w,&h)) {}

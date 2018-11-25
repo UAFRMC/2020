@@ -1,5 +1,7 @@
 /*
-  Use the gridnav library for RMC-style robot.
+  Use the gridnav library for RMC-style robot.  
+  This basically just includes the robot's top-down geometry,
+  and the field dimensions.
 */
 #ifndef AURURA_GRIDNAV_RMC_H
 #define AURURA_GRIDNAV_RMC_H
