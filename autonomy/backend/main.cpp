@@ -194,7 +194,7 @@ public:
     
     //Hard wall
     if (true)
-     for (int y=0;y<200;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,30);
+     for (int y=0;y<260;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,10);
     
     // Isolated straddle obstacle in middle
     if (true) {
@@ -227,6 +227,31 @@ public:
   void update(void);
 
 private:
+
+  /* Use OpenGL to draw this robot navigation grid object */
+  template <class grid_t>
+  void gl_draw_grid(grid_t grid)
+  {
+    glPointSize(4.0f);
+    glBegin(GL_POINTS);
+    for (int y=0;y<rmc_navigator::GRIDY;y++)
+    for (int x=0;x<rmc_navigator::GRIDX;x++)
+    {
+      int height=grid.at(x,y);
+      if (height<100) {
+        if (height>50) glColor3f(0.0f,1.0f,1.0f); // cyan trough / walls
+        else if (height<20) glColor3f(1.0f,0.0f,1.1f); // purple short
+        else  glColor3f(1.0f,0.0f,0.0f); // red tall
+        glVertex2f(
+          rmc_navigator::GRIDSIZE*x-navigator_xshift,
+          rmc_navigator::GRIDSIZE*y-navigator_yshift);
+      }
+    }
+    glEnd();
+  }
+
+
+
   // Autonomy support:
   double cur_time; // seconds since start of backend program
   double state_start_time; // cur_time when we entered the current state
@@ -352,6 +377,10 @@ private:
     if (should_plan_paths) 
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
       path_planning_OK=true;
+      
+      gl_draw_grid(navigator.navigator.obstacles);
+      
+      
       static int replan_counter=0;
       const int replan_interval=1; // 1==every frame.  10==every 10 frames.
       
@@ -413,7 +442,6 @@ private:
       turn = turn/pathslots;
       
       // Cycle detection
-      bool in_cycle=false;
       static int cycle_count=0;
       cycle_count--;
       if (cycle_count<0) cycle_count=0;
@@ -423,7 +451,6 @@ private:
         if (cycle_count>5) { // just do what we did before
           forward=last_drive.forward;
           turn=last_drive.turn;
-          in_cycle=true;
           printf("Path planning CYCLE DETECTED, keeping last drive\n");
         }
       }
@@ -1008,12 +1035,27 @@ void robot_manager_t::update(void) {
       robot.loc.confidence*=0.9;
     robot.loc.confidence*=0.9;
 
-    if (false && robot.loc.y>100 && robot.loc.y<500) { // simulate obstacles
-      if ((rand()%1000)==0) { // crater!
-        sim.loc.angle+=3.0;
+    if (robot.loc.y>100 && robot.loc.y<500) 
+    { // simulate angle drift
+      if ((rand()%300)==0) {
+        sim.loc.angle+=2.0;
+        robotPrintln("Injecting angle drift right\n");
       }
-      if ((rand()%1000)==0) { // crater!
-        sim.loc.angle-=3.0;
+      if ((rand()%300)==0) {
+        sim.loc.angle-=2.0;
+        robotPrintln("Injecting angle drift left\n");
+      }
+      if ((rand()%300)==0) {
+        vec3 delta(0.0);
+        int del;
+        do { del = (rand()%3)-1; } while (del==0);
+        del*=5;
+        int axis=rand()%2;
+        robotPrintln("Injecting position drift by %d on axis %d\n", del,axis);
+        if (axis==0)
+          sim.loc.x+=del;
+        else
+          sim.loc.y+=del;
       }
     }
   }

@@ -352,8 +352,8 @@ void robot_display_setup(const robot_base &robot) {
 	}
 
 	if (robot.loc.confidence>0.5) {
-		robotPrintln("Location:  X %.1f   Y %.1f   angle %.0f",
-			robot.loc.x*0.01,robot.loc.y*0.01,
+		robotPrintln("Location:  X %.0f   Y %.0f   angle %.0f",
+			robot.loc.x,robot.loc.y,
 			robot.loc.angle);
 	}
 }
