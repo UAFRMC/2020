@@ -131,7 +131,7 @@ public:
 /// Keeps track of location
 class obstacle_grid {
 public:
-  enum {GRIDSIZE=2}; // cm per grid cell
+  enum {GRIDSIZE=4}; // cm per grid cell
   enum {GRIDX=(50+807+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
   enum {GRIDY=(50+369+GRIDSIZE-1)/GRIDSIZE};
   enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
@@ -153,7 +153,7 @@ int main()
     bool bigmode=true;
 
     int fps=6;
-    fps=30; // USB 3.0 only
+    // fps=30; // USB 3.0 only
     int depth_w=1280, depth_h=720; // high res mode: definitely more detail visible
     int color_w=1280, color_h=720; 
     if (!bigmode) { // low res
@@ -258,9 +258,9 @@ int main()
           }
           debug_image.at<cv::Vec3b>(y,x)=debug_color;
         }   
-        imshow("Depth image",debug_image);
+        //imshow("Depth image",debug_image);
         
-        enum {depthscale=8};
+        enum {depthscale=6};
         cv::Mat world_depth(cv::Size(obstacle_grid::GRIDX*depthscale,obstacle_grid::GRIDY*depthscale), 
           CV_8UC3, cv::Scalar(0,0,0));
         for (int h = 0; h < obstacle_grid::GRIDY; h++)
