@@ -9,14 +9,11 @@ grid_square::grid_square()
 void grid_square::clear() 
 {
 	count=0;
-	max=-1000;
-	min=1000;
+	max=-10000;
+	min=10000;
 	sum=0;
 	sumSquares=0;
-	atShadow=false;
-	isHole=false;
-	impassable=false;
-	beenChecked=false;
+	flags=0;
 }
 
 void grid_square::addPoint(float z)
@@ -33,23 +30,25 @@ void grid_square::addPoint(float z)
 		max=z;
 	}
 }
-float grid_square::getMean()
+float grid_square::getMean() const
 {
 	float total=count;
 	return sum/total;
 }
-float grid_square::getVariance()
+float grid_square::getTrimmedMean() const
+{
+	if (count>2) {
+		float total=count;
+		return (sum-max-min)/total;
+	}
+	else {
+		return getMean();
+	}
+}
+float grid_square::getVariance() const
 {
 	float total=count;
 	return sumSquares/count-getMean()*getMean();
-}
-float grid_square::getMax()
-{
-	return max;
-}
-float grid_square::getMin()
-{
-	return min;
 }
 
 int compare(grid_square a, grid_square b)

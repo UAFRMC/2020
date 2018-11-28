@@ -16,19 +16,23 @@ private:
   float sum;
   float sumSquares;
   int count;
+  int flags;
 public:
   grid_square();
+
   void clear();
+
   void addPoint(float z);
-  int getCount() { return count; }
-  float getMean();
-  float getVariance();
-  float getMax();
-  float getMin();
-  bool atShadow;
-  bool isHole;
-  bool impassable;
-  bool beenChecked;
+
+  int getCount() const { return count; }
+  float getMean() const;
+  float getTrimmedMean() const;
+  float getVariance() const;
+  float getMax() const { return max; }
+  float getMin() const { return min; }
+
+  void setFlag(int the_flag) { flags |= the_flag; }
+  bool getFlag(int the_flag) const { return the_flag & flags; }
 };
 
 int compare(grid_square a, grid_square b);

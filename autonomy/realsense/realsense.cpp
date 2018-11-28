@@ -10,6 +10,7 @@
 #include <opencv2/opencv.hpp>  
 #include "vision/grid.hpp"
 #include "vision/grid.cpp"
+#include "vision/terrain_map.cpp"
 
   
 using namespace std;  
@@ -174,6 +175,7 @@ int main()
     double depth2screen=255.0*scale/4.5;
     
     int framecount=0;
+    int writecount=0;
     int nextwrite=1;
 
     camera_transform camera_TF;
@@ -214,7 +216,8 @@ int main()
         
         Mat debug_image(Size(depth_w, depth_h), CV_8UC3, cv::Scalar(0));
         
-        for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
+	if (framecount<=1) // clear the grid
+          for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
         
         const int realsense_left_start=50; // invalid data left of here
         for (int y = 0; y < depth_h; y++)
@@ -273,7 +276,7 @@ int main()
             int x=w*depthscale+dx;
             int y=h*depthscale+dy;
             if (g.getCount()>0) {
-              cv::Vec3b color(50+g.getMin(), 50+g.getMean(), 50+g.getMax());
+              cv::Vec3b color(50+g.getMin(), 50+g.getTrimmedMean(), 50+g.getMax());
               
               world_depth.at<cv::Vec3b>(y,x)=color;
             }
@@ -283,6 +286,21 @@ int main()
         
         
         int k = waitKey(10);  
+	if (framecount==10 || k == 'i') // image dump 
+	{
+		framecount=0;
+		char filename[100];
+		sprintf(filename,"world_depth_%03d",writecount);
+
+		imwrite((std::string(filename)+".png").c_str(),world_depth);
+
+		FILE *f=fopen((std::string(filename)+".bin").c_str(),"wb");
+		fwrite(&grid[0],obstacle_grid::GRIDY*obstacle_grid::GRIDX,sizeof(grid[0]),f);
+		fclose(f);
+
+		printf("Stored image to file %s\n",filename);
+		writecount++;
+	}
         if (k == 27 || k=='q')  
             break;  
     }  

@@ -3,7 +3,7 @@
 //Started 11/10/18 (public domain)
 
 #include <vector>
-#include "grid.cpp"
+#include "grid.hpp"
 #include "terrain_map.hpp"
 
 x_y_coord::x_y_coord()
@@ -16,6 +16,13 @@ x_y_coord::x_y_coord(int x, int y)
 	_y=y;
 }
 
+
+// bitwise grid flags we'll be using in this file
+enum {
+	atShadow = 1<<0,
+	beenChecked = 1<<1,
+	impassible = 1<<2,
+};
 
 
 
@@ -37,7 +44,7 @@ void terrainMap(std::vector<grid_square> & terrain)
 	{
 		if (terrain[i].getCount()<=minForShadow)
 		{
-			terrain[i].atShadow=true;
+			terrain[i].setFlag(atShadow);
 		}
 	}
 
@@ -54,12 +61,12 @@ void terrainMap(std::vector<grid_square> & terrain)
 	std::vector<std::vector<x_y_coord>> obstacles;
 	for(int i=0; i<terrain.size(); ++i)
 	{
-		if(!terrain[i].beenChecked&&terrain[i].atShadow)
+		if(!terrain[i].getFlag(beenChecked)&&terrain[i].getFlag(atShadow))
 		{	
 			obstacles.push_back(std::vector<x_y_coord>());
 			findGroupings(x_y_coord(i/429, i%429), terrain,  obstacles[obstacles.size()-1]);
 		}
-		terrain[i].beenChecked=true;
+		terrain[i].setFlag(beenChecked);
 	}
 
 
@@ -91,7 +98,7 @@ void terrainMap(std::vector<grid_square> & terrain)
 	// 	{
 	// 		for(int j=0; j<obstacles[i].size; ++j)
 	// 		{
-	// 			terrain[obstacles[i][j]].impassable=true;
+	// 			terrain[obstacles[i][j]].setFlag(impassable);
 	// 		}
 	// 	}
 	// }
@@ -110,12 +117,12 @@ void terrainMap(std::vector<grid_square> & terrain)
 
 void findGroupings(x_y_coord start, std::vector<grid_square> & terrain, std::vector<x_y_coord> & grouping)
 {
-	if(terrain[getPos(start._x, start._y)].beenChecked)
+	if(terrain[getPos(start._x, start._y)].getFlag(beenChecked))
 	{
 		return;
 	}
-	terrain[getPos(start._x, start._y)].beenChecked=true;
-	if (terrain[getPos(start._x+1, start._y)].atShadow)
+	terrain[getPos(start._x, start._y)].setFlag(beenChecked);
+	if (terrain[getPos(start._x+1, start._y)].getFlag(atShadow))
 	{
 		if(!isInVector(grouping, x_y_coord(start._x+1, start._y)))
 		{
@@ -124,7 +131,7 @@ void findGroupings(x_y_coord start, std::vector<grid_square> & terrain, std::vec
 		}
 	}
 
-	if (terrain[getPos(start._x, start._y-1)].atShadow)
+	if (terrain[getPos(start._x, start._y-1)].getFlag(atShadow))
 	{
 		if(!isInVector(grouping, x_y_coord(start._x, start._y-1)))
 		{	
@@ -133,7 +140,7 @@ void findGroupings(x_y_coord start, std::vector<grid_square> & terrain, std::vec
 		}
 	}
 
-	if (terrain[getPos(start._x-1, start._y)].atShadow)
+	if (terrain[getPos(start._x-1, start._y)].getFlag(atShadow))
 	{
 		if(!isInVector(grouping, x_y_coord(start._x-1, start._y)))
 		{
@@ -142,7 +149,7 @@ void findGroupings(x_y_coord start, std::vector<grid_square> & terrain, std::vec
 		}
 	}
 
-	if (terrain[getPos(start._x, start._y+1)].atShadow)
+	if (terrain[getPos(start._x, start._y+1)].getFlag(atShadow))
 	{
 		if(!isInVector(grouping, x_y_coord(start._x, start._y+1)))
 		{	
