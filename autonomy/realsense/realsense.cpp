@@ -56,9 +56,9 @@ public:
   coord_rotator Z_rotation; // camera panning
   
   camera_transform(real_t camera_Z_angle=0.0)
-    :camera(0.0,0.0,75.0),  // camera position
+    :camera(147+90.0,40.0,75.0),  // camera position
      camera_tilt(-20), // X axis rotation (camera mounting tilt)
-     Z_rotation(camera_Z_angle) // Z axis rotation
+     Z_rotation(camera_Z_angle-90) // Z axis rotation
   {
   }
   
@@ -129,21 +129,134 @@ public:
 };
 
   
-/// Keeps track of location
+/// Keeps track of location of obstacles
 class obstacle_grid {
 public:
   enum {GRIDSIZE=4}; // cm per grid cell
-  enum {GRIDX=(50+807+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
-  enum {GRIDY=(50+369+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDX=(30+538+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
+  enum {GRIDY=(30+369+GRIDSIZE-1)/GRIDSIZE};
   enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
+
+  /* Raster pattern of GRIDX * GRIDY cells,
+     where we accumulate depth data. */
+  std::vector<grid_square> grid;
   
-  obstacle_grid() {
-    
+  obstacle_grid() 
+    :grid(obstacle_grid::GRIDTOTAL)
+  {
   }
 
-  // Detected obstacles (mostly for display as a GUI)
-  cv::Mat obstacles;
+  /* Flush all stored points */
+  void clear(void) {
+    for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
+  }
+
+  /* Add this point to our grid */ 
+  void add(vec3 world) {
+              unsigned int x=world.x*(1.0/obstacle_grid::GRIDSIZE);
+              unsigned int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
+              if (x<obstacle_grid::GRIDX && y<obstacle_grid::GRIDY)
+              {
+                grid[y*obstacle_grid::GRIDX + x].addPoint(world.z);
+              }
+  }
+
+  /* Get a top-down debug image.
+     Scale the image up by depthscale */
+  cv::Mat get_debug_2D(int depthscale) const
+  {
+        int nw=obstacle_grid::GRIDX*depthscale;
+        int nh=obstacle_grid::GRIDY*depthscale;
+        cv::Mat world_depth(cv::Size(nw,nh),
+          CV_8UC3, cv::Scalar(0,0,0));
+        for (int h = 0; h < obstacle_grid::GRIDY; h++)
+        for (int w = 0; w < obstacle_grid::GRIDX; w++)
+        {
+          const grid_square &g=grid[h*obstacle_grid::GRIDX + w];
+          for (int dy=0; dy<depthscale;dy++)
+          for (int dx=0; dx<depthscale;dx++)
+          {
+            int x=w*depthscale+dx;
+            int y=h*depthscale+dy;
+            if (g.getCount()>0) {
+              cv::Vec3b color(50+g.getMin(), 50+g.getTrimmedMean(), 50+g.getMax());
+              
+              world_depth.at<cv::Vec3b>(nh-1-y,x)=color;
+            }
+          }
+        }
+
+        return world_depth;
+  }
+
+  /* Write this obstacle grid to this base filename */
+  void write(std::string filename) const
+  {
+
+		imwrite((filename+".png").c_str(),get_debug_2D(1));
+		
+		FILE *f=fopen((filename+".bin").c_str(),"wb");
+		fwrite(&grid[0],obstacle_grid::GRIDY*obstacle_grid::GRIDX,sizeof(grid[0]),f);
+		fclose(f);
+  }
+
+
 };
+
+/// Keeps track of platform position
+class stepper_controller
+{
+	/* Angle (degrees) that centerline of camera is facing */
+	float camera_Z_angle;
+	int last_steps;
+
+	bool do_seek(int steps) {
+		if (steps==0) return true;
+
+		int dir=+1;
+		if (steps<0) dir=-1;
+
+		int startup=2; // extra steps at startup
+		steps+=dir*startup; 
+
+		int backlash=24; // extra steps when changing direction
+		if (steps*last_steps<0) // changing directions, add backlash
+			steps+=dir*backlash;
+		last_steps=steps;
+		
+		char cmd[256];
+		sprintf(cmd,"step.sh %d",steps);
+		if (!system(cmd)) return false;
+		return true;
+	}
+
+public:
+	stepper_controller() {
+		last_steps=0;
+		setup_seek();
+	}
+	
+	void setup_seek(void) {
+		camera_Z_angle=32;
+		do_seek(-300);
+	}
+	void absolute_seek(float degrees) {
+		relative_seek(degrees-camera_Z_angle);
+	}
+	void relative_seek(float degrees) {
+		float deg_to_steps=(107.0-24)/58.0;
+		int steps=(int)(degrees*deg_to_steps);
+		do_seek(steps);
+		camera_Z_angle+=steps/deg_to_steps;
+		printf("Seeked camera to angle %.0f degrees\n", camera_Z_angle);
+	}
+
+	// Return the current stepper angle, in degrees 
+	float get_angle_deg(void) const {
+		return camera_Z_angle;
+	}
+};
+
 
 
 int main()  
@@ -152,6 +265,8 @@ int main()
     rs2::config cfg;  
   
     bool bigmode=true;
+    stepper_controller stepper;
+    float camera_Z_angle=0; 
 
     int fps=6;
     // fps=30; // USB 3.0 only
@@ -178,8 +293,7 @@ int main()
     int writecount=0;
     int nextwrite=1;
 
-    camera_transform camera_TF;
-    std::vector<grid_square> grid(obstacle_grid::GRIDTOTAL);
+    obstacle_grid obstacles;
     
     rs2::frameset frames;  
     while (true)  
@@ -216,9 +330,9 @@ int main()
         
         Mat debug_image(Size(depth_w, depth_h), CV_8UC3, cv::Scalar(0));
         
-	if (framecount<=1) // clear the grid
-          for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
+	if (framecount<=10) obstacles.clear(); // clear the grid
         
+        camera_transform camera_TF(stepper.get_angle_deg());
         const int realsense_left_start=50; // invalid data left of here
         for (int y = 0; y < depth_h; y++)
         for (int x = realsense_left_start; x < depth_w; x++)
@@ -234,15 +348,6 @@ int main()
             vec3 cam = depth_to_3D.lookup(depth,x,y);
             vec3 world = camera_TF.world_from_camera(cam);
             
-            if (world.y>0.0 && world.y<200.0) { // green Y stripe
-              const cv::Vec3b green(0,255,0);
-              debug_color=green;
-            }
-            if (world.x>0.0 && world.x<20.0) { // red X stripe
-              const cv::Vec3b red(0,0,255);
-              debug_color=red;
-            }
-            
             if (world.z<5.0 && world.z>-30.0) { // blue Z stripe
               const cv::Vec3b blue(255,0,0);
               debug_color=blue;
@@ -250,12 +355,7 @@ int main()
             
             if (world.z<150.0 && world.z>-50.0)
             {
-              unsigned int x=world.x*(1.0/obstacle_grid::GRIDSIZE)+obstacle_grid::GRIDX/2;
-              unsigned int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
-              if (x<obstacle_grid::GRIDX && y<obstacle_grid::GRIDY)
-              {
-                grid[y*obstacle_grid::GRIDX + x].addPoint(world.z);
-              }
+              obstacles.add(world);
             }
             
           }
@@ -263,42 +363,24 @@ int main()
         }   
         //imshow("Depth image",debug_image);
         
-        enum {depthscale=6};
-        cv::Mat world_depth(cv::Size(obstacle_grid::GRIDX*depthscale,obstacle_grid::GRIDY*depthscale), 
-          CV_8UC3, cv::Scalar(0,0,0));
-        for (int h = 0; h < obstacle_grid::GRIDY; h++)
-        for (int w = 0; w < obstacle_grid::GRIDX; w++)
-        {
-          grid_square &g=grid[h*obstacle_grid::GRIDX + w];
-          for (int dy=0; dy<depthscale;dy++)
-          for (int dx=0; dx<depthscale;dx++)
-          {
-            int x=w*depthscale+dx;
-            int y=h*depthscale+dy;
-            if (g.getCount()>0) {
-              cv::Vec3b color(50+g.getMin(), 50+g.getTrimmedMean(), 50+g.getMax());
-              
-              world_depth.at<cv::Vec3b>(y,x)=color;
-            }
-          }
-        }
-        imshow("2D World",world_depth);
-        
+        cv::Mat world_depth=obstacles.get_debug_2D(6);
+        imshow("2D World",world_depth);        
         
         int k = waitKey(10);  
-	if (framecount==10 || k == 'i') // image dump 
+	if (framecount>=20 || k == 'i') // image dump 
 	{
 		framecount=0;
 		char filename[100];
-		sprintf(filename,"world_depth_%03d",writecount);
-
-		imwrite((std::string(filename)+".png").c_str(),world_depth);
-
-		FILE *f=fopen((std::string(filename)+".bin").c_str(),"wb");
-		fwrite(&grid[0],obstacle_grid::GRIDY*obstacle_grid::GRIDX,sizeof(grid[0]),f);
-		fclose(f);
+		sprintf(filename,"world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
+		obstacles.write(filename);
 
 		printf("Stored image to file %s\n",filename);
+
+		if (stepper.get_angle_deg()<130)
+			stepper.relative_seek(10.0);
+		else
+			stepper.absolute_seek(35.0);
+
 		writecount++;
 	}
         if (k == 27 || k=='q')  
