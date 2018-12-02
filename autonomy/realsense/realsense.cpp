@@ -16,20 +16,6 @@
 using namespace std;  
 using namespace cv;  
 
-/// Make it easy to swap between float (fast for big arrays) and double
-typedef float real_t;
-
-/// Simple 3D vector
-class vec3 {
-public:
-  real_t x;
-  real_t y;
-  real_t z;
-  
-  vec3(real_t X=0.0, real_t Y=0.0, real_t Z=0.0) {
-    x=X; y=Y; z=Z;
-  }
-};
 
 /// Rotate coordinates using right hand rule
 class coord_rotator {
@@ -128,80 +114,7 @@ public:
   }
 };
 
-  
-/// Keeps track of location of obstacles
-class obstacle_grid {
-public:
-  enum {GRIDSIZE=4}; // cm per grid cell
-  enum {GRIDX=(30+538+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
-  enum {GRIDY=(30+369+GRIDSIZE-1)/GRIDSIZE};
-  enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
 
-  /* Raster pattern of GRIDX * GRIDY cells,
-     where we accumulate depth data. */
-  std::vector<grid_square> grid;
-  
-  obstacle_grid() 
-    :grid(obstacle_grid::GRIDTOTAL)
-  {
-  }
-
-  /* Flush all stored points */
-  void clear(void) {
-    for (size_t i=0;i<grid.size();i++) grid[i]=grid_square();
-  }
-
-  /* Add this point to our grid */ 
-  void add(vec3 world) {
-              unsigned int x=world.x*(1.0/obstacle_grid::GRIDSIZE);
-              unsigned int y=world.y*(1.0/obstacle_grid::GRIDSIZE);
-              if (x<obstacle_grid::GRIDX && y<obstacle_grid::GRIDY)
-              {
-                grid[y*obstacle_grid::GRIDX + x].addPoint(world.z);
-              }
-  }
-
-  /* Get a top-down debug image.
-     Scale the image up by depthscale */
-  cv::Mat get_debug_2D(int depthscale) const
-  {
-        int nw=obstacle_grid::GRIDX*depthscale;
-        int nh=obstacle_grid::GRIDY*depthscale;
-        cv::Mat world_depth(cv::Size(nw,nh),
-          CV_8UC3, cv::Scalar(0,0,0));
-        for (int h = 0; h < obstacle_grid::GRIDY; h++)
-        for (int w = 0; w < obstacle_grid::GRIDX; w++)
-        {
-          const grid_square &g=grid[h*obstacle_grid::GRIDX + w];
-          for (int dy=0; dy<depthscale;dy++)
-          for (int dx=0; dx<depthscale;dx++)
-          {
-            int x=w*depthscale+dx;
-            int y=h*depthscale+dy;
-            if (g.getCount()>0) {
-              cv::Vec3b color(50+g.getMin(), 50+g.getTrimmedMean(), 50+g.getMax());
-              
-              world_depth.at<cv::Vec3b>(nh-1-y,x)=color;
-            }
-          }
-        }
-
-        return world_depth;
-  }
-
-  /* Write this obstacle grid to this base filename */
-  void write(std::string filename) const
-  {
-
-		imwrite((filename+".png").c_str(),get_debug_2D(1));
-		
-		FILE *f=fopen((filename+".bin").c_str(),"wb");
-		fwrite(&grid[0],obstacle_grid::GRIDY*obstacle_grid::GRIDX,sizeof(grid[0]),f);
-		fclose(f);
-  }
-
-
-};
 
 /// Keeps track of platform position
 class stepper_controller

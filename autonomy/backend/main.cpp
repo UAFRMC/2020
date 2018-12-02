@@ -190,14 +190,14 @@ public:
 
     // Add a few hardcoded obstacles, to show off path planning
     int x=130;
-    int y=160;
+    int y=180;
     
     //Hard wall
     if (true)
-     for (int y=0;y<240;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,18);
+     for (int y=180;y<240;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,18);
     
     // Isolated big obstacle in middle
-    navigator.mark_obstacle(x+navigator_xshift,y,25);
+    navigator.mark_obstacle(x+navigator_xshift,180,25);
     
     // Big spike on left
     navigator.mark_obstacle(170,y,25);
@@ -695,7 +695,10 @@ void robot_manager_t::autonomous_state()
     if (autonomous_drive(target,dump_target_angle)
       || (fabs(sim.loc.x-target.x)<20 && sim.loc.y<target.y+10) )
     { 
-      if (driver_test) enter_state(state_drive_to_mine);
+      if (driver_test) {
+        mine_target_loc.y=50+(rand()%250); // retarget every run
+        enter_state(state_drive_to_mine);
+      }
       else enter_state(state_dump_contact);
     }
   }
