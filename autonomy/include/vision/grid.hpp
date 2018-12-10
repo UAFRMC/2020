@@ -104,7 +104,7 @@ public:
     for (int h = 0; h < obstacle_grid::GRIDY; h++)
     for (int w = 0; w < obstacle_grid::GRIDX; w++)
     {
-      const grid_square &g=at(h,w);
+      const grid_square &g=at(w,h);
       for (int dy=0; dy<depthscale;dy++)
       for (int dx=0; dx<depthscale;dx++)
       {
