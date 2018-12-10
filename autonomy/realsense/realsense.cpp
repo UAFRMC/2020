@@ -12,9 +12,12 @@
 #include "vision/grid.cpp"
 #include "vision/terrain_map.cpp"
 
+#include "aruco_localize.cpp"
   
 using namespace std;  
 using namespace cv;  
+
+bool show_GUI=true; // show debug windows onscreen
 
 
 /// Rotate coordinates using right hand rule
@@ -172,21 +175,32 @@ public:
 
 
 
-int main()  
+int main(int argc,const char *argv[])  
 {  
     rs2::pipeline pipe;  
     rs2::config cfg;  
   
-    bool bigmode=true;
+    bool bigmode=true; // high res 720p input
+    int fps=6; // framerate (USB 2.0 compatible by default)
+    
+    for (int argi=1;argi<argc;argi++) {
+      std::string arg=argv[argi];
+      if (arg=="--nogui") show_GUI=false;
+      else if (arg=="--coarse") bigmode=false; // lowres mode
+      else if (arg=="--fast") fps=30; // USB-3 only
+      else {
+        std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
+        return 1;
+      }
+    }
+    
     stepper_controller stepper;
     float camera_Z_angle=0; 
 
-    int fps=6;
-    // fps=30; // USB 3.0 only
     int depth_w=1280, depth_h=720; // high res mode: definitely more detail visible
     int color_w=1280, color_h=720; 
     if (!bigmode) { // low res
-      fps=15;
+      if (fps<10) fps=15;
       depth_w=480; depth_h=270;
       color_w=424; color_h=240;
     }
@@ -205,6 +219,8 @@ int main()
     int framecount=0;
     int writecount=0;
     int nextwrite=1;
+    
+    aruco_localizer aruco_loc;
 
     obstacle_grid obstacles;
     
@@ -232,7 +248,10 @@ int main()
         
         // Make OpenCV versions of raw pixels:
         //Mat depth_raw(Size(depth_w, depth_h), CV_16U, depth_data, Mat::AUTO_STEP);  
-        //Mat color(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
+        Mat color_image(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
+        if (aruco_loc.find_markers(color_image))
+          if (show_GUI) 
+            imshow("Color Image",color_image);
         
         // Display raw data onscreen
         //imshow("Depth", depth_raw);
@@ -277,7 +296,7 @@ int main()
         //imshow("Depth image",debug_image);
         
         cv::Mat world_depth=obstacles.get_debug_2D(6);
-        imshow("2D World",world_depth);        
+        if (show_GUI) imshow("2D World",world_depth);        
         
         int k = waitKey(10);  
 	if (framecount>=20 || k == 'i') // image dump 
