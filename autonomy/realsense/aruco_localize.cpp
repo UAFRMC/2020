@@ -30,6 +30,7 @@ struct marker_info_t {
 const static marker_info_t marker_info[]={
 	{-1,0.145}, // fallback default case
 	
+	{13, 0.250}, // creeper (on 30cm full-size test plate)
 	{17, 0.145}, // bird (on 20cm half-size test plate)
 	{16, 0.040}, // elipsis (on tiny 5cm test plate)
 };
