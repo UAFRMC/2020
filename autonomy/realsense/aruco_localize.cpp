@@ -167,7 +167,8 @@ void extract_location(location_binary &bin,const aruco::Marker &marker)
 
 
 	// Invert, to convert marker-from-camera into camera-from-marker
-	cv::Mat back=full.inv();
+	//cv::Mat back=full.inv(); // marker on scoring trough, camera on robot
+	cv::Mat back=full; // marker on robot, camera on scoring trough
 
   if (false) {
 	  // Splat marker's inverse matrix to screen, for debugging
@@ -181,16 +182,16 @@ void extract_location(location_binary &bin,const aruco::Marker &marker)
 	bin.valid=1;
 	double scale=mi.true_size;
 	bin.x=back.at<float>(0,3)*scale+mi.x_shift;
-	bin.y=back.at<float>(1,3)*scale+mi.y_shift;
-	bin.z=back.at<float>(2,3)*scale+mi.z_shift;
-	bin.angle=180.0/M_PI*atan2(back.at<float>(1,0),back.at<float>(0,0))+mi.rotate;
+	bin.y=back.at<float>(2,3)*scale+mi.y_shift;
+	bin.z=(-back.at<float>(1,3)*scale)+mi.z_shift;
+	bin.angle=180.0/M_PI*atan2(back.at<float>(2,0),back.at<float>(0,0))+mi.rotate;
 	bin.marker_ID=marker.id;
 
 	// Print grep-friendly output
 	printf("Marker %d: Camera %.3f %.3f %.3f meters, heading %.1f degrees\n",
 	       marker.id, bin.x,bin.y,bin.z,bin.angle
 	      );
-
+	fflush(stdout);
 }
 
 
