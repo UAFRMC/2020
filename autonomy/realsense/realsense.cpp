@@ -141,6 +141,7 @@ class stepper_controller
 			steps+=dir*backlash;
 		last_steps=steps;
 		
+		fflush(stdout); fflush(stderr);
 		char cmd[256];
 		sprintf(cmd,"step.sh %d",steps);
 		if (!system(cmd)) return false;
