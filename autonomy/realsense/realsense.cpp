@@ -18,6 +18,7 @@ using namespace std;
 using namespace cv;  
 
 bool show_GUI=true; // show debug windows onscreen
+bool pan_stepper=false; // automatically pan stepper motor around
 
 
 /// Rotate coordinates using right hand rule
@@ -149,7 +150,8 @@ class stepper_controller
 public:
 	stepper_controller() {
 		last_steps=0;
-		setup_seek();
+		if (pan_stepper)
+			setup_seek();
 	}
 	
 	void setup_seek(void) {
@@ -187,6 +189,7 @@ int main(int argc,const char *argv[])
       std::string arg=argv[argi];
       if (arg=="--nogui") show_GUI=false;
       else if (arg=="--coarse") bigmode=false; // lowres mode
+      else if (arg=="--pan") pan_stepper=true; // pan around
       else if (arg=="--fast") fps=30; // USB-3 only
       else {
         std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
@@ -299,7 +302,7 @@ int main(int argc,const char *argv[])
         if (show_GUI) imshow("2D World",world_depth);        
         
         int k = waitKey(10);  
-	if (framecount>=20 || k == 'i') // image dump 
+	if ((pan_stepper && framecount>=20) || k == 'i') // image dump 
 	{
 		framecount=0;
 		char filename[100];
