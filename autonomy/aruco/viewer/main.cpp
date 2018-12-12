@@ -397,7 +397,7 @@ int main(int argc,char **argv)
 	int skipPhase=0;
 
 	int wid=640, ht=480;
-	const char *dictionary="ARUCO";
+	const char *dictionary="TAG25h9";
 	for (int argi=1; argi<argc; argi++) {
 		if (0==strcmp(argv[argi],"-gui")) showGUI=true;
 		else if (0==strcmp(argv[argi],"-cam")) camNo=atoi(argv[++argi]);
