@@ -55,6 +55,16 @@ public:
   vec3(real_t X=0.0, real_t Y=0.0, real_t Z=0.0) {
     x=X; y=Y; z=Z;
   }
+
+  friend vec3 operator+(const vec3 &a,const vec3 &b) {
+     return vec3(a.x+b.x, a.y+b.y, a.z+b.z);
+  }
+  friend vec3 operator-(const vec3 &a,const vec3 &b) {
+     return vec3(a.x-b.x, a.y-b.y, a.z-b.z);
+  }
+  friend vec3 operator*(const vec3 &a,real_t scale) {
+     return vec3(a.x*scale, a.y*scale, a.z*scale);
+  }
 };
 
 

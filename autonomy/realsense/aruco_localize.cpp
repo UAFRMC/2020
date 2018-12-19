@@ -15,38 +15,6 @@
 #include "aruco/aruco.h"
 #include "aruco/cvdrawingutils.h"
 
-// Store info about how the markers are scaled, positioned and oriented
-struct marker_info_t {
-	int id; // marker's ID, from 0-31
-	float true_size; // side length, in meters, of black part of pattern
-	
-	float x_shift; // marker-relative translation to robot origin, in meters from center of pattern
-	float y_shift; 
-	float z_shift; 
-	
-	float rotate; // Z axis rotation angle of marker relative to robot
-};
-
-const static marker_info_t marker_info[]={
-	{-1,0.145}, // fallback default case
-	
-	{13, 0.250}, // creeper (on 30cm full-size test plate)
-	{17, 0.145}, // bird (on 20cm half-size test plate)
-	{16, 0.040}, // elipsis (on tiny 5cm test plate)
-};
-
-// Look up the calibration parameters for this marker
-const marker_info_t &get_marker_info(int id) {
-	for (int i=1;i<sizeof(marker_info)/sizeof(marker_info_t);i++) {
-		if (marker_info[i].id==id) 
-			return marker_info[i];
-	}
-	return marker_info[0];
-}
-
-
-#include "aurora/location_binary.h"
-
 
 class aruco_localizer {
 public:
@@ -78,7 +46,14 @@ aruco_localizer()
   
 }
 
-bool find_markers(cv::Mat &color_image) {
+/**
+  The marker_watcher class has one required method:
+     void found_marker(cv::Mat &matrix4x4,const aruco::Marker &marker,int ID);
+  matrix4x4 is the marker's 4x4 perspective transform matrix, in camera coords.
+  ID is the Aruco marker number observed.
+*/
+template <class marker_watcher>
+bool find_markers(cv::Mat &color_image,marker_watcher &watcher) {
 	skipPhase=(skipPhase+1)%skipCount;
 	if (skipPhase!=0) return false; // skip this frame
 	
@@ -91,12 +66,9 @@ bool find_markers(cv::Mat &color_image) {
 	MDetector.detect(color_image,TheMarkers,cam_param,1.0,true);
 	
 	// Extract locations from different markers:
-	enum {n_locs=8};
-	location_binary locs[n_locs];
-	
-	for (unsigned int i=0; i<std::min((int)TheMarkers.size(),(int)n_locs); i++) {
+	for (unsigned int i=0; i<(int)TheMarkers.size(); i++) {
 		aruco::Marker &marker=TheMarkers[i];
-		extract_location(locs[i],marker);
+		extract_location(marker,watcher);
 	}
 	
 	if (true) // draw debug info
@@ -130,10 +102,9 @@ bool find_markers(cv::Mat &color_image) {
 /* Extract location data from this valid, detected marker. 
    Does not modify the location for an invalid marker.
 */
-void extract_location(location_binary &bin,const aruco::Marker &marker)
+template <class marker_watcher>
+cv::Mat extract_location(const aruco::Marker &marker,marker_watcher &watcher)
 {
-	const marker_info_t &mi=get_marker_info(marker.id);
-
 	// Extract 3x3 rotation matrix
 	cv::Mat Rot(3,3,CV_32FC1);
 	cv::Rodrigues(marker.Rvec, Rot); // euler angles to rotation matrix
@@ -158,12 +129,6 @@ void extract_location(location_binary &bin,const aruco::Marker &marker)
 	full.at<float>(3,2)=0.0;
 	full.at<float>(3,3)=1.0;
 	
-	if (mi.rotate==90) {
-		for (int i=0; i<3; i++) {
-			std::swap(full.at<float>(i,0),full.at<float>(i,2)); // swap X and Z
-			full.at<float>(i,0)*=-1; // invert (new) X
-		}
-	}
 
 
 	// Invert, to convert marker-from-camera into camera-from-marker
@@ -179,19 +144,7 @@ void extract_location(location_binary &bin,const aruco::Marker &marker)
 	  }
   }
 	
-	bin.valid=1;
-	double scale=mi.true_size;
-	bin.x=back.at<float>(0,3)*scale+mi.x_shift;
-	bin.y=back.at<float>(2,3)*scale+mi.y_shift;
-	bin.z=(-back.at<float>(1,3)*scale)+mi.z_shift;
-	bin.angle=180.0/M_PI*atan2(back.at<float>(2,0),back.at<float>(0,0))+mi.rotate;
-	bin.marker_ID=marker.id;
-
-	// Print grep-friendly output
-	printf("Marker %d: Camera %.3f %.3f %.3f meters, heading %.1f degrees\n",
-	       marker.id, bin.x,bin.y,bin.z,bin.angle
-	      );
-	fflush(stdout);
+	watcher.found_marker(back,marker,marker.id);
 }
 
 
