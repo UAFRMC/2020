@@ -124,56 +124,28 @@ void findGroupings(x_y_coord start, std::vector<grid_square> & terrain, std::vec
 	terrain[getPos(start._x, start._y)].setFlag(beenChecked);
 	if (terrain[getPos(start._x+1, start._y)].getFlag(atShadow))
 	{
-		if(!isInVector(grouping, x_y_coord(start._x+1, start._y)))
-		{
-			grouping.push_back(x_y_coord(start._x+1, start._y));
-			findGroupings(x_y_coord(start._x+1, start._y), terrain, grouping);
-		}
+		grouping.push_back(x_y_coord(start._x+1, start._y));
+		findGroupings(x_y_coord(start._x+1, start._y), terrain, grouping);
 	}
 
 	if (terrain[getPos(start._x, start._y-1)].getFlag(atShadow))
 	{
-		if(!isInVector(grouping, x_y_coord(start._x, start._y-1)))
-		{	
-			grouping.push_back(x_y_coord(start._x, start._y-1));
-			findGroupings(x_y_coord(start._x, start._y-1), terrain, grouping);
-		}
+		grouping.push_back(x_y_coord(start._x, start._y-1));
+		findGroupings(x_y_coord(start._x, start._y-1), terrain, grouping);
 	}
 
 	if (terrain[getPos(start._x-1, start._y)].getFlag(atShadow))
 	{
-		if(!isInVector(grouping, x_y_coord(start._x-1, start._y)))
-		{
-			grouping.push_back(x_y_coord(start._x-1, start._y));
-			findGroupings(x_y_coord(start._x-1, start._y), terrain, grouping);
-		}
+		grouping.push_back(x_y_coord(start._x-1, start._y));
+		findGroupings(x_y_coord(start._x-1, start._y), terrain, grouping);
 	}
 
 	if (terrain[getPos(start._x, start._y+1)].getFlag(atShadow))
 	{
-		if(!isInVector(grouping, x_y_coord(start._x, start._y+1)))
-		{	
-			grouping.push_back(x_y_coord(start._x, start._y+1));
-			findGroupings(x_y_coord(start._x, start._y+1), terrain, grouping);
-		}
+		grouping.push_back(x_y_coord(start._x, start._y+1));
+		findGroupings(x_y_coord(start._x, start._y+1), terrain, grouping);
 	}
 }
-
-
-
-bool isInVector(std::vector<x_y_coord> & toCheckAgainst, x_y_coord toCheck)
-{
-	for(int i=0; i<toCheckAgainst.size(); ++i)
-	{
-		if(toCheckAgainst[i]._x==toCheck._x&&toCheckAgainst[i]._y==toCheck._y)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-
 
 
 int getPos(int x, int y)
