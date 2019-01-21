@@ -1,4 +1,10 @@
-
+/**
+  Holds a RealSense sensor, Raspberry Pi processor,
+  and 28BYJ geared stepper motor to make a computer-controlled
+  depth camera station.
+  
+  Dr. Orion Lawlor, lawlor@alaska.edu, 2018-10 (Public Domain)
+*/
 
 // Smoothness of rounded parts
 $fs=0.2; $fa=10; // fast
@@ -13,8 +19,6 @@ inch=25.4;
 realsense_hfov=90; // 86;
 // Vertical field of view for realsense
 realsense_vfov=60; // 57;
-// Tilt downward for realsense
-realsense_tilt=realsense_vfov/2;
 
 // Body of sensor (as a cube)
 realsense_body=[90,25,25];
@@ -30,7 +34,7 @@ realsense_ventilation=2;
 realsense_rounding=10;
 
 // USB-C cable, at RealSense end
-usb_C=[100,14,8];
+usb_C=[150,14,8];
 
 // Round this 2D profile like a realsense
 module realsense_outside_2D_rounding(more_rounding=0) {
@@ -46,12 +50,13 @@ module realsense_outside_2D() {
 }
 
 // Far-plane field of view
-module realsense_view_2D(more_rounding=0,farplane) {
+module realsense_view_2D(viewscale=1,farplane) {
 	translate([0,0,farplane])
 	minkowski() {
-		realsense_outside_2D_rounding(more_rounding)
+		smear_left=12*viewscale;
+		translate([-smear_left/2,0]) 
 			square([
-				2*tan(realsense_hfov/2)*farplane,
+				smear_left + 2*tan(realsense_hfov/2)*farplane,
 				2*tan(realsense_vfov/2)*farplane
 				],center=true);
 		realsense_outside_2D();
@@ -59,22 +64,22 @@ module realsense_view_2D(more_rounding=0,farplane) {
 }
 
 // Solidified field of view
-module realsense_view_3D(fatten=0,extra_view=0) {
+module realsense_view_3D(fatten=0,viewscale=1) {
 	translate([0,0,-3])
 	hull() {
 		linear_extrude(height=1,convexity=2)
 			offset(r=fatten) realsense_outside_2D();
 		
-		farplane=50+extra_view-fatten;
+		farplane=50*viewscale-fatten;
 		translate([0,0,farplane])
 		linear_extrude(height=1,convexity=2)
-			offset(r=fatten) realsense_view_2D(extra_view*0.5,farplane);
+			offset(r=fatten) realsense_view_2D(viewscale,farplane);
 	}
 }
 
 // Realsense container, generic version
-module realsense_holder_3D(fatten=0,extra_view=0) {
-	realsense_view_3D(fatten,extra_view);
+module realsense_holder_3D(fatten=0,viewscale=1) {
+	realsense_view_3D(fatten,viewscale);
 	
 	translate([0,0,-realsense_body[2]-fatten+0.1])
 	linear_extrude(height=realsense_body[2]+2*fatten,convexity=2)
@@ -94,7 +99,7 @@ module realsense_plus(wall_thickness=2.0) {
 	rotate(realsense_reference_orient)
 	translate(realsense_reference_point)
 	union() {
-		realsense_holder_3D(wall_thickness,0.0);
+		realsense_holder_3D(wall_thickness,1.0);
 		
 		realsense_backbolt_mounts() 
 			cylinder(d1=7,d2=15,h=realsense_backbolt_length);
@@ -111,7 +116,7 @@ module realsense_minus(wall_thickness=2.0) {
 			
 			// Space for body and view
 			difference() {
-				realsense_holder_3D(0.0,25.0);
+				realsense_holder_3D(0.0,2.0);
 				
 				// Inset for bottom mounting bolt
 				translate([0,-0.5*realsense_body[1]-1,bottom_bolt_Z]) rotate([90,0,0]) 
@@ -145,7 +150,7 @@ wall=1.2;
 pivot_top_Y=25;
 pivot_bottom_Y=-175;
 
-box_left_X=-105;
+box_left_X=-115;
 box_right_X=70;
 box_top_Y=pivot_top_Y-5;
 box_bottom_Y=pivot_bottom_Y;
