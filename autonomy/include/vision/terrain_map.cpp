@@ -78,20 +78,21 @@ void terrainMap(std::vector<grid_square> & terrain)
 	//to find if the height of the areas differ. If the areas below 
 	//have a higher height, the obstacle is a rock. If the height is 
 	//the same, or close to the same, it is a hole. 
-
 	
-
-
-
-
-
-
-
-
-
-
-
-
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	// for(int i=0; i<obstacles.size(); ++i)
 	// {
 	// 	for(int i=0; i<obstacles.size(); ++i)

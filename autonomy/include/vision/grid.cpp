@@ -33,13 +33,13 @@ void grid_square::addPoint(float z)
 float grid_square::getMean() const
 {
 	float total=count;
-	return sum/total;
+	return sum/count;
 }
 float grid_square::getTrimmedMean() const
 {
 	if (count>2) {
 		float total=count;
-		return (sum-max-min)/total;
+		return (sum-max-min)/(count-2);
 	}
 	else {
 		return getMean();
