@@ -1,5 +1,5 @@
 OPTS=-O3
-CFLAGS= -std=c++11 $(OPTS)
+CFLAGS= -std=c++14 $(OPTS)
 LDFLAGS=  -L/usr/local/lib -lzmq
 
 all: network-client network-server
