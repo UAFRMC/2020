@@ -11,6 +11,6 @@ network-server: hello_server.cpp
 	g++ $(CFLAGS) $< $(LDFLAGS)  -o $@
 
 clean:
-	- rm kinect
+	- rm network-client network-server
 
 
