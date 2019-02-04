@@ -19,7 +19,10 @@ int main (int argc, char *argv[])
     //  Socket to talk to server
     std::cout << "Collecting updates from weather server…\n" << std::endl;
     zmq::socket_t subscriber (context, ZMQ_SUB);
-    subscriber.connect("tcp://localhost:5556");
+    subscriber.connect("tcp://10.10.10.100:5556");
+    
+    // Subscribe to all messages from server
+    subscriber.setsockopt(ZMQ_SUBSCRIBE,"",0);
 
     while (true) {
 
