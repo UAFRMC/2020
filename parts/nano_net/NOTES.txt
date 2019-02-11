@@ -1,0 +1,33 @@
+Basic idea: instead of one big monolithic Arduino, we have dedicated motor controller micros, in their own 3D-printed cases.  E.g., one left side, one right side, one for mining head.
+
+
++ Use simpler, more reliable parts (spare electronics possible)
++ Less wire crossing the robot
+- More parts to build
+
+
+UN178 motor controller x2, each doing 2 motors (4 total motors)
+
+	2x PWM inputs, one each for A and B motors
+	4x digital inputs for A and B sides
+	gnd in
+
+3-pin encoder inputs (x4? x6?).  Servo 3-pin cables: gnd, 5v, encoder
+	1 per controlled motor
+	Plus 2 spares: redundant encoders, bag up/down, etc.
+
+RJ-45 serial uplink to main controller: 5v (orange), ground (orange-white), tx0 (brown), rx0 (green)
+
+Nano PWM-capable pins: 3, 5, 6, 9, 10, 11
+
+
+RA motor: dir 2,4  PWM 3
+RB motor: dir 5,7  PWM 6
+
+LA motor: dir 12,A0  PWM 11
+LB motor: dir 9,8   PWM 10
+
+
+
+
+
