@@ -18,6 +18,7 @@
 #include "aurora/network.h"
 #include "aurora/ui.h"
 #include "aurora/robot_serial.h"
+#include "aurora/pose_network.h"
 
 #include <SOIL/SOIL.h>
 
@@ -166,6 +167,9 @@ public:
   robot_serial arduino;
 
   robot_simulator sim;
+  
+  pose_subscriber *pose_net;
+  robot_markers_all markers; // last seen markers
 
   robot_manager_t() {
     // HACK: zero out main structures.
@@ -175,6 +179,7 @@ public:
     memset(&command,0,sizeof(command));
     robot.sensor.limit_top=1;
     robot.sensor.limit_bottom=1;
+    pose_net=0;
 
     // Start simulation in random real start location
     sim.loc.y=(rand()%10)*20.0+100.0;
@@ -219,6 +224,12 @@ public:
       navdebug<<"Proximity:\n";
       navigator.navigator.slice[angle].proximity.print(navdebug,1);
     }
+    
+    const char *pose_server=getenv("POSE_SERVER");
+    if (pose_server) {
+      printf("Network connection to '%s'\n",pose_server);
+      pose_net=new pose_subscriber(pose_server);
+    }    
   }
 
   // Do robot work.
@@ -825,9 +836,21 @@ void robot_manager_t::update(void) {
   }
 #endif
 
+  if (pose_net) {
+    if (pose_net->update(markers)) 
+    if (markers.pose.confidence>0.2) {
+      sim.loc.x=markers.pose.pos.x;
+      sim.loc.y=markers.pose.pos.y;
+      sim.loc.z=markers.pose.pos.z;
+      sim.loc.angle=sim.loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
+    }
+    robot_display_markers(markers);
+  }
+
   robot_display(sim.loc,0.5);
 // Show real and simulated robots
   robot_display(robot.loc);
+
 
   // Check for an updated location from the vive
   

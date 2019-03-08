@@ -1,5 +1,7 @@
 COMPILER=g++ -std=c++11
 
+LIB+=-lzmq
+
 DIRS=-I/usr/local/include -L/usr/local/lib -I../include
 
 SOIL_DIR=../include/SOIL

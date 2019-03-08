@@ -13,7 +13,6 @@
 #include "vision/terrain_map.cpp"
 
 #include "aruco_localize.cpp"
-#include "aurora/localization.h"
   
 using namespace std;  
 using namespace cv;  
@@ -130,57 +129,57 @@ public:
 /// Keeps track of platform position
 class stepper_controller
 {
-	/* Angle (degrees) that centerline of camera is facing */
-	float camera_Z_angle;
-	int last_steps;
+  /* Angle (degrees) that centerline of camera is facing */
+  float camera_Z_angle;
+  int last_steps;
 
-	bool do_seek(int steps) {
-		if (steps==0) return true;
+  bool do_seek(int steps) {
+    if (steps==0) return true;
 
-		int dir=+1;
-		if (steps<0) dir=-1;
+    int dir=+1;
+    if (steps<0) dir=-1;
 
-		int startup=2; // extra steps at startup
-		steps+=dir*startup; 
+    int startup=2; // extra steps at startup
+    steps+=dir*startup; 
 
-		int backlash=24; // extra steps when changing direction
-		if (steps*last_steps<0) // changing directions, add backlash
-			steps+=dir*backlash;
-		last_steps=steps;
-		
-		fflush(stdout); fflush(stderr);
-		char cmd[256];
-		sprintf(cmd,"step.sh %d",steps);
-		if (!system(cmd)) return false;
-		return true;
-	}
+    int backlash=24; // extra steps when changing direction
+    if (steps*last_steps<0) // changing directions, add backlash
+      steps+=dir*backlash;
+    last_steps=steps;
+    
+    fflush(stdout); fflush(stderr);
+    char cmd[256];
+    sprintf(cmd,"step.sh %d",steps);
+    if (!system(cmd)) return false;
+    return true;
+  }
 
 public:
-	stepper_controller() {
-		last_steps=0;
-		if (pan_stepper)
-			setup_seek();
-	}
-	
-	void setup_seek(void) {
-		camera_Z_angle=32;
-		do_seek(-300);
-	}
-	void absolute_seek(float degrees) {
-		relative_seek(degrees-camera_Z_angle);
-	}
-	void relative_seek(float degrees) {
-		float deg_to_steps=(107.0-24)/58.0;
-		int steps=(int)(degrees*deg_to_steps);
-		do_seek(steps);
-		camera_Z_angle+=steps/deg_to_steps;
-		printf("Seeked camera to angle %.0f degrees\n", camera_Z_angle);
-	}
+  stepper_controller() {
+    last_steps=0;
+    if (pan_stepper)
+      setup_seek();
+  }
+  
+  void setup_seek(void) {
+    camera_Z_angle=32;
+    do_seek(-300);
+  }
+  void absolute_seek(float degrees) {
+    relative_seek(degrees-camera_Z_angle);
+  }
+  void relative_seek(float degrees) {
+    float deg_to_steps=(107.0-24)/58.0;
+    int steps=(int)(degrees*deg_to_steps);
+    do_seek(steps);
+    camera_Z_angle+=steps/deg_to_steps;
+    printf("Seeked camera to angle %.0f degrees\n", camera_Z_angle);
+  }
 
-	// Return the current stepper angle, in degrees 
-	float get_angle_deg(void) const {
-		return camera_Z_angle;
-	}
+  // Return the current stepper angle, in degrees 
+  float get_angle_deg(void) const {
+    return camera_Z_angle;
+  }
 };
 
 
@@ -203,50 +202,50 @@ public:
 
   void found_marker(cv::Mat &m,const aruco::Marker &marker,int ID)
   {
-	  const marker_info_t &info=get_marker_info(ID);
-	  
-	  double scale=info.true_size;
-	  vec3 v; // camera-coords location
-	  v.x=+m.at<float>(0,3)*scale+info.x_shift;
-	  v.y=+m.at<float>(1,3)*scale+info.y_shift;
-	  v.z=+m.at<float>(2,3)*scale+info.z_shift;
-	  v=v*100.0; // meters to centimeters
-	  
-	  vec3 w=camera_TF.world_from_camera(v);
-	  
-	  
-	  // bin.angle=180.0/M_PI*atan2(m.at<float>(2,0),m.at<float>(0,0))+info.rotate;
-	  vec3 axes[3];
-	  for (int axis=0;axis<3;axis++) {
-	    vec3 a;
-	    a.x=+m.at<float>(0,axis)*scale;
-	    a.y=+m.at<float>(1,axis)*scale;
-	    a.z=+m.at<float>(2,axis)*scale;
-	    a=a*100.0; // meters to centimeters
-	    
-	    axes[axis]=camera_TF.world_from_camera(v+a)-w;
-	  }
-	  // printf("X axis: %.2f %.2f %.2f\n",axes[0].x,axes[0].y,axes[0].z);
-	  float radian2degree=180.0/M_PI;
-	  float yaw=radian2degree * atan2(axes[0].y,axes[0].x) + info.rotate;
-	  
-	  // FIXME: these should be robot-relative, not world-relative rotations
-	  // pitch seems particularly unpredictable
-	  float roll=radian2degree * atan2(axes[0].z,axes[0].x);
-	  float pitch=radian2degree * atan2(axes[2].y,-axes[2].z);
-	  
-	  // Print grep-friendly output
-	  printf("Marker %d: ", info.id);
-	  if (false) {
-	     printf("Camera %.1f  World %.1f %.1f %.1f cm, yaw %.1f deg, roll %.1f deg, pitch %.1f deg\n",
-	         camera_TF.camera.y,  w.x,w.y,w.z, yaw,roll,pitch
-	        );
-	  }
-	
-	  markers.add(info.id, w,axes[2],axes[0], info.shift, info.side);
-	  markers.markers[info.id].print();
+    const marker_info_t &info=get_marker_info(ID);
+    
+    double scale=info.true_size;
+    vec3 v; // camera-coords location
+    v.x=+m.at<float>(0,3)*scale;
+    v.y=+m.at<float>(1,3)*scale;
+    v.z=+m.at<float>(2,3)*scale;
+    v=v*100.0; // meters to centimeters
+    
+    vec3 w=camera_TF.world_from_camera(v);
+    
+    
+    // bin.angle=180.0/M_PI*atan2(m.at<float>(2,0),m.at<float>(0,0));
+    vec3 axes[3];
+    for (int axis=0;axis<3;axis++) {
+      vec3 a;
+      a.x=+m.at<float>(0,axis)*scale;
+      a.y=+m.at<float>(1,axis)*scale;
+      a.z=+m.at<float>(2,axis)*scale;
+      a=a*100.0; // meters to centimeters
+      
+      axes[axis]=camera_TF.world_from_camera(v+a)-w;
+    }
+    // printf("X axis: %.2f %.2f %.2f\n",axes[0].x,axes[0].y,axes[0].z);
+    float radian2degree=180.0/M_PI;
+    float yaw=radian2degree * atan2(axes[0].y,axes[0].x);
+    
+    // FIXME: these should be robot-relative, not world-relative rotations
+    // pitch seems particularly unpredictable
+    float roll=radian2degree * atan2(axes[0].z,axes[0].x);
+    float pitch=radian2degree * atan2(axes[2].y,-axes[2].z);
+    
+    // Print grep-friendly output
+    printf("Marker %d: ", info.id);
+    if (false) {
+       printf("Camera %.1f  World %.1f %.1f %.1f cm, yaw %.1f deg, roll %.1f deg, pitch %.1f deg\n",
+           camera_TF.camera.y,  w.x,w.y,w.z, yaw,roll,pitch
+          );
+    }
+  
+    markers.add(info.id, w,axes[2],axes[0], info.shift, info.side);
+    markers.markers[info.id].print();
 
-	  fflush(stdout);
+    fflush(stdout);
   }
 };
 
@@ -312,6 +311,8 @@ int main(int argc,const char *argv[])
     double depth2cm = scale * 100.0; 
     double depth2screen=255.0*scale/4.5;
     
+    pose_publisher pose_pub;
+    
     int framecount=0;
     int writecount=0;
     int nextwrite=1;
@@ -372,25 +373,25 @@ int main(int argc,const char *argv[])
           
           if (camera_TF.camera.y!=0.0)
 #endif
-          if (aruco_loc.find_markers(color_image,p))
-            if (show_GUI) 
-              imshow("Color Image",color_image);
+          aruco_loc.find_markers(color_image,p);
           
+          pose_pub.publish(p.markers);
           
+          if (show_GUI) 
+            imshow("Color Image",color_image);
         }
         
         if (do_depth) 
         {
-        rs2::depth_frame depth_frame = frames.get_depth_frame();  
-        if ((depth_w != depth_frame.get_width()) ||
-          (depth_h != depth_frame.get_height()) || 
-          (color_w != color_frame.get_width()) ||
-          (color_h != color_frame.get_height()))
-        {
-          std::cerr<<"Realsense capture size mismatch!\n";
-          exit(1);
-        }
-        
+          rs2::depth_frame depth_frame = frames.get_depth_frame();  
+          if ((depth_w != depth_frame.get_width()) ||
+            (depth_h != depth_frame.get_height()) || 
+            (color_w != color_frame.get_width()) ||
+            (color_h != color_frame.get_height()))
+          {
+            std::cerr<<"Realsense capture size mismatch!\n";
+            exit(1);
+          }
         
           typedef unsigned short depth_t;
           depth_t *depth_data = (depth_t*)depth_frame.get_data();
@@ -436,22 +437,22 @@ int main(int argc,const char *argv[])
         }    
         
         int k = waitKey(10);  
-	if ((pan_stepper && framecount>=20) || k == 'i') // image dump 
-	{
-		framecount=0;
-		char filename[100];
-		sprintf(filename,"world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
-		obstacles.write(filename);
+  if ((pan_stepper && framecount>=20) || k == 'i') // image dump 
+  {
+    framecount=0;
+    char filename[100];
+    sprintf(filename,"world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
+    obstacles.write(filename);
 
-		printf("Stored image to file %s\n",filename);
+    printf("Stored image to file %s\n",filename);
 
-		if (stepper.get_angle_deg()<130)
-			stepper.relative_seek(10.0);
-		else
-			stepper.absolute_seek(35.0);
+    if (stepper.get_angle_deg()<130)
+      stepper.relative_seek(10.0);
+    else
+      stepper.absolute_seek(35.0);
 
-		writecount++;
-	}
+    writecount++;
+  }
         if (k == 27 || k=='q')  
             break;  
     }  
