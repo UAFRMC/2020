@@ -209,7 +209,6 @@ public:
     v.x=+m.at<float>(0,3)*scale;
     v.y=+m.at<float>(1,3)*scale;
     v.z=+m.at<float>(2,3)*scale;
-    v=v*100.0; // meters to centimeters
     
     vec3 w=camera_TF.world_from_camera(v);
     
@@ -242,7 +241,7 @@ public:
           );
     }
   
-    markers.add(info.id, w,axes[2],axes[0], info.shift, info.side);
+    markers.add(info.id, w,axes[0],axes[1], info.shift, info.side);
     markers.markers[info.id].print();
 
     fflush(stdout);
@@ -374,7 +373,7 @@ int main(int argc,const char *argv[])
           if (camera_TF.camera.y!=0.0)
 #endif
           aruco_loc.find_markers(color_image,p);
-          
+          p.markers.pose.print();
           pose_pub.publish(p.markers);
           
           if (show_GUI) 

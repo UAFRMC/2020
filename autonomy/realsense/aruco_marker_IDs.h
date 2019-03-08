@@ -2,20 +2,22 @@
 // Store info about how the markers are scaled, positioned and oriented
 struct marker_info_t {
 	int id; // marker's ID, from 0-31
-	float true_size; // side length, in meters, of black part of pattern
+	float true_size; // side length, in cm, of black part of pattern
 	
 	int side; // side of the robot (0==right side, 1==left side, 2==back side, 3==front side)
-	vec3 shift; // marker-relative translation to robot origin, in meters from center of pattern	
+	vec3 shift; // marker-relative cm translation to robot origin, in meters from center of pattern	
 };
 
+#define robot_side_vec(x) vec3(x,66,0)
+
 const static marker_info_t marker_info[]={
-	{-1,0.145}, // fallback default case
+	{-1,14.5}, // fallback default case
 	
-	{13, 0.250}, // creeper (on 30cm full-size test plate)
-	{17, 0.145}, // bird (on 20cm half-size test plate)
-	{14, 0.145}, // cat
-	{25, 0.100}, // bleachers 
-	{16, 0.040}, // elipsis (on tiny 5cm test plate)
+	{13, 25.0, 0, -robot_side_vec(23) }, // creeper (on 30cm full-size test plate)
+	{17, 14.5, 0, -robot_side_vec(0) }, // bird (on 20cm half-size test plate)
+	{14, 14.5, 0, -robot_side_vec(0) }, // cat
+	{25, 10.0, 0, -robot_side_vec(-15) }, // bleachers 
+	{16,  4.0, 0, -robot_side_vec(-4) }, // elipsis (on tiny 5cm test plate)
 };
 
 // Look up the calibration parameters for this marker
