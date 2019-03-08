@@ -13,6 +13,7 @@
 #include "vision/terrain_map.cpp"
 
 #include "aruco_localize.cpp"
+#include "aurora/localization.h"
   
 using namespace std;  
 using namespace cv;  
@@ -183,8 +184,9 @@ public:
 };
 
 
+#include "aurora/pose.h"
+#include "aurora/pose_network.h"
 #include "aruco_marker_IDs.h" /* location and size of markers */
-#include "aurora/location_binary.h"
 
 /** 
 Watches for OpenCV markers, and prints them as it sees them.
@@ -192,6 +194,8 @@ Watches for OpenCV markers, and prints them as it sees them.
 class marker_watcher_print {
   const camera_transform &camera_TF;
 public:
+  robot_markers_all markers;
+
   marker_watcher_print(const camera_transform &camera_TF_) 
     :camera_TF(camera_TF_)
   {
@@ -201,10 +205,6 @@ public:
   {
 	  const marker_info_t &info=get_marker_info(ID);
 	  
-    location_binary bin;
-    bin.valid=1;
-	  bin.marker_ID=info.id;
-
 	  double scale=info.true_size;
 	  vec3 v; // camera-coords location
 	  v.x=+m.at<float>(0,3)*scale+info.x_shift;
@@ -235,12 +235,17 @@ public:
 	  float roll=radian2degree * atan2(axes[0].z,axes[0].x);
 	  float pitch=radian2degree * atan2(axes[2].y,-axes[2].z);
 	  
-	  bin.angle=yaw;
-
 	  // Print grep-friendly output
-	  printf("Marker %d: Camera %.1f  World %.1f %.1f %.1f cm, yaw %.1f deg, roll %.1f deg, pitch %.1f deg\n",
-	         info.id, camera_TF.camera.y,  w.x,w.y,w.z, yaw,roll,pitch
+	  printf("Marker %d: ", info.id);
+	  if (false) {
+	     printf("Camera %.1f  World %.1f %.1f %.1f cm, yaw %.1f deg, roll %.1f deg, pitch %.1f deg\n",
+	         camera_TF.camera.y,  w.x,w.y,w.z, yaw,roll,pitch
 	        );
+	  }
+	
+	  markers.add(info.id, w,axes[2],axes[0], info.shift, info.side);
+	  markers.markers[info.id].print();
+
 	  fflush(stdout);
   }
 };
@@ -343,20 +348,9 @@ int main(int argc,const char *argv[])
 
         // Wait for a coherent pair of frames: depth and color  
         frames = pipe.wait_for_frames();  
-        rs2::depth_frame depth_frame = frames.get_depth_frame();  
         rs2::video_frame color_frame = frames.get_color_frame();  
         framecount++;
   
-        if ((depth_w != depth_frame.get_width()) ||
-          (depth_h != depth_frame.get_height()) || 
-          (color_w != color_frame.get_width()) ||
-          (color_h != color_frame.get_height()))
-        {
-          std::cerr<<"Realsense capture size mismatch!\n";
-          exit(1);
-        }
-        
-        
         if (do_color) 
         {
           void *color_data = (void*)color_frame.get_data();  
@@ -387,6 +381,17 @@ int main(int argc,const char *argv[])
         
         if (do_depth) 
         {
+        rs2::depth_frame depth_frame = frames.get_depth_frame();  
+        if ((depth_w != depth_frame.get_width()) ||
+          (depth_h != depth_frame.get_height()) || 
+          (color_w != color_frame.get_width()) ||
+          (color_h != color_frame.get_height()))
+        {
+          std::cerr<<"Realsense capture size mismatch!\n";
+          exit(1);
+        }
+        
+        
           typedef unsigned short depth_t;
           depth_t *depth_data = (depth_t*)depth_frame.get_data();
           

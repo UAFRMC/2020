@@ -4,11 +4,8 @@ struct marker_info_t {
 	int id; // marker's ID, from 0-31
 	float true_size; // side length, in meters, of black part of pattern
 	
-	float x_shift; // marker-relative translation to robot origin, in meters from center of pattern
-	float y_shift; 
-	float z_shift; 
-	
-	float rotate; // Z axis rotation angle of marker relative to robot
+	int side; // side of the robot (0==right side, 1==left side, 2==back side, 3==front side)
+	vec3 shift; // marker-relative translation to robot origin, in meters from center of pattern	
 };
 
 const static marker_info_t marker_info[]={
