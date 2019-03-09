@@ -47,7 +47,7 @@ public:
     rgt=normalize(rgt*mw+ref.rgt*rw);
   }
   
-  void print(void) {
+  void print(void) const {
     printf("  conf %.2f, pos=(%.0f,%.0f,%.0f), fwd=(%.1f,%.1f,%.1f), rgt=(%.1f,%.1f,%.1f)\n",
       confidence, pos.x,pos.y,pos.z, 
       fwd.x,fwd.y,fwd.z,

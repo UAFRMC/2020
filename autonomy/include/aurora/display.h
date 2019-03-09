@@ -395,17 +395,18 @@ void robot_display(const robot_localization &loc,double alpha=1.0)
 void robot_display_pose(const robot_pose &pose) 
 {
   if (pose.confidence<0.1) return;
+  vec3 start=pose.pos;
   
   glBegin(GL_TRIANGLE_FAN);
   
-  glColor3f(0.0,0.0,0.0);
-  glVertex2fv(pose.pos);
+  glColor3f(0.5,0.5,0.5);
+  glVertex2fv(start);
   
   glColor3f(1.0,0.0,0.0);
-  glVertex2fv(pose.pos+20.0*pose.rgt);
+  glVertex2fv(start+20.0*pose.rgt);
   
   glColor3f(0.0,1.0,0.0);
-  glVertex2fv(pose.pos+20.0*pose.fwd);
+  glVertex2fv(start+20.0*pose.fwd);
   
   glEnd();
 }
@@ -413,8 +414,14 @@ void robot_display_pose(const robot_pose &pose)
 void robot_display_markers(const robot_markers_all &m) 
 {
   robot_display_pose(m.pose);
+  printf("Robot pose: "); m.pose.print();
+  
   for (int i=0;i<robot_markers_all::NMARKER;i++)
+  {
+    if (m.markers[i].confidence<0.1) continue;
+    printf("Marker %d: ",i); m.markers[i].print();
     robot_display_pose(m.markers[i]);
+  }
 }
 
 

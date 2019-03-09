@@ -842,16 +842,21 @@ void robot_manager_t::update(void) {
       sim.loc.x=markers.pose.pos.x;
       sim.loc.y=markers.pose.pos.y;
       sim.loc.z=markers.pose.pos.z;
+      sim.loc.angle=0; //<- don't recompute relative angle
       sim.loc.angle=sim.loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
+      printf("Computed robot angle: %.0f deg\n",sim.loc.angle);
+      sim.loc.confidence=markers.pose.confidence;
+      robot.loc=sim.loc;
     }
     robot_display_markers(markers);
   }
 
-  robot_display(sim.loc,0.5);
 // Show real and simulated robots
-  robot_display(robot.loc);
+  robot_display(sim.loc,0.2);
+  robot_display(robot.loc,0.4);
 
 
+/*
   // Check for an updated location from the vive
   
   static osl::transform robot_tf;
@@ -864,7 +869,7 @@ void robot_manager_t::update(void) {
     robot.loc.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.x,robot_tf.basis.x.y);
     robot.loc.pitch=(180.0/M_PI)*robot_tf.basis.x.z;
   }
-  
+  */
 
 
 /*
