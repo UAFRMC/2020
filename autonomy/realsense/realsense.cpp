@@ -346,9 +346,19 @@ int main(int argc,const char *argv[])
 #endif
 
 
-        // Wait for a coherent pair of frames: depth and color  
+        // Wait for a coherent pair of frames: depth and color
         frames = pipe.wait_for_frames();  
         rs2::video_frame color_frame = frames.get_color_frame();  
+        rs2::depth_frame depth_frame = frames.get_depth_frame();  
+        if ((depth_w != depth_frame.get_width()) ||
+            (depth_h != depth_frame.get_height()) || 
+            (color_w != color_frame.get_width()) ||
+            (color_h != color_frame.get_height()))
+        {
+          std::cerr<<"Realsense capture size mismatch!\n";
+          exit(1);
+        }
+        
         framecount++;
   
         if (do_color) 
@@ -382,16 +392,6 @@ int main(int argc,const char *argv[])
         
         if (do_depth) 
         {
-          rs2::depth_frame depth_frame = frames.get_depth_frame();  
-          if ((depth_w != depth_frame.get_width()) ||
-            (depth_h != depth_frame.get_height()) || 
-            (color_w != color_frame.get_width()) ||
-            (color_h != color_frame.get_height()))
-          {
-            std::cerr<<"Realsense capture size mismatch!\n";
-            exit(1);
-          }
-        
           typedef unsigned short depth_t;
           depth_t *depth_data = (depth_t*)depth_frame.get_data();
           
