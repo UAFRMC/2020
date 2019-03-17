@@ -135,4 +135,4 @@ module cover() {
 }
 
 // Made to match, based largely on the case
-cover();
+mirror([0,1,0]) cover();
