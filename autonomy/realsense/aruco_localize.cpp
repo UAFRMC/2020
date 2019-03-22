@@ -103,7 +103,7 @@ bool find_markers(cv::Mat &color_image,marker_watcher &watcher) {
    Does not modify the location for an invalid marker.
 */
 template <class marker_watcher>
-cv::Mat extract_location(const aruco::Marker &marker,marker_watcher &watcher)
+void extract_location(const aruco::Marker &marker,marker_watcher &watcher)
 {
 	// Extract 3x3 rotation matrix
 	cv::Mat Rot(3,3,CV_32FC1);
