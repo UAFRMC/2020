@@ -11,8 +11,8 @@ module dxf(layer_name) {
 
 floor=1.3;
 outerwall=1.5;
-outerwall_z=floor+25.5; // FIXME
-outerwall_z_adjusted=floor+30; // adjusted for the size of the cover
+outerwall_z=15; // height of holes in frame
+outerwall_z_full=floor+30-7; // complete top-bottom cover size
 
 innerwalls=1.5;
 
@@ -29,7 +29,7 @@ module round(fillet) {
 // Outer walls
 module outline_2D(thickness=outerwall) {
 	offset(r=+thickness)
-	offset(r=-1) // <- prepared with fitting over the case in mind
+	offset(r=-0.9) // <- prepared with fitting over the case in mind
 	dxf("outline");
 }
 
@@ -45,7 +45,7 @@ module velcro() {
 // Main frame, with no add-ons or holes
 module frame_3D() {
 	// Outer walls
-	linear_extrude(height=outerwall_z_adjusted,convexity=4) 
+	linear_extrude(height=outerwall_z_full,convexity=4) 
 	difference() {
 		outline_2D();
 		offset(r=-outerwall) outline_2D();
@@ -59,9 +59,11 @@ module velcro_2D() {
 	
 	for (side=[0,1]) // 0: left side.  1:right side
 	translate([side?right:left,0,0]) {
-		translate([0,bot,0]) scale([side?1:-1,1]) velcro();
-		translate([0,top,0]) scale([side?1:-1,-1]) velcro();
 		if (side) translate([0,(bot+top-velcro_sz[1])/2,0]) velcro();
+		else {
+			translate([0,bot,0]) scale([side?1:-1,1]) velcro();
+			translate([0,top,0]) scale([side?1:-1,-1]) velcro();
+		}
 	}
 }
 
@@ -86,17 +88,25 @@ module whole_frame() {
 		}
         
 		// Openings for electronics
-		translate([-3,0,circuit_low_z-4]) scale([0.9,1,1])
-		linear_extrude(height=outerwall_z)
-			dxf("insert");
+		intersection() {
+			translate([-100,100,0]) cube([200,200,200],center=true);
+			translate([-3,0,circuit_low_z-4]) scale([0.9,1,1])
+			linear_extrude(height=outerwall_z)
+				dxf("insert");
+		}
+		
         
-        translate([75,-28,circuit_low_z-5]) scale([5,1.85,1])
+		// Openings for big wires to enter at base
+		holesize=2.25;
+        translate([75,-28-8,circuit_low_z-5]) scale([5,holesize,1])
         linear_extrude(height=outerwall_z+1)
         square(velcro_sz);
         
-        translate([75,31.5,circuit_low_z-5]) scale([5,1.85,1])
+        translate([75,32,circuit_low_z-5]) scale([5,holesize,1])
         linear_extrude(height=outerwall_z+1)
         square(velcro_sz);
+		
+		
 	}
 }
 
@@ -111,7 +121,7 @@ module supports_2D() {
 
 // 3Dsupports for the velcro ears
 module supports_3D() {
-    for (pos=[0:59.5:119]) { // 0: left, 1: middle, 2: right
+    for (pos=[59.5]) { // 0: left, 1: middle, 2: right
         translate([93.75,pos-48,0]) supports_2D();
     }
     
@@ -126,11 +136,11 @@ module supports_3D() {
 }
 
 module cover() {
-	linear_extrude(height=3) outline_2D();
+	linear_extrude(height=floor) outline_2D();
     
-    translate([0,0,outerwall_z_adjusted+1]) mirror([0,0,1]) whole_frame();
+    translate([0,0,outerwall_z_full+1]) mirror([0,0,1]) whole_frame();
     
-    linear_extrude(height=outerwall_z_adjusted)
+    linear_extrude(height=outerwall_z_full-2.7)
     supports_3D();
 }
 
