@@ -40,6 +40,15 @@ For the aruco marker viewer:
 	cd ../../viewer
 	make
 
+For the realsense viewer:
+  sudo apt-get install libusb-1.0-0-dev libgtk-3-dev libglfw3-dev libzmq3-dev cmake libssl-dev
+  git clone https://github.com/IntelRealSense/librealsense
+  cd librealsense/
+  ./scripts/patch-realsense-ubuntu-lts.sh 
+  cmake .
+
+
+
 
 ---------------
 2017 Hardware info:

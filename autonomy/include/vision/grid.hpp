@@ -9,6 +9,7 @@
 #define GRIDHPP
 #include <fstream>
 #include <vector>
+#include "../aurora/vec3.h"
 
 class grid_square
 {
@@ -44,28 +45,6 @@ int compare(grid_square a, grid_square b);
 
 /// Make it easy to swap between float (fast for big arrays) and double
 typedef float real_t;
-
-/// Simple 3D vector
-class vec3 {
-public:
-  real_t x;
-  real_t y;
-  real_t z;
-  
-  vec3(real_t X=0.0, real_t Y=0.0, real_t Z=0.0) {
-    x=X; y=Y; z=Z;
-  }
-
-  friend vec3 operator+(const vec3 &a,const vec3 &b) {
-     return vec3(a.x+b.x, a.y+b.y, a.z+b.z);
-  }
-  friend vec3 operator-(const vec3 &a,const vec3 &b) {
-     return vec3(a.x-b.x, a.y-b.y, a.z-b.z);
-  }
-  friend vec3 operator*(const vec3 &a,real_t scale) {
-     return vec3(a.x*scale, a.y*scale, a.z*scale);
-  }
-};
 
 
 /// Keeps track of location of obstacles

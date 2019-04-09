@@ -12,6 +12,7 @@
 #include <stdarg.h>  /* for varargs stuff below */
 #include "osl/vec2.h"
 #include "osl/quadric.h"
+#include "aurora/pose.h"
 #include <string>
 
 robot_state_t robotState_requested=state_last;
@@ -93,6 +94,7 @@ inline vec2 rotate(const vec2 &src,float ang_deg) {
 inline float state_to_Y(int state) {
 	return 300+field_y_size*(state_last-state)*(1.0/state_last);
 }
+
 
 /* Called at start of user's OpenGL display function */
 void robot_display_setup(const robot_base &robot) {
@@ -388,6 +390,38 @@ void robot_display(const robot_localization &loc,double alpha=1.0)
 	glEnd();
 
 	glColor4f(1.0,1.0,1.0,1.0);
+}
+
+void robot_display_pose(const robot_pose &pose) 
+{
+  if (pose.confidence<0.1) return;
+  vec3 start=pose.pos;
+  
+  glBegin(GL_TRIANGLE_FAN);
+  
+  glColor3f(0.5,0.5,0.5);
+  glVertex2fv(start);
+  
+  glColor3f(1.0,0.0,0.0);
+  glVertex2fv(start+20.0*pose.rgt);
+  
+  glColor3f(0.0,1.0,0.0);
+  glVertex2fv(start+20.0*pose.fwd);
+  
+  glEnd();
+}
+
+void robot_display_markers(const robot_markers_all &m) 
+{
+  robot_display_pose(m.pose);
+  printf("Robot pose: "); m.pose.print();
+  
+  for (int i=0;i<robot_markers_all::NMARKER;i++)
+  {
+    if (m.markers[i].confidence<0.1) continue;
+    printf("Marker %d: ",i); m.markers[i].print();
+    robot_display_pose(m.markers[i]);
+  }
 }
 
 
