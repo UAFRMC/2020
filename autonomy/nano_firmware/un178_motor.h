@@ -31,7 +31,7 @@ public:
         stop();
     }
 
-    void drive (uint8_t pwm, uint8_t dir_1, uint8_t dir_2)
+    void drive (uint8_t pwm, uint8_t dir_1, uint8_t dir_2)const
     {
         if (pwm == 255 )
             pwm = 254; //UN178 stops working if it gets 255 PWM
@@ -40,17 +40,17 @@ public:
         analogWrite(pwm_,pwm);
     }
 
-    void drive_green(uint8_t pwm)
+    void drive_green(uint8_t pwm)const
     {
         drive(pwm,1,0);
     }
 
-    void drive_red(uint8_t pwm)
+    void drive_red(uint8_t pwm)const
     {
         drive(pwm,0,1);
     }
 
-    void stop()
+    void stop()const
     {
         drive(0,0,0);
     }
