@@ -89,7 +89,7 @@ module whole_frame() {
         
 		// Openings for electronics
 		intersection() {
-			translate([-100,100,0]) cube([200,200,200],center=true);
+			translate([-100,-100,0]) cube([200,200,200],center=true);
 			translate([-3,0,circuit_low_z-4]) scale([0.9,1,1])
 			linear_extrude(height=outerwall_z)
 				dxf("insert");
