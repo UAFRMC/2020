@@ -9,7 +9,7 @@ module dxf(layer_name) {
 	import(dxf_name,layer=layer_name);
 }
 
-floor=1.3;
+floor=0.9;
 outerwall=1.5;
 outerwall_z=15; // height of holes in frame
 outerwall_z_full=floor+30-7; // complete top-bottom cover size
@@ -115,8 +115,8 @@ module supports_2D() {
     for (loc=[0:7:14]) { // 0: left, 1: middle, 2: right
         translate([0,loc,0]) scale([2.75,1,1]) circle(1);
     }
-    translate([-2.5,18,0]) rotate([0,0,45]) scale([2.75,1,1]) circle(1);
-    translate([-2.5,-4,0]) rotate([0,0,-45]) scale([2.75,1,1]) circle(1);
+    translate([-1,18,0]) rotate([0,0,45]) scale([2.75,1,1]) circle(1);
+    translate([-1,-4,0]) rotate([0,0,-45]) scale([2.75,1,1]) circle(1);
 }
 
 // 3Dsupports for the velcro ears
