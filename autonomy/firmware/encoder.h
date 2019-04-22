@@ -4,8 +4,6 @@
 #include "milli.h"
 #include "Arduino.h"
 
-extern milli_t milli;
-
 /**
   Read an optical encoder value, and reconstruct the
   speed of the changes being seen.

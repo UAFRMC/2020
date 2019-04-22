@@ -3,9 +3,10 @@
  * For Arduino Mega
  */
 #include "robot_base.h" /* classes shared with PC, and across network */
-#include "serial_packet.h" /* CYBER-Alaska packetized serial comms */
+#include "communication_channel.h" /* CYBER-Alaska packetized serial comms */
+#include "nano_net.h"
+
 #include "encoder.h"
-#include "milli.h"
 #include "pid.h"
 #include "bts_motor.h"
 #include "speed_controller.h"
@@ -26,58 +27,27 @@ BTS_motor_digital_t motor_front_linear(31,33,255);
 // Call this function frequently--it's for minimum-latency operations
 void low_latency_ops();
 
-/** This class manages communication via an A_packet_formatter,
- including timeouts. */
-class CommunicationChannel {
-public:
-  HardwareSerial &backend;
-  A_packet_formatter<HardwareSerial> pkt; // packet formatter
-  bool is_connected; // 1 if we're recently connected; 0 if no response
-  milli_t last_read; // millis() the last time we got data back
-  milli_t next_send; // millis() the next time we should send off data
-
-  CommunicationChannel(HardwareSerial &new_backend) :
-  backend(new_backend), pkt(backend)
-  {
-    is_connected=0;
-    last_read=milli;
-    next_send=milli;
-  }
-
-  bool read_packet(A_packet &p) {
-    p.valid=0;
-    if (backend.available()) {
-      while (-1==pkt.read_packet(p)) {
-        low_latency_ops(); /* while reading packet */
-      }
-      if (p.valid && p.length>0) {
-        last_read=milli;
-        next_send=milli;
-        is_connected=true; // got valid packet
-        //digitalWrite(13,HIGH); // !!(milli&(1<<8))); // blink while getting good data
-        return true;
-      }
-    }
-    if (milli-next_send>500) { // read timeout
-      next_send=milli;
-      pkt.reset();
-      pkt.write_packet(0,0,0); // send heartbeat ping packet
-      is_connected=false;
-
-      //digitalWrite(13,0); // LED off if disconnected
-    }
-    return false;
-  }
-};
 
 // All PC commands go via this (onboard USB) port
 HardwareSerial &PCport=Serial; // direct PC
-HardwareSerial &BlinkyLport=Serial1; // serial comms to blinky nanos
-HardwareSerial &BlinkyRport=Serial2; // serial comms to blinky nanos
+CommunicationChannel<HardwareSerial> PC(PCport);
 
-CommunicationChannel PC(PCport);
-CommunicationChannel BlinkyL(BlinkyLport);
-CommunicationChannel BlinkyR(BlinkyRport);
+// Send error string up to main PC
+void fatal(const char *why) {
+  PC.pkt.write_packet(0xE,strlen(why),why);
+}
+
+CommunicationChannel<HardwareSerial> nanos[nano_net::n_nanos]={
+  CommunicationChannel<HardwareSerial>(Serial1),
+  CommunicationChannel<HardwareSerial>(Serial3),
+};
+
+
+// FIXME: fill these structs with useful data.
+nano_net::nano_net_sensors nano_setup[nano_net::n_nanos];
+nano_net::nano_net_sensors nano_sensors[nano_net::n_nanos];
+nano_net::nano_net_command nano_commands[nano_net::n_nanos];
+
 
 const int encoder_raw_pin_count=12;
 
@@ -133,9 +103,9 @@ void read_sensors(void) {
   ++robot.sensor.heartbeat;
   
   
-  robot.sensor.encoder_raw=0;
-  for(int ii=0;ii<encoder_raw_pin_count;++ii)
-    robot.sensor.encoder_raw|=digitalRead(encoder_raw_pins[ii])<<ii;
+  robot.sensor.encoder_raw=int(nano_sensors[0].raw) | (int(nano_sensors[1].raw)<<nano_net::n_sensors);
+//  for(int ii=0;ii<encoder_raw_pin_count;++ii)
+//    robot.sensor.encoder_raw|=digitalRead(encoder_raw_pins[ii])<<ii;
 }
 
 
@@ -230,6 +200,36 @@ void handle_packet(A_packet_formatter<HardwareSerial> &pkt,const A_packet &p)
   else if (p.command==0) { // ping request
     pkt.write_packet(0,p.length,p.data); // ping reply
   }
+  else fatal("PC/cmd?");
+}
+
+
+// Comms to the nano
+void handle_nano_packet(A_packet_formatter<HardwareSerial> &pkt,int n,const A_packet &p)
+{
+  if (p.command==0x5) { // sensor command incoming
+    if (!p.get(nano_sensors[n])) { // error (like a packet size mismatch)
+      fatal("n-m/!0x5");
+    }
+    else
+    { // got sensor data successfully
+      read_sensors();
+      //pkt.write_packet(0xC,sizeof(nano_commands[n]),&nano_commands[n]);
+    }
+  }
+  else if (p.command==0xE) { // nano hit error
+    fatal((const char *)p.data);
+  }
+  else if (p.command==0xB) { // nano booting (not fatal, but nice to report it)
+    // Send the nano boot info
+    pkt.write_packet(0xB,sizeof(nano_setup[n]),&nano_setup[n]);
+    
+  }
+  else if (p.command==0) { // ping request
+    // Fire up comm cycle by sending it a command?
+    //pkt.write_packet(0xC,sizeof(nano_commands[n]),&nano_commands[n]);
+  }
+  else fatal("n-m/cmd?");
 }
 
 /**** Low latency (sub-millisecond) timing section.
@@ -286,6 +286,8 @@ void low_latency_ops() {
 void setup()
 {
   aurora::PCport.begin(57600); // Control connection to PC via USB
+  for (int n=0;n<nano_net::n_nanos;n++)
+    aurora::nanos[n].backend.begin(115200);
 
   // Our ONE debug LED!
   //pinMode(13,OUTPUT);
@@ -307,10 +309,18 @@ void loop()
   A_packet p;
   if (aurora::PC.read_packet(p)) aurora::handle_packet(aurora::PC.pkt,p);
   if (!(aurora::PC.is_connected)) aurora::robot.power.stop(); // disconnected?
-
-  if (milli-next_milli_send>=5)
-  { // Send commands to motors
+  
+  for (int n=0;n<nano_net::n_nanos;n++)
+    if (aurora::nanos[n].read_packet(p)) 
+      aurora::handle_nano_packet(aurora::nanos[n].pkt,n,p);
+  
+  if (milli-next_milli_send>=10)
+  { // Send commands to motors (via nanos)
     aurora::send_motors();
-    next_milli_send=milli; // send_motors every 5ms
+    
+    for (int n=0;n<nano_net::n_nanos;n++)
+      aurora::nanos[n].pkt.write_packet(0xC,sizeof(aurora::nano_commands[n]),&aurora::nano_commands[n]);
+    
+    next_milli_send=milli; 
   }
 }
