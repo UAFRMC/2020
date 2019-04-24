@@ -6,23 +6,9 @@
 #include "communication_channel.h" /* CYBER-Alaska packetized serial comms */
 #include "nano_net.h"
 
-#include "encoder.h"
-#include "pid.h"
-#include "bts_motor.h"
-#include "speed_controller.h"
-
 /* Subtle: I don't need a namespace, but this at least disables the Arduino IDE's
 utterly broken prototype generation code in the Arduino IDE. */
 namespace aurora {
-
-int bts_enable_pin=22;
-// Hardware pin wiring (for Mega)
-BTS_motor_t motor_mining(10,11,255);
-BTS_motor_t motor_box(12,3,255); // Box raise/lower motor
-BTS_motor_t motor_drive_left(8,9,60);
-BTS_motor_t motor_drive_right(5,4,60);
-BTS_motor_t motor_side_linears(7,6,255);
-BTS_motor_digital_t motor_front_linear(31,33,255);
 
 // Call this function frequently--it's for minimum-latency operations
 void low_latency_ops();
@@ -43,38 +29,44 @@ CommunicationChannel<HardwareSerial> nanos[nano_net::n_nanos]={
 };
 
 
-// FIXME: fill these structs with useful data.
-nano_net::nano_net_sensors nano_setup[nano_net::n_nanos];
+// FIXME: match up these with actual hardware.
+//   And send commands / read sensors from the right spots.
+nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
+  /* Nano 0: */ {
+    /* Motors: */ { 
+    /* motor[0] */ '0', // drive right
+    /* motor[1] */ '1', // mine 1
+    /* motor[2] */ '1', // mine 2 (same encoder as 1)
+    /* motor[3] */ 'T', // extend mining head
+    },
+    /* Sensors: */ {
+    /* sensor[0] */ '0', // drivetrain
+    /* sensor[1] */ '1', // mining head
+    /* sensor[2] */ 'B', // unused from here
+    /* sensor[3] */ 'B', 
+    /* sensor[4] */ 'B', // back-up right?
+    /* sensor[5] */ 'C', 
+    },
+  },
+  /* Nano 1: */ {
+    /* Motors: */ { 
+    /* motor[0] */ '0', // drive left
+    /* motor[1] */ '1', // roll bag
+    /* motor[2] */ 'T', // UNUSED
+    /* motor[3] */ 'T', // dump up/down
+    },
+    /* Sensors: */ {
+    /* sensor[0] */ '0', // drivetrain
+    /* sensor[1] */ '1', // bag roll
+    /* sensor[2] */ 'B', // bag limit low
+    /* sensor[3] */ 'B', // bag limit high
+    /* sensor[4] */ 'B', // back-up left?
+    /* sensor[5] */ 'C', 
+    },
+  },
+};
 nano_net::nano_net_sensors nano_sensors[nano_net::n_nanos];
 nano_net::nano_net_command nano_commands[nano_net::n_nanos];
-
-
-const int encoder_raw_pin_count=12;
-
-const int encoder_raw_pins[encoder_raw_pin_count]={48,34,50,32,52,30, 42,40,44,38,46,36};
-
-const int encoder_bus_1[9]={0,0,0, 48,34,50,32,52,30}; //bus 1-4
-const int encoder_bus_2[9]={0,0,0, 42,40,44,38,46,36}; //bus 5-8
-
-enum
-{
-  NUM_AVERAGES=2
-};
-//speed_controller_t<NUM_AVERAGES> encoder_M(4,0,0,encoder_bus_2[3],80,motor_mining); // Mining head left side motor
-
-speed_controller_t<NUM_AVERAGES> encoder_mining_left(4,0,0,encoder_raw_pins[4],80,motor_mining);
-speed_controller_t<NUM_AVERAGES> encoder_mining_right(4,0,0,encoder_raw_pins[11],80,motor_mining);
-
-speed_controller_t<NUM_AVERAGES> encoder_R(4,0,0,encoder_raw_pins[6],80,motor_box); // Encoder for roll motor
-
-// Only one drive encoder per side
-speed_controller_t<NUM_AVERAGES> encoder_DL1(4,0,0,encoder_raw_pins[5],13,motor_drive_left);  //Left front wheel encoder
-speed_controller_t<NUM_AVERAGES> encoder_DL2(4,0,0,encoder_raw_pins[5],13,motor_drive_left);  //Left back wheel encoder
-speed_controller_t<NUM_AVERAGES> encoder_DR1(4,0,0,encoder_raw_pins[8],13,motor_drive_right); //Right front wheel encoder
-speed_controller_t<NUM_AVERAGES> encoder_DR2(4,0,0,encoder_raw_pins[8],13,motor_drive_right);  //Right back wheel encoder
-
-encoder_t limit_top(encoder_raw_pins[3]);
-encoder_t limit_bottom(encoder_raw_pins[2]);
 
 
 
@@ -92,41 +84,57 @@ robot_base robot;
 
 // Read all robot sensors into robot.sensor
 void read_sensors(void) {
+
   robot.sensor.battery=0; 
   low_latency_ops();
 
+  /*
   robot.sensor.Mstall=encoder_mining_right.stalled; //encoder_mining_left.stalled || encoder_mining_right.stalled;
   robot.sensor.DRstall=encoder_DL1.stalled;
   robot.sensor.DLstall=encoder_DR1.stalled;
   robot.sensor.limit_top=limit_top.count_mono;
   robot.sensor.limit_bottom=limit_bottom.count_mono;
-  ++robot.sensor.heartbeat;
+  */
+  robot.sensor.DR1count = nano_sensors[0].counts[0];
+  robot.sensor.DRstall = nano_sensors[0].stall&(1<<0);
   
+  robot.sensor.McountL = nano_sensors[0].counts[1];
+  robot.sensor.Mstall = nano_sensors[0].stall&(1<<1);
+  
+  robot.sensor.DL1count = nano_sensors[1].counts[0];
+  robot.sensor.DLstall = nano_sensors[1].stall&(1<<0);
+  
+  robot.sensor.Rcount = nano_sensors[1].counts[1];
+
+  robot.sensor.limit_bottom = nano_sensors[1].counts[4];
+  robot.sensor.limit_top = nano_sensors[1].counts[3];
+  
+  robot.sensor.heartbeat=milli;
   
   robot.sensor.encoder_raw=int(nano_sensors[0].raw) | (int(nano_sensors[1].raw)<<nano_net::n_sensors);
-//  for(int ii=0;ii<encoder_raw_pin_count;++ii)
-//    robot.sensor.encoder_raw|=digitalRead(encoder_raw_pins[ii])<<ii;
 }
 
-
-void set_direction(int power64, encoder_t &enc)
-{
-  //Update encoder direction
-  if (power64>64) enc.last_dir=+1;
-  if (power64<64) enc.last_dir=-1;
-
+// Scale Sabertooth style 0..64..127 to -100 .. 0 .. +100
+signed char scale_from_64(unsigned char speed_64) {
+  return (int(speed_64)*100)/64-100;
 }
-// Match up motor power value with encoder
-void send_motor_power(int power64,BTS_motor_t &motor,encoder_t &enc) {
-  // update encoder direction
-  set_direction(power64,enc);
-  // send to motor
-  motor.drive(power64);
-}
+
 
 // Send current power values to the motors
 void send_motors(void)
 {
+  nano_commands[0].speed[0]=scale_from_64(robot.power.right);
+  nano_commands[0].speed[1]=scale_from_64(robot.power.mine);
+  nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
+  nano_commands[0].speed[3]=scale_from_64(robot.power.head_extend);
+  
+  nano_commands[1].speed[0]=scale_from_64(robot.power.left);
+  nano_commands[1].speed[1]=scale_from_64(robot.power.roll);
+  nano_commands[1].speed[2]=0;
+  nano_commands[1].speed[3]=scale_from_64(robot.power.dump);
+
+  
+  /*
   if(robot.power.motorControllerReset!=0)
     digitalWrite(bts_enable_pin,LOW);
   else
@@ -177,6 +185,8 @@ void send_motors(void)
   // Send power to linears
   motor_front_linear.drive(robot.power.head_extend);
   motor_side_linears.drive(robot.power.dump);
+  */
+  
 }
 
 // Structured communication with PC:
@@ -241,6 +251,7 @@ void low_latency_ops() {
   unsigned long micro=micros();
   milli=micro>>10; // approximately == milliseconds
 
+/*
   //Encoder for mining motor
 //  encoder_M.read();
 //  // robot.sensor.Mspeed=encoder_M.period;
@@ -272,6 +283,8 @@ void low_latency_ops() {
   
   limit_top.read();
   limit_bottom.read();
+*/
+
 
   // Update latency counter
   unsigned int latency=milli-last_milli;
@@ -290,13 +303,14 @@ void setup()
     aurora::nanos[n].backend.begin(115200);
 
   // Our ONE debug LED!
-  //pinMode(13,OUTPUT);
-  //digitalWrite(13,LOW);
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
 
+/*
   // BTS Enable Pin (Controls all pins)
   pinMode(aurora::bts_enable_pin,OUTPUT);
   digitalWrite(aurora::bts_enable_pin,HIGH);
-
+*/
 }
 
 
@@ -314,7 +328,7 @@ void loop()
     if (aurora::nanos[n].read_packet(p)) 
       aurora::handle_nano_packet(aurora::nanos[n].pkt,n,p);
   
-  if (milli-next_milli_send>=10)
+  if (milli-next_milli_send>=5)
   { // Send commands to motors (via nanos)
     aurora::send_motors();
     

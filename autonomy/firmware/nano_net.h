@@ -24,6 +24,7 @@ namespace nano_net
     sensorMode_motor='0', // add this to motor number to count up/down based on direction
     sensorMode_motor_end='5', // beyond last valid motor
     sensorMode_binary='B', // Only report 0 or 1 (e.g., limit switch)
+    sensorMode_constant='C', // Send the constant value 9 (a configuration test)
   };
 
   // From mega down to nano: (re)configuration / setup

@@ -7,6 +7,7 @@
 #include "nano_net.h"
 
 #include "encoder.h"
+#include "speed_controller.h"
 
 typedef unsigned int milli_t;
 milli_t milli;
@@ -47,48 +48,136 @@ namespace nano_net
     mega.pkt.write_packet(0xE,strlen(why),why);
   }
 
-  nano_net_setup last_setup;
+  nano_net_setup last_setup= /* Default Nano setup: */ {
+    /* Motors: */ { 
+    /* motor[0] */ 'T', 
+    /* motor[1] */ 'T', 
+    /* motor[2] */ 'T', 
+    /* motor[3] */ 'T', 
+    },
+    /* Sensors: */ {
+    /* sensor[0] */ 'B', 
+    /* sensor[1] */ 'B', 
+    /* sensor[2] */ 'C', 
+    /* sensor[3] */ 'C', 
+    /* sensor[4] */ 'B', 
+    /* sensor[5] */ 'B', 
+    },
+  };
+
+  typedef speed_controller_t<2> speed_controller;
+  speed_controller speed_controllers[n_motors];
+  
+  void got_setup() { // read last_setup and do it
+    for (int m=0;m<n_motors;m++)
+    {
+      unsigned char mode=last_setup.motorMode[m];
+      if (mode!='T') {
+        int src=mode-'0';
+        speed_controllers[m]=speed_controller(&encoders[src]);
+      }
+    }
+  }
+  
   nano_net_command last_command;
+  
+  void got_command() {
+    
+    // Blink LED via mega command
+    digitalWrite(13,last_command.LED);
+    
+    // Set encoder directions from commanded speeds
+    for (int s=0;s<n_sensors;s++) {
+      unsigned char mode=last_setup.sensorMode[s];
+      if (mode<sensorMode_motor_end) 
+      { // sensor direction from motor direction
+        int m=mode-'0';
+        int dir=0;
+        int command=last_command.speed[m];
+        if (command<0) dir=-1;
+        else if (command>0) dir=+1;
+        encoders[s].last_dir=dir;
+      }
+    }
+  }
+  
   nano_net_sensors next_sensors;
 
- /*
-   Scale speed from -100 .. +100
-   to -255 .. +255 
- */
- int16_t power_percent_to_pwm(int8_t speed)
- {
-  if (speed>=100) return 255;
-  if (speed<=-100) return -255;
-  int16_t pwm = (int16_t(speed)*255)/100; // floor(255*(double(speed)/100));
-  return pwm;
- }
+  /*
+  Scale speed from -100 .. +100
+  to -254 .. +254 
+  (Can't send full 255, the UN178 will shut off)
+  */
+  int16_t power_percent_to_pwm(int8_t speed)
+  {
+    if (speed>=100) return 254;
+    if (speed<=-100) return -254;
+    int16_t pwm = (int16_t(speed)*254)/100; // floor(254*(double(speed)/100));
+    return pwm;
+  }
 
- void send_motor_power(const un178_motor_single_t &motor, int8_t speed)
- {
-  int16_t pwm = power_percent_to_pwm(speed);
-  if(pwm==0)
-    motor.stop();
-  else if(pwm>0)
-    motor.drive_green(pwm);
-  else
-    motor.drive_red(-pwm);
- }
- void send_motors() 
- {
-  for (int m=0;m<n_motors;m++)
-    send_motor_power(motors[m],last_command.speed[m]);
- }
+  void send_motor_power(const un178_motor_single_t &motor, int8_t speed)
+  {
+    int16_t pwm = power_percent_to_pwm(speed);
+    if(pwm==0)
+      motor.stop();
+    else if(pwm>0)
+      motor.drive_green(pwm);
+    else
+      motor.drive_red(-pwm);
+  }
+  
+  // Send last command to the motors
+  void send_motors() 
+  {
+    for (int m=0;m<n_motors;m++)
+    {
+      int8_t speed=0;
+      if (mega.is_connected && !last_command.stop) {
+        int8_t command=last_command.speed[m];
+        if (last_setup.motorMode[m]=='T')
+        { // torque control
+          speed=command;
+        } 
+        else 
+        { // try speed control
+          speed=speed_controllers[m].update(command,last_command.torque);
+        }
+      }
+      send_motor_power(motors[m],speed);
+    }
+  }
 
- void read_encoders()
- {
-   next_sensors.raw=0;
-   for (int s=0;s<n_sensors;s++) {
-     encoders[s].read();
-     if (encoders[s].value)
-       next_sensors.raw|=(1<<s); // set that bit of raw
-     next_sensors.counts[s]=encoders[s].count_dir;
-   }
- }
+  // Fill out next_sensors from the current encoder values
+  void read_encoders()
+  {
+    next_sensors.ok=mega.is_connected;
+    
+    int raw=0;
+    for (int s=0;s<n_sensors;s++) {
+      encoders[s].read();
+      if (encoders[s].value)
+        raw|=(1<<s); // set that bit of raw
+      
+      int count=0;
+      unsigned char mode=last_setup.sensorMode[s];
+      if (mode<sensorMode_motor_end) 
+        count=encoders[s].count_dir;
+      else if (mode=='B')
+        count=encoders[s].value;
+      else 
+        count=99;
+      next_sensors.counts[s]=count;
+    }
+    next_sensors.raw=raw;
+    
+    int stall=0;
+    for (int m=0;m<n_motors;m++) {
+      if (speed_controllers[m].stalled)
+        stall=1<<m; // set that bit of stall
+    }
+    next_sensors.stall=stall;
+  }
 
 
 
@@ -98,11 +187,15 @@ namespace nano_net
     if (p.command==0xB) { // boot setup command
       if (!p.get(last_setup)) fatal("n/!0xB");
       
+      got_setup();
+      
       // Send them back a ping request
       pkt.write_packet(0,0,0);
     }
     else if (p.command==0xC) { // mega command incoming
       if (!p.get(last_command)) fatal("n/!0xC");
+      
+      got_command();
 
       // Handle incoming motor powers
       send_motors();
@@ -129,6 +222,9 @@ void setup()
   for(int s=0;s<n_sensors;s++)
     pinMode(SENSOR_PINS[s],INPUT);
   pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+  
+  got_setup();
 }
 
 void loop()
@@ -141,22 +237,5 @@ void loop()
   if (mega.read_packet(p))
      nano_net::handle_mega_packet(mega.pkt,p);
   
-  if (mega.is_connected) {
-    digitalWrite(13,HIGH);
-  }
-  else {
-    digitalWrite(13,LOW);
-  }
-  
-  delay(1);
-/*
-  nano_net::send_motor_power(nano_net::left_motor_A,20);
-  nano_net::send_motor_power(nano_net::left_motor_B,-100);
-  nano_net::send_motor_power(nano_net::right_motor_A,50);
-  nano_net::send_motor_power(nano_net::right_motor_B,-50);
-  for (int s=0;s<nano_net::n_sensors;s++)
-    nano_net::Mega.print(nano_net::next_sensors.counts[s]);
-  nano_net::Mega.println();
-*/
-  
+  nano_net::send_motors();
 }

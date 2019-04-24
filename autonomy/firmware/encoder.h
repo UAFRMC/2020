@@ -17,9 +17,6 @@ class encoder_t{
    uint16_t count_dir;  // encoder count including up/down directions
    int16_t last_dir; // +1 for counting upward, -1 for counting downward, 0 for no direction
    
-   milli_t last_change; // millis() at last changed value
-   long period; // milliseconds per change
-
    encoder_t(int pin_)
      :pin(pin_)
    {
@@ -29,29 +26,22 @@ class encoder_t{
      last_dir=0;
      old_value=0;
      value=0;
-     last_change=milli;
-     period=1000;
-   }
-   
-   virtual void change()
-   {
    }
 
    void read()
    {
       old_value = value;
-      value = digitalRead(pin);
+      //if (pin!=A6) {
+        value = digitalRead(pin);
+      //} else {
+      //  value = analogRead(pin)>100; // A6 is digital only
+      //}
       
       if (value!=old_value)
       {
         // edge detected!
         ++count_mono;
         count_dir+=last_dir;
-
-        milli_t t=milli;
-        period=t-last_change;
-        last_change=t; 
-        change();
       }
     }
 };
