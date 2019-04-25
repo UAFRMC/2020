@@ -7,6 +7,7 @@
 #define AURURA_GRIDNAV_RMC_H
 
 #include "gridnav.h"
+#include "../../firmware/field_geometry.h"
 
 /**
   Build a gridnav navigator to plan paths for our 
@@ -18,10 +19,10 @@ class rmc_navigator : public gridnav::robot_geometry {
 public:
   // RMC-plausible navigation grid dimensions:
   enum {GRIDSIZE=8}; // cm per grid cell
-  enum {GRIDX=(3*270+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
-  enum {GRIDY=(370+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDX=(field_x_size+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
+  enum {GRIDY=(field_y_size+GRIDSIZE-1)/GRIDSIZE};
   enum {GRIDA=72}; // angular slices around 360 degrees
-  enum {ROBOTSIZE=(100+GRIDSIZE-1)/GRIDSIZE}; // maximum size measured from middle
+  enum {ROBOTSIZE=(80+GRIDSIZE-1)/GRIDSIZE}; // maximum size measured from middle
 
   // Create the navigator and planner
   typedef gridnav::gridnavigator<GRIDX, GRIDY, GRIDA, GRIDSIZE, ROBOTSIZE> navigator_t;
@@ -51,17 +52,22 @@ public:
     //    +x is the direction the robot naturally drives forward
   virtual int clearance_height(float x,float y) const 
   {
+    float frontback=robot_x;
+    float leftright=robot_y;
+    float tracks=robot_track_y; // tracks, frame, motors, etc
+  
   // Special dot under mining head
-    float dx=x-50, dy=y-0;
+    float dx=x-robot_mine_x, dy=y-0;
     float r=sqrt(dx*dx+dy*dy);
-    if (r<15) return 15; // clearance under mining head
+    if (r<robot_mine_radius) return robot_mine_clearance; 
   
   // front-back:
-    if (x>32.0 || x<-32.0) return gridnav::OPEN;
+    if (x>frontback || x<-frontback) return gridnav::OPEN;
     if (y<0) y=-y; // apply Y symmetry
-    if (y>70.0) return gridnav::OPEN; // beyond the tracks
-    if (y>50.0) return 0; // tracks
-    return 20; // clearance area under main body (box, etc)
+    if (y>leftright) return gridnav::OPEN; // beyond the tracks
+    if (y>leftright-tracks) return 0; // tracks
+    if (y<robot_box_y) return robot_box_clearance;
+    return robot_inside_clearance; // clearance area under main body (box, etc)
   }
 };
 

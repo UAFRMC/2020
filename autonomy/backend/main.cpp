@@ -52,13 +52,13 @@ bool nodrive=false; // --nodrive flag (for testing indoors)
 
 
 /** X,Y field target location where we drive to, before finally backing up */
-vec2 dump_target_loc(0,field_y_trough+80); // rough area
-vec2 dump_align_loc(0,field_y_trough+35); // final alignment
-float dump_target_angle=90; // along +y
+vec2 dump_target_loc(field_x_size/2,field_y_trough_center); // rough area
+vec2 dump_align_loc(field_x_trough_edge,field_y_trough_center); // final alignment
+float dump_target_angle=field_angle_trough;
 
-/** X,Y field target location where we drive to, before finally backing up */
-vec2 mine_target_loc(field_x_max,field_y_middle);
-float mine_target_angle=-30; // along +x
+/** X,Y field target location that we target for mining */
+vec2 mine_target_loc(field_x_size/2,field_y_size-60);
+float mine_target_angle=90; // along +y
 
 
 /* Convert this unsigned char difference into a float difference */
@@ -157,9 +157,6 @@ public:
   robot_ui ui; // keyboard interface
 
   rmc_navigator navigator;
-  // Add these shifts to field coords before passing to navigator.
-  //   (Navigator works in a 0-max space; field coords are centered on trough.)
-  enum {navigator_xshift=field_x_hsize, navigator_yshift=0};
   enum {navigator_res=rmc_navigator::GRIDSIZE};
   typedef rmc_navigator::navigator_t::searchposition planned_path_t;
   std::deque<planned_path_t> planned_path;
@@ -182,30 +179,27 @@ public:
     pose_net=0;
 
     // Start simulation in random real start location
-    sim.loc.y=(rand()%10)*20.0+100.0;
-    sim.loc.x=-90.0;
-    sim.loc.angle=(rand()%6)*60;
+    sim.loc.y=80.0;
+    sim.loc.x= (rand()%10)*20.0+100.0;
+    sim.loc.angle=((rand()%8)*8)/360;
     sim.loc.confidence=1.0;
     
     
     // Add obstacles around the scoring trough
-    for (int x=-field_x_htrough-navigator_res;x<=field_x_htrough+navigator_res;x+=navigator_res)
-    for (int y=0;y<=field_y_trough;y+=navigator_res)
-      navigator.mark_obstacle(x+navigator_xshift, y+navigator_yshift, 55);
+    for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
+    for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
+      navigator.mark_obstacle(x, y, 55);
 
     // Add a few hardcoded obstacles, to show off path planning
     int x=130;
-    int y=180;
+    int y=290;
     
     //Hard wall
     if (true)
-     for (int y=180;y<240;y+=navigator_res) navigator.mark_obstacle(x+navigator_xshift,y+navigator_yshift,18);
+     for (;x<=250;x+=navigator_res) navigator.mark_obstacle(x,y,15);
     
-    // Isolated big obstacle in middle
-    navigator.mark_obstacle(x+navigator_xshift,180,25);
-    
-    // Big spike on left
-    navigator.mark_obstacle(170,y,25);
+    // Isolated tall obstacle in middle
+    navigator.mark_obstacle(130,y,40);
     
     
     // Recompute proximity costs after marking obstacles
@@ -253,8 +247,8 @@ private:
         else if (height<20) glColor3f(1.0f,0.0f,0.0f); // red short-ish
         else  glColor3f(1.0f,1.0f,1.0f); // white tall
         glVertex2f(
-          rmc_navigator::GRIDSIZE*x-navigator_xshift,
-          rmc_navigator::GRIDSIZE*y-navigator_yshift);
+          rmc_navigator::GRIDSIZE*x,
+          rmc_navigator::GRIDSIZE*y);
       }
     }
     glEnd();
@@ -379,7 +373,7 @@ private:
     if (!drive_posture()) return false; // don't drive yet
     
     vec2 cur(sim.loc.x,sim.loc.y); // robot location
-    float cur_angle=90-sim.loc.angle;
+    float cur_angle=90-sim.loc.angle; // <- sim angle is Y-relative (STUPID!)
     
     bool path_planning_OK=false;
     double forward=0.0; // forward-backward
@@ -404,9 +398,9 @@ private:
         while (planned_path.size()>0) planned_path.pop_back(); // flush old planned path
         
         // Start position: robot's position
-        rmc_navigator::fposition fstart(cur.x+navigator_xshift,cur.y+navigator_yshift,cur_angle);
+        rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
         // End position: at target
-        rmc_navigator::fposition ftarget(target.x+navigator_xshift,target.y+navigator_yshift,target_angle);
+        rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
 
         rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
         glBegin(GL_LINE_STRIP);
@@ -420,8 +414,7 @@ private:
             p.print();
           }
           glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
-          vec2 v=p.pos.v-vec2(navigator_xshift,navigator_yshift);
-          glVertex2fv(v);
+          glVertex2fv(p.pos.v);
           steps++;
         }
         glColor3f(1.0f,1.0f,1.0f);
@@ -613,10 +606,10 @@ void robot_manager_t::autonomous_state()
   {
     if (drive_posture()) {
       
-      double target_X=field_x_mine+90; // mining area distance (plus buffer)
-      double distance=target_X-sim.loc.x;
+      double target_Y=field_y_mine_start; // mining area distance (plus buffer)
+      double distance=target_Y-sim.loc.y;
       if (autonomous_drive(mine_target_loc,90) ||
-          fabs(distance)<10.0)  // we're basically there now
+          distance<0.0)  // we're basically there now
       {
         if (driver_test) enter_state(state_drive_to_dump);
         else enter_state(state_mine_lower); // start mining!
@@ -702,12 +695,12 @@ void robot_manager_t::autonomous_state()
   else if (robot.state==state_dump_align)
   {
     vec2 target=dump_align_loc;
-    target.x=sim.loc.x; // don't try to turn this close
+    target.y=sim.loc.y; // don't try to turn when this close
     if (autonomous_drive(target,dump_target_angle)
-      || (fabs(sim.loc.x-target.x)<20 && sim.loc.y<target.y+10) )
+      || (fabs(sim.loc.y-target.y)<30 && fabs(sim.loc.x-field_x_trough_stop)<=5) )
     { 
       if (driver_test) {
-        mine_target_loc.y=50+(rand()%250); // retarget every run
+        mine_target_loc.x=50+(rand()%250); // retarget in mining area every run
         enter_state(state_drive_to_mine);
       }
       else enter_state(state_dump_contact);
@@ -1104,17 +1097,19 @@ void display(void) {
 
   robot_manager->update();
 
-  glTranslatef(field_x_GUI+250.0,100.0,0.0);
-  glScalef(300.0,200.0,1.0);
-  glBindTexture(GL_TEXTURE_2D,video_texture_ID);
-  glEnable(GL_TEXTURE_2D);
-  glBegin(GL_QUAD_STRIP);
-  glTexCoord2f(0.0,0.0); glVertex2f(0.0,0.0);
-  glTexCoord2f(1.0,0.0); glVertex2f(+1.0,0.0);
-  glTexCoord2f(0.0,1.0); glVertex2f(0.0,+1.0);
-  glTexCoord2f(1.0,1.0); glVertex2f(+1.0,+1.0);
-  glEnd();
-  glBindTexture(GL_TEXTURE_2D,0);
+  if (video_texture_ID) {
+    glTranslatef(field_x_GUI+350.0,100.0,0.0);
+    glScalef(300.0,200.0,1.0);
+    glBindTexture(GL_TEXTURE_2D,video_texture_ID);
+    glEnable(GL_TEXTURE_2D);
+    glBegin(GL_QUAD_STRIP);
+    glTexCoord2f(0.0,0.0); glVertex2f(0.0,0.0);
+    glTexCoord2f(1.0,0.0); glVertex2f(+1.0,0.0);
+    glTexCoord2f(0.0,1.0); glVertex2f(0.0,+1.0);
+    glTexCoord2f(1.0,1.0); glVertex2f(+1.0,+1.0);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D,0);
+  }
 
   glutSwapBuffers();
   glutPostRedisplay();
@@ -1126,7 +1121,7 @@ int main(int argc,char *argv[])
   glutInit(&argc,argv);
 
   // Set screen size
-  int w=1280, h=700;
+  int w=1200, h=700;
   for (int argi=1;argi<argc;argi++) {
     if (0==strcmp(argv[argi],"--sim")) {
       simulate_only=true;

@@ -92,7 +92,7 @@ inline vec2 rotate(const vec2 &src,float ang_deg) {
 }
 
 inline float state_to_Y(int state) {
-	return 300+field_y_size*(state_last-state)*(1.0/state_last);
+	return field_y_size*(state_last-state)*(1.0/state_last);
 }
 
 
@@ -125,10 +125,10 @@ void robot_display_setup(const robot_base &robot) {
 	glClear(GL_COLOR_BUFFER_BIT+GL_DEPTH_BUFFER_BIT);
 
 	// Scale to showing the whole field, in centimeter units
-	float xShift=-0.3, yShift=-0.85; // GL-coordinates center of field
+	float xShift=-0.9, yShift=-0.9; // GL-coordinates origin of field
 	glTranslatef(xShift,yShift,0.0);
-	float xScale=2.0*0.6/field_x_size;
-	float yScale=xScale*wid/ht;
+	float yScale=1.8/field_y_size;
+	float xScale=yScale*ht/wid;
 	glScalef(xScale, yScale, 0.1);
 	robotPrintf_y=(1.0-yShift)/yScale+robotPrintf_line;
 
@@ -158,46 +158,44 @@ void robot_display_setup(const robot_base &robot) {
 // Delineate the start and mine bays
 	glBegin(GL_LINES);
 	glColor4f(0.3,0.3,0.5,1.0);
-	glVertex2i(-0.5*field_x_bay,0);
-	glVertex2i(-0.5*field_x_bay,field_y_size);
-	glVertex2i(+0.5*field_x_bay,0);
-	glVertex2i(+0.5*field_x_bay,field_y_size);
+	glVertex2i(0,field_y_start_zone);
+	glVertex2i(field_x_size,field_y_start_zone);
+	glVertex2i(0,field_y_mine_zone);
+	glVertex2i(field_x_size,field_y_mine_zone);
 
 // Draw the scoring trough
 	glColor4f(0.3,1.0,1.0,1.0);
-	glVertex2i(-field_x_htrough,field_y_trough);
-	glVertex2i(+field_x_htrough,field_y_trough);
+	glVertex2i(field_x_trough_edge,field_y_trough_start);
+	glVertex2i(field_x_trough_edge,field_y_trough_end);
 	glEnd();
 
 // Outline the field
 	glBegin(GL_LINE_LOOP);
 	glColor4f(0.0,0.0,0.8,1.0);
-	glVertex2i(+field_x_hsize,0);
-	glVertex2i(-field_x_hsize,0);
-	glVertex2i(-field_x_hsize,field_y_size);
-	glVertex2i(+field_x_hsize,field_y_size);
+	glVertex2i(0,0);
+	glVertex2i(field_x_size,0);
+	glVertex2i(field_x_size,field_y_size);
+	glVertex2i(0,field_y_size);
 	glEnd();
 
-
-/*
-// Draw blinky xmitters
+// Draw beacon
 	glBegin(GL_LINES);
-	for (int xmit=0;xmit<3;xmit++) {
+	for (int angle=-30;angle<=+30;angle+=30) {
 		float color[4]={0.2,0.2,0.2,1.0};
-		color[xmit%3]=1.0;
 		glColor4fv(color);
-		vec2 start((xmit-1)*field_x_xmit,field_y_xmit);
+		float ang=angle*(M_PI/180.0);
+		float c=cos(ang), s=sin(ang);
+		vec2 start(field_x_beacon,field_y_beacon);
 		glVertex2fv(start);
-		glVertex2fv(start+vec2(5.0,0.0));
+		glVertex2fv(start+200.0*vec2(c,s));
 	}
 	glEnd();
-*/
 
 // Draw current robot configuration (side view)
 	glBegin(GL_TRIANGLES);
 	double robot_draw_y=75; // size of side view image
 	double robot_draw_x=-75;
-	vec2 robot_draw(0.6*field_x_size-robot_draw_x,200);
+	vec2 robot_draw(1.2*field_x_size-robot_draw_x,200);
 	vec2 dump_pivot=robot_draw;
 
 	glColor4f(0.0,0.0,0.0,1.0); // body (black)
@@ -249,7 +247,7 @@ void robot_display_setup(const robot_base &robot) {
 
 // Draw the current autonomy state
 	robotPrintf_enable=false;
-	double state_display_x=-field_x_hsize; // 3*field_x_hsize;
+	double state_display_x=field_x_size*2.6; // 3*field_x_hsize;
 	for (robot_state_t state=state_STOP;state<state_last;state=(robot_state_t)(state+1))
 	{
 		glColor4f(0.0,0.0,0.0,1.0); // black inactive
@@ -280,14 +278,14 @@ void robot_display_setup(const robot_base &robot) {
 	unsigned char *powers=(unsigned char *)&robot.power; // HACK: want array of powers
 	glBegin(GL_TRIANGLES);
 	for (unsigned int i=0;i<sizeof(robot.power);i++) {
-		unsigned int pow=powers[i]&0x7f;
+		int pow=powers[i]&0x7f;
 		int autonomous=powers[i]&0x80;
 		float cenx=50*(0.5+i)+field_x_GUI;
 		float ceny=0.10*field_y_size;
 		glColor3ub(128+pow,autonomous?255:128,255-pow);
 		glVertex2f(cenx-20,ceny);
 		glVertex2f(cenx+20,ceny);
-		glVertex2f(cenx,ceny+2.0*(powers[i]-60));
+		glVertex2f(cenx,ceny+2.0*(pow-63));
 	}
 	glEnd();
 
@@ -371,12 +369,12 @@ void robot_display(const robot_localization &loc,double alpha=1.0)
 	glBegin(GL_TRIANGLE_FAN);
 	//float ang=loc.angle*M_PI/180.0;
 	vec2 C=loc.center(); // (loc.x,loc.y); // center of robot
-	vec2 F=75.0/2*loc.forward(); // (+30.0*sin(ang), +30.0*cos(ang)); // robot forward direction
-	vec2 R=140.0/2*loc.right(); // (+70.0*cos(ang), -70.0*sin(ang)); // robot right side
+	vec2 F=robot_x*loc.forward(); // (+30.0*sin(ang), +30.0*cos(ang)); // robot forward direction
+	vec2 R=robot_y*loc.right(); // (+70.0*cos(ang), -70.0*sin(ang)); // robot right side
 	double d=1.0; // front wheel deploy?
 
-	glColor4f(0.0,0.8*conf,0.0,alpha); // green center
-	glVertex2fv(C+0.5*F);
+	glColor4f(0.0,0.8*conf,0.0,alpha); // green mining tool
+	glVertex2fv(C+robot_mine_x*loc.forward());
 
 	glColor4f(0.8*conf,0.0,0.0,alpha); // red front wheels
 	glVertex2fv(C-R+d*F);

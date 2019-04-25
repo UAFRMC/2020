@@ -8,6 +8,8 @@
 #ifndef __AURORA_ROBOTICS__ROBOT_H
 #define __AURORA_ROBOTICS__ROBOT_H
 #include <stdint.h> /* for uint32_t */
+#include "field_geometry.h"
+
 
 /** This is the Arduino's AREF analog reference voltage.
   It's the scale factor that gives true voltage output,
@@ -106,39 +108,6 @@ public:
 };
 
 
-/**
-  These are the field dimensions, in centimeters.
-  Y runs up the field, trough at Y==0.  It's always positive.
-  X runs across the field, from left to right side.  It's signed, trough at X==0.
-*/
-enum {
-	field_y_size=369, // Y-length of field, in centimeters
-	field_y_middle=field_y_size/2, // generic middle of field
-//	field_y_size=500, // Y-length of field, in centimeters for the test arena
-//	field_y_start_zone=183, // y end of start area, in centimeters
-//	field_y_mine_zone=field_y_start_zone+294, // y start of mining area
-//	field_y_xmit=-47, // y coordinate of IR transmitters behind bin
-//	field_x_xmit=70, // x coordinate between IR transmitters
-//	field_y_mine_zone=field_y_start_zone+100, // y start of mining area for the test arena
-
-  field_x_bay=269, // X-width of one "bay", in cm
-	field_x_size=3*field_x_bay, // Displayed X-width of field, in centimeters
-	field_x_end_mine=(int)(field_x_bay*0.4), // distance in from end of field to consider mining
-	field_x_max=(int)(field_x_size/2-field_x_end_mine), // maximum X coordinate
-	field_x_hsize=(int)(1.5*field_x_bay), // Centerline for bin
-	field_x_GUI=field_x_hsize+10, // start X for GUI display
-
-	field_y_trough=55, // Y-width of collection trough, in centimeters
-	field_x_trough=156, // X-width of collection trough, in centimeters
-	field_x_htrough=field_x_trough/2, // distance from origin of corners of trough
-	
-	field_x_mine=(int)(0.6*field_x_bay) // minimum absolute magnitude for X when mining
-};
-
-enum {
-	robot_rt_blinky=55, // robot centerline to blinky receiver center, right() direction
-	robot_fw_blinky=-33 // robot centerline to blinky receiver center, forward() direction
-};
 
 enum {
 /*
