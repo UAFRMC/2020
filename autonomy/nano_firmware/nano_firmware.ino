@@ -16,13 +16,6 @@ namespace nano_net
 {
   const uint8_t OUTPUT_PINS[12] = {2,3,4,5,6,7,8,9,10,11,12,A0};
   const uint8_t SENSOR_PINS[n_sensors] = { A1,A2,A3,A4,A5,A6 };
-
-  /*
-  un178_motor_single_t left_motor_A(11,12,A0);
-  un178_motor_single_t left_motor_B(10,9,8);
-  un178_motor_single_t right_motor_A(3,2,4);
-  un178_motor_single_t right_motor_B(6,5,7);
-  */
   
   un178_motor_single_t motors[n_motors]={
     un178_motor_single_t(11,12,A0),
@@ -56,16 +49,16 @@ namespace nano_net
     /* motor[3] */ 'T', 
     },
     /* Sensors: */ {
-    /* sensor[0] */ 'B', 
-    /* sensor[1] */ 'B', 
+    /* sensor[0] */ 'C',  // uninitialized -> send 99 count
+    /* sensor[1] */ 'C', 
     /* sensor[2] */ 'C', 
     /* sensor[3] */ 'C', 
-    /* sensor[4] */ 'B', 
-    /* sensor[5] */ 'B', 
+    /* sensor[4] */ 'C', 
+    /* sensor[5] */ 'C', 
     },
   };
 
-  typedef speed_controller_t<2> speed_controller;
+  typedef speed_controller_t<4> speed_controller;
   speed_controller speed_controllers[n_motors];
   
   void got_setup() { // read last_setup and do it
@@ -170,6 +163,9 @@ namespace nano_net
       next_sensors.counts[s]=count;
     }
     next_sensors.raw=raw;
+
+    // DEBUG HACK: report PID debugging as mine counts.
+    // next_sensors.counts[1]=speed_controllers[0].debug;
     
     int stall=0;
     for (int m=0;m<n_motors;m++) {
@@ -188,9 +184,10 @@ namespace nano_net
       if (!p.get(last_setup)) fatal("n/!0xB");
       
       got_setup();
+      next_sensors.nosetup=0;
       
-      // Send them back a ping request
-      pkt.write_packet(0,0,0);
+      // Send them sensor data
+      pkt.write_packet(0x5,sizeof(next_sensors),&next_sensors);
     }
     else if (p.command==0xC) { // mega command incoming
       if (!p.get(last_command)) fatal("n/!0xC");
@@ -203,8 +200,8 @@ namespace nano_net
       // Send them sensor data
       pkt.write_packet(0x5,sizeof(next_sensors),&next_sensors);
     }
-    else if (p.command==0) { // ping request: requesting data
-      pkt.write_packet(0x5,sizeof(next_sensors),&next_sensors);
+    else if (p.command==0) { // ping request: requesting setup
+      pkt.write_packet(0,0,0);
     }
     else fatal("n/cmd");
   }
@@ -213,9 +210,12 @@ using namespace nano_net;
 
 void setup()
 {
+  next_sensors.nosetup=1; // need setup packet
   megaport.begin(115200);
   delay(500); // wait for mega to wake up
-  mega.pkt.write_packet(0xB,0,0); // send mega a boot message
+  // flush old data
+  while (megaport.available()) megaport.read();
+  mega.pkt.reset(); 
   
   for(int i=0;i<sizeof(OUTPUT_PINS);i++)
     pinMode(OUTPUT_PINS[i],OUTPUT);

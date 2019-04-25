@@ -69,7 +69,10 @@ void robot_serial::update(robot_base &robot){
 			}
 			else if (p.command==0xE)
 			{
-				robotPrintln("Got ERROR (0xE) packet back from robot (length %d)", p.length);
+				char buf[32];
+				memset(buf,0,sizeof(buf));
+				memcpy(buf,p.data,std::min((size_t)p.length,sizeof(buf)));
+				robotPrintln("Got ERROR (0xE) packet back from robot (length %d, data '%s')", p.length,buf);
 			}
 			else if (p.command==0x3)
 			{

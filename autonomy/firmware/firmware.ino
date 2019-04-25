@@ -18,9 +18,13 @@ void low_latency_ops();
 HardwareSerial &PCport=Serial; // direct PC
 CommunicationChannel<HardwareSerial> PC(PCport);
 
-// Send error string up to main PC
-void fatal(const char *why) {
+// Send this debug/error string up to main PC
+void send_PC_debug(const char *why) {
   PC.pkt.write_packet(0xE,strlen(why),why);
+}
+
+void fatal(const char *why) {
+  send_PC_debug(why);
 }
 
 CommunicationChannel<HardwareSerial> nanos[nano_net::n_nanos]={
@@ -32,7 +36,7 @@ CommunicationChannel<HardwareSerial> nanos[nano_net::n_nanos]={
 // FIXME: match up these with actual hardware.
 //   And send commands / read sensors from the right spots.
 nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
-  /* Nano 0: */ {
+  /* Nano 0: on Serial1, right side of robot by e-stop */ {
     /* Motors: */ { 
     /* motor[0] */ '0', // drive right
     /* motor[1] */ '1', // mine 1
@@ -48,7 +52,7 @@ nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
     /* sensor[5] */ 'C', 
     },
   },
-  /* Nano 1: */ {
+  /* Nano 1: on Serial3, left side of robot */ {
     /* Motors: */ { 
     /* motor[0] */ '0', // drive left
     /* motor[1] */ '1', // roll bag
@@ -123,6 +127,14 @@ signed char scale_from_64(unsigned char speed_64) {
 // Send current power values to the motors
 void send_motors(void)
 {
+  for (int n=0;n<nano_net::n_nanos;n++)
+  {
+    nano_commands[n].stop = !PC.is_connected;
+    nano_commands[n].torque = robot.power.torqueControl;
+    nano_commands[n].LED = ((milli%1024)<200); // mega tells nanos to blink
+  }
+  
+  
   nano_commands[0].speed[0]=scale_from_64(robot.power.right);
   nano_commands[0].speed[1]=scale_from_64(robot.power.mine);
   nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
@@ -223,21 +235,23 @@ void handle_nano_packet(A_packet_formatter<HardwareSerial> &pkt,int n,const A_pa
     }
     else
     { // got sensor data successfully
+      if (nano_sensors[n].nosetup) { // nano needs setup packet
+        aurora::send_PC_debug("n/boot");
+        pkt.write_packet(0xB,sizeof(nano_setup[n]),&nano_setup[n]);
+      }
       read_sensors();
       //pkt.write_packet(0xC,sizeof(nano_commands[n]),&nano_commands[n]);
     }
   }
   else if (p.command==0xE) { // nano hit error
+    aurora::send_PC_debug("n/err");
     fatal((const char *)p.data);
   }
-  else if (p.command==0xB) { // nano booting (not fatal, but nice to report it)
-    // Send the nano boot info
-    pkt.write_packet(0xB,sizeof(nano_setup[n]),&nano_setup[n]);
-    
-  }
   else if (p.command==0) { // ping request
-    // Fire up comm cycle by sending it a command?
-    //pkt.write_packet(0xC,sizeof(nano_commands[n]),&nano_commands[n]);
+    aurora::send_PC_debug("n/ping");
+    
+    // Send a command packet to start reports coming
+    pkt.write_packet(0xC,sizeof(aurora::nano_commands[n]),&aurora::nano_commands[n]);
   }
   else fatal("n-m/cmd?");
 }
@@ -299,8 +313,11 @@ void low_latency_ops() {
 void setup()
 {
   aurora::PCport.begin(57600); // Control connection to PC via USB
+  
   for (int n=0;n<nano_net::n_nanos;n++)
     aurora::nanos[n].backend.begin(115200);
+
+  aurora::send_PC_debug("mega/boot");
 
   // Our ONE debug LED!
   pinMode(13,OUTPUT);

@@ -51,7 +51,8 @@ namespace nano_net
   {
     unsigned char stall:4; // For each motor: 0-not stalled.  1-currently stalled.
     unsigned char ok:1; // 0- no commands recently.  1- nano is receiving commands regularly.
-    unsigned char pad1:3;
+    unsigned char nosetup:1; // 1- nano needs setup packet
+    unsigned char pad1:2;
     
     unsigned char raw:6; // 6 raw encoder pins (for debugging, or for level-triggered stuff)
     unsigned char pad2:2; // reserved for future use

@@ -852,8 +852,8 @@ void robot_manager_t::update(void) {
   }
 
 // Show real and simulated robots
-  robot_display(sim.loc,0.2);
-  robot_display(robot.loc,0.4);
+  robot_display(robot.loc,0.2);
+  robot_display(sim.loc,0.4);
 
 
 /*
