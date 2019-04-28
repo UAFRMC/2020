@@ -446,31 +446,143 @@ module electronics_box_travels() {
 		}
 }
 
+// The "halo" holds computer vision markers used for angular localization.  
+//  It's printed separately, so that it can be bright white plastic.
+halo_R=150;
+halo_tall=10; // Y height
+halo_thick=10; // bar width
+halo_marker_size=20; // size of marker panel (small, to block less area)
+halo_marker_thick=5;
+halo_marker_y=-halo_marker_size/2; // world Y position of center of panel
+
+halo_mount_wide=50; // final X width
+halo_mount_tall=16; // final Z height
+halo_mount_z=10; // start mount this high
+halo_mountbolt_z=halo_mount_z+halo_mount_tall/2;
+halo_mountbolt_xs=[-16,0,+16];
+
+halo_Y=pivot_top_Y+5; // location of frame base
+module realsense_halo() 
+color([0.5,0.5,0.5]) {
+	round=10;
+	roundin=halo_thick/2-1;
+	support_angles=[-30,+30];
+	marker_angles=[-45,0,+45];
+	
+	translate([0,halo_Y+halo_tall])
+	rotate([90,0,0])
+	union() {
+		linear_extrude(height=halo_tall,convexity=6)
+		difference() {
+			offset(r=-round) offset(r=+round)
+			offset(r=+roundin) offset(r=-roundin)
+			difference() {
+				union() {
+					// Outer ring
+					difference() {
+						circle(r=halo_R+halo_thick);
+						circle(r=halo_R);
+					}
+					
+					// Support arms
+					for (ang=support_angles)
+						rotate([0,0,ang]) scale([ang<0?-1:+1,ang<0?-1:+1])
+							translate([0,-halo_thick/2])
+								square([halo_R+halo_thick,halo_thick]);
+					
+					// Base mounting block
+					translate([-halo_mount_wide/2,halo_mount_z])
+						square([halo_mount_wide,halo_mount_tall]);
+					
+				}
+				
+				// Trim off stuff below the supports
+				for (ang=support_angles)
+					rotate([0,0,ang])
+						translate([0,-1000-halo_thick/2])
+							square([2000,2000],center=true);
+				
+				// Flatten off bottom
+				translate([0,-1000+halo_mount_z])
+					square([2000,2000],center=true);
+			}
+			
+			// Mounting M3 bolt holes
+			for (x=halo_mountbolt_xs) 
+				translate([x,halo_mountbolt_z]) 
+					circle(d=3);
+		}
+		
+	}
+		
+	// The actual marker supports
+	for (angle=marker_angles) 
+	rotate([0,angle,0]) translate([0,0,halo_R])
+	{
+		hull() {
+			translate([0,halo_marker_y,0])
+				cube([halo_marker_size,halo_marker_size,halo_marker_thick],center=true);
+			translate([0,halo_Y+halo_tall/2,halo_thick/2])
+				rotate([0,90,0])
+					cylinder(d=halo_thick,h=halo_marker_size*2,center=true);
+		}
+	}
+	
+}
+
+
 // The pivot arm supports the box as it rotates
-pivot_height=100;
-pivot_width=20;
-pivot_thick=10;
+pivot_height=120;
+pivot_width=25;
+pivot_thick=14;
+pivot_washer=2; // thickness of bottom washer to pivot on
+
+pivot_toe_X=75; // width of toe
+pivot_toe_Y=50; // height of toe hanging over edge
+pivot_toe_Z=10; // from pivot point to edge
+
+// One at top to hang from, one at bottom to roll on
+M3_bearing_OD=10;
+M3_bearing_H=4;
+
 module realsense_pivot_complete() {
+	bottom_Y=pivot_bottom_Y-pivot_washer;
+
 	intersection() {
 		translate([-1000+pivot_width/2,0,0])
 			cube([2000,2000,2000],center=true);
 		difference() {
 			union() {
+				
+				// This "toe" hangs over the edge of the scoring trough
+				hull()
+				for (topside=[0,1])
+				translate([-pivot_toe_X,bottom_Y-pivot_thick-(topside?0:pivot_toe_Y),pivot_toe_Z])
+					cube([pivot_toe_X+pivot_width/2,
+						pivot_thick,
+						pivot_thick*(topside?1.0:0.3)]);
+				
+				// Blends the toe into the main support
+				hull()
+				for (toespot=[[0,pivot_toe_Z],
+						[-pivot_toe_X+pivot_width/2,pivot_toe_Z], // outside corner of toe
+						[0,-60] // back along support
+					])
+					translate([toespot[0],bottom_Y-pivot_thick/2,toespot[1]])
+						cube([pivot_width,pivot_thick,pivot_thick],center=true);
+				
 		
 				// Top reinforcing
 				translate([0,pivot_top_Y,0])
-					rotate([-90,0,0])
-						cylinder(d=pivot_width,h=pivot_thick);
-				
-				// Bottom reinforcing
-				translate([0,pivot_bottom_Y-pivot_thick,0])
-					rotate([-90,0,0])
-					{
-						// Extra meat around stepper shaft
-						cylinder(d1=pivot_width+20,d2=pivot_width,h=pivot_thick);
-						// Anti-tipover plate
-						cylinder(d=120,h=3);
+				{
+					hull() {
+						mountw=halo_mount_wide*0.7;
+						translate([pivot_width/2-mountw,0,halo_mount_z])
+							cube([mountw,pivot_thick,+halo_mount_tall+5]);
+						rotate([-90,0,0])
+							cylinder(d=pivot_width,h=pivot_thick);
 					}
+				}
 				
 				// Arms out to pivots
 				translate([0,0,-pivot_height])
@@ -479,7 +591,7 @@ module realsense_pivot_complete() {
 						cube([pivot_width,pivot_top_Y-pivot_bottom_Y+2*pivot_thick,pivot_thick]);
 					linear_extrude(height=pivot_height) {
 						// Bottom upright:
-						translate([0,pivot_bottom_Y-pivot_thick/2])
+						translate([0,bottom_Y-pivot_thick/2])
 							square([pivot_width,pivot_thick],center=true);
 						// Top upright:
 						translate([0,pivot_top_Y+pivot_thick/2])
@@ -488,29 +600,19 @@ module realsense_pivot_complete() {
 				}
 				
 				// Diagonal reinforcing
-				diag=30;
+				diag=40;
 				translate([pivot_width/2,0,-pivot_height]) {
 					rotate([0,-90,0]) linear_extrude(height=3) {
-						translate([0,pivot_bottom_Y,0])
+						translate([0,bottom_Y-1,0])
 							polygon([[0,0],[diag,0],[0,diag]]);
-						translate([0,pivot_top_Y,0])
+						translate([0,pivot_top_Y+1,0])
 							polygon([[0,0],[diag,0],[0,-diag]]);
 					}
 				}
-				
-				// Endstop
-				rotate([0,30,0]) scale([1,1,-1])
-					linear_extrude(height=limit_switch_radius+10)
-					hull() {
-						translate([-pivot_thick,pivot_bottom_Y-pivot_thick])
-							square([pivot_width,1]);
-						translate([0,pivot_bottom_Y-1])
-							square([pivot_width-pivot_thick,1]);
-					}
 			}
 			
 			// Bottom pivot hole for servo
-			translate([0,pivot_bottom_Y-pivot_thick-0.1,0])
+			translate([0,bottom_Y-pivot_thick-0.1,0])
 			{
 				// rotate([-90,0,0]) cylinder(r=limit_switch_radius,h=20,center=true);
 				
@@ -519,40 +621,74 @@ module realsense_pivot_complete() {
 				// M3 bolts to retain flat on stepper
 				flats=3;
 				M3_wide=2.7;
-				M3_length=18;
-				for (side=[-1,+1])
-					translate([-side*(-flats/2-M3_wide/2),pivot_thick/2,10-M3_length+4*side])
+				M3_length=35;
+				for (side=[-1])
+					translate([-side*(-flats/2-M3_wide/2),pivot_thick/2,15-M3_length+4*side])
 					{
-						cylinder(d=2.5,h=M3_length);
+						cylinder(d=2.5,h=1.5*M3_length);
 						translate([0,0,M3_length-0.1])
-							cylinder(d=7,h=M3_length);
+							cylinder(d=7,h=M3_length*3);
 					}
 			}
 			
+			// Hole to mount backside arrow shaft
+			translate([0,bottom_Y-pivot_thick/2,-50])
+				scale([1,1,-1]) cylinder(d=7.5,h=200);
+			
+			// Hole to mount bottom rolling M3 bearing
+			translate([0,bottom_Y-M3_bearing_OD/2,0])
+				rotate([0,90,0])
+					cylinder(d=2.5,h=20);
+			
 			// Top hole for M3 bearing
 			translate([0,pivot_top_Y-0.1,0])
+			{
 				rotate([-90,0,0])
 				{
 					// Bearing itself
-					cylinder(d=10,h=4);
+					cylinder(d=M3_bearing_OD,h=M3_bearing_H);
 					
-					// M3 bolt clearance
+					// M3 bolt head clearance
 					cylinder(d=7,h=pivot_thick+2);
 				}
 			
+				// Top holes for halo
+				for (x=halo_mountbolt_xs)
+					translate([x,0,halo_mountbolt_z])
+						rotate([90,0,0])
+							cylinder(d=2.5,h=100,center=true);
+				
+			}
+			translate([-100,halo_Y,halo_mount_z])
+				cube([200,pivot_thick,halo_mount_tall+0.2]);
 		}
 	}
 }
 
-// intersection() { translate([-90,-40,-40]) cube([1000,1000,1000]); // box demo section
-realsense_mount_box_complete();
+
+module realsense_everything_demo() {
+	// intersection() { translate([-90,-40,-40]) cube([1000,1000,1000]); // box demo section
+	realsense_mount_box_complete();
+	
+	interior_parts();
+
+	#electronics_box_travels();
+
+	realsense_halo();
+
+	realsense_pivot_complete();
+}
+
+// realsense_everything_demo(); // Show working parts in assembled orientation
 
 
-// interior_parts();
-//#electronics_box_travels();
+// Printable versions:
+//realsense_mount_box_complete();
 
-//rotate([0,90,0])
-//realsense_pivot_complete();
+//rotate([-90,0,0]) realsense_halo();
+
+rotate([0,90,0]) realsense_pivot_complete(); 
+
 
 
 
