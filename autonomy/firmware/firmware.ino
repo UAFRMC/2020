@@ -312,6 +312,14 @@ void low_latency_ops() {
 
 void setup()
 {
+  // The nanos are soft-powered from the mega's digital output pins 22-25.
+  for (int powerpin=22;powerpin<=25;powerpin++) {
+    int sign=(powerpin%2)?LOW:HIGH;
+    digitalWrite(powerpin,sign);
+    pinMode(powerpin,OUTPUT);
+    digitalWrite(powerpin,sign);
+  } 
+
   aurora::PCport.begin(57600); // Control connection to PC via USB
   
   for (int n=0;n<nano_net::n_nanos;n++)
@@ -322,6 +330,7 @@ void setup()
   // Our ONE debug LED!
   pinMode(13,OUTPUT);
   digitalWrite(13,LOW);
+  
 
 /*
   // BTS Enable Pin (Controls all pins)
