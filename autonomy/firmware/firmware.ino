@@ -140,10 +140,10 @@ void send_motors(void)
   nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
   nano_commands[0].speed[3]=scale_from_64(robot.power.head_extend);
   
-  nano_commands[1].speed[0]=scale_from_64(robot.power.left);
+  nano_commands[1].speed[0]=-scale_from_64(robot.power.left);
   nano_commands[1].speed[1]=scale_from_64(robot.power.roll);
   nano_commands[1].speed[2]=0;
-  nano_commands[1].speed[3]=scale_from_64(robot.power.dump);
+  nano_commands[1].speed[3]=-scale_from_64(robot.power.dump);
 
   
   /*
