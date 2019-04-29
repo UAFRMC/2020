@@ -10,6 +10,7 @@
 #include <fstream>
 #include <vector>
 #include "../aurora/vec3.h"
+#include "../../firmware/field_geometry.h"
 
 class grid_square
 {
@@ -51,8 +52,8 @@ typedef float real_t;
 class obstacle_grid {
 public:
   enum {GRIDSIZE=4}; // cm per grid cell
-  enum {GRIDX=(30+538+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
-  enum {GRIDY=(30+369+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDX=(30+field_x_size+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
+  enum {GRIDY=(30+field_y_size+GRIDSIZE-1)/GRIDSIZE};
   enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
 
   /* Raster pattern of GRIDX * GRIDY cells,

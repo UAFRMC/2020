@@ -11,6 +11,7 @@
 #include "vision/grid.hpp"
 #include "vision/grid.cpp"
 #include "vision/terrain_map.cpp"
+#include "../firmware/field_geometry.h"
 
 #include "aruco_localize.cpp"
   
@@ -18,13 +19,15 @@ using namespace std;
 using namespace cv;  
 
 bool show_GUI=true; // show debug windows onscreen
-bool pan_stepper=false; // automatically pan stepper motor around
 
 #define DO_GCODE 0 /* command 3D printer via serial gcode */
 #if DO_GCODE
 #include "printer_gcode.h"
-#include "serial.cpp"
 #endif
+#include "serial.cpp" /* for talking to stepper driver */
+
+SerialPort stepper_serial;
+bool pan_stepper=true; // automatically pan stepper motor around
 
 
 /// Rotate coordinates using right hand rule
@@ -52,15 +55,15 @@ public:
   coord_rotator Z_rotation; // camera panning
   
   camera_transform(real_t camera_Z_angle=0.0)
-    :camera(147+90.0,40.0,75.0),  // camera position
+    :camera(field_x_beacon,field_y_beacon,70.0),  // camera position
      camera_tilt(-20), // X axis rotation (camera mounting tilt)
-     Z_rotation(camera_Z_angle-90) // Z axis rotation
+     Z_rotation(camera_Z_angle) // Z axis rotation
   {
   }
   
   // Project this camera-relative 3D point into world coordinates
   vec3 world_from_camera(vec3 point) const {
-    real_t x=point.x, y=point.z, z=-point.y;
+    real_t x=point.z, y=-point.x, z=-point.y;
     camera_tilt.rotate(y,z); // tilt up, so camera is level
     Z_rotation.rotate(x,y); // rotate, to align with field
     x+=camera.x;
@@ -132,50 +135,63 @@ class stepper_controller
   /* Angle (degrees) that centerline of camera is facing */
   float camera_Z_angle;
   int last_steps;
+#define stepper_angle_to_step (400.0 / 360.0)  /* scale degrees to step count */
+#define stepper_angle_zero -73 /* degrees for stepper zero */
+  
+  void read_serial() {
+    while (stepper_serial.available()) {
+      unsigned char pos255=stepper_serial.read();
+      camera_Z_angle=(pos255 / stepper_angle_to_step)+stepper_angle_zero;
+      
+      static unsigned char last=255;
+      if (pos255!=last) {
+        printf("Stepper reports %.0f degrees / %d steps\n",camera_Z_angle,pos255);
+        last=pos255;
+      }
+    }
+  }
 
-  bool do_seek(int steps) {
-    if (steps==0) return true;
-
-    int dir=+1;
-    if (steps<0) dir=-1;
-
-    int startup=2; // extra steps at startup
-    steps+=dir*startup; 
-
-    int backlash=24; // extra steps when changing direction
-    if (steps*last_steps<0) // changing directions, add backlash
-      steps+=dir*backlash;
-    last_steps=steps;
-    
-    fflush(stdout); fflush(stderr);
-    char cmd[256];
-    sprintf(cmd,"step.sh %d",steps);
-    if (!system(cmd)) return false;
-    return true;
+  void seek_steps(int step) {
+    if (step<0) step=0;
+    if (step>250) step=250;
+    stepper_serial.write((unsigned char)step);
   }
 
 public:
   stepper_controller() {
     last_steps=0;
     if (pan_stepper)
-      setup_seek();
+    {
+    // Connect to Arduino Nano, running nano_stepper firmware.
+      if (stepper_serial.begin(57600)!=0) {
+        pan_stepper=false;
+      } else {
+        // Wait for bootloader to finish
+        printf("*** Successfully connected to stepper\n");
+        sleep(2); // seconds to wait for bootloader
+        read_serial();
+      }
+    }
+  }
+  void serial_poll(void) {
+    if (pan_stepper) {
+      read_serial();
+    }
   }
   
   void setup_seek(void) {
-    camera_Z_angle=32;
-    do_seek(-300);
+    if (pan_stepper) {
+      camera_Z_angle=stepper_angle_zero;
+      stepper_serial.write(0xff);
+    }
   }
   void absolute_seek(float degrees) {
-    relative_seek(degrees-camera_Z_angle);
+    if (pan_stepper) {
+      int step=(degrees-stepper_angle_zero)*stepper_angle_to_step;
+      printf("*** Seeking stepper to %.0f degrees / %d steps\n",degrees,step);
+      seek_steps(step);
+    } else { camera_Z_angle=degrees; }
   }
-  void relative_seek(float degrees) {
-    float deg_to_steps=(107.0-24)/58.0;
-    int steps=(int)(degrees*deg_to_steps);
-    do_seek(steps);
-    camera_Z_angle+=steps/deg_to_steps;
-    printf("Seeked camera to angle %.0f degrees\n", camera_Z_angle);
-  }
-
   // Return the current stepper angle, in degrees 
   float get_angle_deg(void) const {
     return camera_Z_angle;
@@ -265,7 +281,7 @@ int main(int argc,const char *argv[])
       else if (arg=="--nodepth") do_depth=false;
       else if (arg=="--nocolor") do_color=false;
       else if (arg=="--coarse") bigmode=false; // lowres mode
-      else if (arg=="--pan") pan_stepper=true; // pan around
+      else if (arg=="--nostep") pan_stepper=false; // pan around
       else if (arg=="--fast") fps=30; // USB-3 only
       else {
         std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
@@ -290,13 +306,14 @@ int main(int argc,const char *argv[])
 #endif
     
     stepper_controller stepper;
+    // stepper.setup_seek();  // <- assumes startup in most clockwise angle
 
     int depth_w=1280, depth_h=720; // high res mode: definitely more detail visible
     int color_w=1280, color_h=720; 
     if (!bigmode) { // low res
       if (fps<10) fps=15;
       depth_w=480; depth_h=270;
-      color_w=424; color_h=240;
+      color_w=640; color_h=480; //color_w=424; color_h=240;
     }
 
     cfg.enable_stream(RS2_STREAM_DEPTH, depth_w,depth_h, RS2_FORMAT_Z16, fps);  
@@ -324,6 +341,7 @@ int main(int argc,const char *argv[])
     while (true)  
     {  
         // Figure out coordinate system for this capture
+        stepper.serial_poll();
         camera_transform camera_TF(pan_stepper?stepper.get_angle_deg():90);
 
 #if DO_GCODE
@@ -436,7 +454,7 @@ int main(int argc,const char *argv[])
         }    
         
         int k = waitKey(10);  
-  if ((pan_stepper && framecount>=20) || k == 'i') // image dump 
+  if ((pan_stepper && framecount>=30) || k == 'i') // image dump 
   {
     framecount=0;
     char filename[100];
@@ -444,11 +462,11 @@ int main(int argc,const char *argv[])
     obstacles.write(filename);
 
     printf("Stored image to file %s\n",filename);
-
-    if (stepper.get_angle_deg()<130)
-      stepper.relative_seek(10.0);
-    else
-      stepper.absolute_seek(35.0);
+    
+    const int n_angles=5;
+    const static float angles[n_angles]={-45,0,+45,+90,0};
+    stepper.absolute_seek(angles[writecount%n_angles]);
+        
 
     writecount++;
   }
