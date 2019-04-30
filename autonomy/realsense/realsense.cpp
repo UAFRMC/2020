@@ -163,7 +163,8 @@ public:
     if (pan_stepper)
     {
     // Connect to Arduino Nano, running nano_stepper firmware.
-      if (stepper_serial.begin(57600)!=0) {
+      stepper_serial.Set_baud(57600);
+      if (stepper_serial.Open("/dev/ttyUSB0")!=0) {
         pan_stepper=false;
       } else {
         // Wait for bootloader to finish
