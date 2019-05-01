@@ -222,12 +222,26 @@ public:
     const marker_info_t &info=get_marker_info(ID);
     
     double scale=info.true_size;
+    if (scale<0.0) { // invalid marker
+       printf("Unknown marker ID %d in view\n",ID);
+       return;
+    }
     vec3 v; // camera-coords location
     v.x=+m.at<float>(0,3)*scale;
     v.y=+m.at<float>(1,3)*scale;
     v.z=+m.at<float>(2,3)*scale;
     
+    // World coordinates of center point of observed marker
     vec3 w=camera_TF.world_from_camera(v);
+
+    if (info.side<0) { // marker is fixed to trough, angular reference only
+      w -= camera_TF.camera; // marker positions are camera-relative
+      float deg=(atan2(w.y,w.x))*(180.0/M_PI);
+      float ref=info.shift.z;
+      printf("Angle shift %.1f (ref %.0f, observed %.1f, (%.2f,%.2f,%.2f)\n",
+          deg-ref, ref, deg, w.x,w.y,w.z);
+      return;
+    }
     
     
     // bin.angle=180.0/M_PI*atan2(m.at<float>(2,0),m.at<float>(0,0));
@@ -380,12 +394,12 @@ int main(int argc,const char *argv[])
         
         framecount++;
   
+        void *color_data = (void*)color_frame.get_data();  
+          
+        // Make OpenCV version of raw pixels (no copy, so this is cheap)
+        Mat color_image(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
         if (do_color) 
         {
-          void *color_data = (void*)color_frame.get_data();  
-          
-          // Make OpenCV versions of raw pixels:
-          Mat color_image(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
           //imshow("RGB", color_image);
 
           marker_watcher_print p(camera_TF);
@@ -458,16 +472,21 @@ int main(int argc,const char *argv[])
   if ((pan_stepper && framecount>=30) || k == 'i') // image dump 
   {
     framecount=0;
-    char filename[100];
-    sprintf(filename,"world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
-    obstacles.write(filename);
-
-    printf("Stored image to file %s\n",filename);
+    char filename[500];
+    if (do_depth) {
+      sprintf(filename,"vidcaps/world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
+      obstacles.write(filename);
+      printf("Stored image to file %s\n",filename);
+    }
+    if (do_color) {
+      imwrite("vidcaps/latest.jpg",color_image);
+      sprintf(filename,"cp vidcaps/latest.jpg vidcaps/view_%04d_%03ddeg.jpg",writecount,(int)(0.5+stepper.get_angle_deg()));
+      (void)system(filename);
+    }
     
     const int n_angles=5;
-    const static float angles[n_angles]={-45,0,+45,+90,0};
+    const static float angles[n_angles]={-45,0,+45,+60,0};
     stepper.absolute_seek(angles[writecount%n_angles]);
-        
 
     writecount++;
   }

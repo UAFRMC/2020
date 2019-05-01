@@ -17,7 +17,7 @@ public:
 	float y; // out from marker
 	float z; // down from marker
 	
-	// Camera's pointing angle in the X-Y plane, degrees from Y axis
+	// Robot's yaw pointing angle in the X-Y plane, degrees around Z axis
 	float angle;
 	
 	uint32_t count; // incremented at each update (to detect crash/lag/invisible)
