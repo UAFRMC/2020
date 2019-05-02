@@ -219,10 +219,8 @@ public:
       navigator.navigator.slice[angle].proximity.print(navdebug,1);
     }
     
-    const char *pose_server=getenv("POSE_SERVER");
-    if (pose_server) {
-      printf("Network connection to '%s'\n",pose_server);
-      pose_net=new pose_subscriber(pose_server);
+    if (getenv("BEACON")) {
+      pose_net=new pose_subscriber();
     }    
   }
 

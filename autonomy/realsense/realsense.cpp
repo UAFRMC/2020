@@ -13,6 +13,8 @@
 #include "vision/terrain_map.cpp"
 #include "../firmware/field_geometry.h"
 
+#include "aurora/beacon_commands.h"
+
 #include "aruco_localize.cpp"
   
 using namespace std;  
@@ -29,6 +31,7 @@ bool show_GUI=true; // show debug windows onscreen
 SerialPort stepper_serial;
 bool pan_stepper=true; // automatically pan stepper motor around
 
+int sys_error=0;
 
 /// Rotate coordinates using right hand rule
 class coord_rotator {
@@ -158,7 +161,12 @@ class stepper_controller
   }
 
 public:
-  stepper_controller() {
+  // Observed angle - true angle correction factor
+  float angle_correction;
+
+  stepper_controller() 
+    :angle_correction(0.0)
+  {
     last_steps=0;
     if (pan_stepper)
     {
@@ -188,14 +196,14 @@ public:
   }
   void absolute_seek(float degrees) {
     if (pan_stepper) {
-      int step=(degrees-stepper_angle_zero)*stepper_angle_to_step;
+      int step=(degrees-angle_correction-stepper_angle_zero)*stepper_angle_to_step;
       printf("*** Seeking stepper to %.0f degrees / %d steps\n",degrees,step);
       seek_steps(step);
-    } else { camera_Z_angle=degrees; }
+    } else { camera_Z_angle=degrees-angle_correction; }
   }
   // Return the current stepper angle, in degrees 
   float get_angle_deg(void) const {
-    return camera_Z_angle;
+    return camera_Z_angle+angle_correction;
   }
 };
 
@@ -211,9 +219,10 @@ class marker_watcher_print {
   const camera_transform &camera_TF;
 public:
   robot_markers_all markers;
+  float angle_correction;
 
   marker_watcher_print(const camera_transform &camera_TF_) 
-    :camera_TF(camera_TF_)
+    :camera_TF(camera_TF_), angle_correction(0.0f)
   {
   }
 
@@ -236,10 +245,11 @@ public:
 
     if (info.side<0) { // marker is fixed to trough, angular reference only
       w -= camera_TF.camera; // marker positions are camera-relative
-      float deg=(atan2(w.y,w.x))*(180.0/M_PI);
-      float ref=info.shift.z;
+      float deg=(atan2(w.y,w.x))*(180.0/M_PI); // observed position
+      float ref=info.shift.z; // theoretical position
       printf("Angle shift %.1f (ref %.0f, observed %.1f, (%.2f,%.2f,%.2f)\n",
           deg-ref, ref, deg, w.x,w.y,w.z);
+      angle_correction=deg-ref;
       return;
     }
     
@@ -347,14 +357,41 @@ int main(int argc,const char *argv[])
     int framecount=0;
     int writecount=0;
     int nextwrite=1;
+
+    int obstacle_scan=0; // frames remaining for obstacle scan
+    int obstacle_scan_target=-999; // angle at which we want to do the scan
     
     aruco_localizer aruco_loc;
 
     obstacle_grid obstacles;
     
+    aurora_beacon_command_server command_server;
+    
     rs2::frameset frames;  
     while (true)  
     {  
+        // Check for network data
+        aurora_beacon_command cmd;
+        if (command_server.request(cmd)) {
+          if (cmd.letter=='P') { // point request
+            stepper.absolute_seek(cmd.angle);
+            command_server.response(); 
+          }
+          else if (cmd.letter=='O') { // turn-off request
+            sys_error=system("sudo shutdown -h now");
+            command_server.response(); 
+          }
+          else if (cmd.letter=='S') { // scan for obstacles
+            stepper.absolute_seek(cmd.angle);
+            obstacle_scan_target=cmd.angle;
+            obstacle_scan=15; 
+          }
+          else { // unknown command
+            printf("Ignoring unknown command request '%c'\n", cmd.letter);
+            command_server.response(); 
+          }
+        }
+
         // Figure out coordinate system for this capture
         stepper.serial_poll();
         camera_transform camera_TF(pan_stepper?stepper.get_angle_deg():90);
@@ -418,6 +455,7 @@ int main(int argc,const char *argv[])
           aruco_loc.find_markers(color_image,p);
           p.markers.pose.print();
           pose_pub.publish(p.markers);
+          stepper.angle_correction=p.angle_correction;
           
           if (show_GUI) 
             imshow("Color Image",color_image);
@@ -481,7 +519,7 @@ int main(int argc,const char *argv[])
     if (do_color) {
       imwrite("vidcaps/latest.jpg",color_image);
       sprintf(filename,"cp vidcaps/latest.jpg vidcaps/view_%04d_%03ddeg.jpg",writecount,(int)(0.5+stepper.get_angle_deg()));
-      (void)system(filename);
+      sys_error=system(filename);
     }
     
     const int n_angles=5;
