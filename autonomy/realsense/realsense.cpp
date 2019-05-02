@@ -13,6 +13,8 @@
 #include "vision/terrain_map.cpp"
 #include "../firmware/field_geometry.h"
 
+#include "aurora/beacon_commands.h"
+
 #include "aruco_localize.cpp"
   
 using namespace std;  
@@ -29,6 +31,7 @@ bool show_GUI=true; // show debug windows onscreen
 SerialPort stepper_serial;
 bool pan_stepper=true; // automatically pan stepper motor around
 
+int sys_error=0;
 
 /// Rotate coordinates using right hand rule
 class coord_rotator {
@@ -158,7 +161,12 @@ class stepper_controller
   }
 
 public:
-  stepper_controller() {
+  // Observed angle - true angle correction factor
+  float angle_correction;
+
+  stepper_controller() 
+    :angle_correction(0.0)
+  {
     last_steps=0;
     if (pan_stepper)
     {
@@ -188,14 +196,14 @@ public:
   }
   void absolute_seek(float degrees) {
     if (pan_stepper) {
-      int step=(degrees-stepper_angle_zero)*stepper_angle_to_step;
+      int step=(degrees-angle_correction-stepper_angle_zero)*stepper_angle_to_step;
       printf("*** Seeking stepper to %.0f degrees / %d steps\n",degrees,step);
       seek_steps(step);
-    } else { camera_Z_angle=degrees; }
+    } else { camera_Z_angle=degrees-angle_correction; }
   }
   // Return the current stepper angle, in degrees 
   float get_angle_deg(void) const {
-    return camera_Z_angle;
+    return camera_Z_angle+angle_correction;
   }
 };
 
@@ -211,9 +219,10 @@ class marker_watcher_print {
   const camera_transform &camera_TF;
 public:
   robot_markers_all markers;
+  float angle_correction;
 
   marker_watcher_print(const camera_transform &camera_TF_) 
-    :camera_TF(camera_TF_)
+    :camera_TF(camera_TF_), angle_correction(0.0f)
   {
   }
 
@@ -222,12 +231,27 @@ public:
     const marker_info_t &info=get_marker_info(ID);
     
     double scale=info.true_size;
+    if (scale<0.0) { // invalid marker
+       printf("Unknown marker ID %d in view\n",ID);
+       return;
+    }
     vec3 v; // camera-coords location
     v.x=+m.at<float>(0,3)*scale;
     v.y=+m.at<float>(1,3)*scale;
     v.z=+m.at<float>(2,3)*scale;
     
+    // World coordinates of center point of observed marker
     vec3 w=camera_TF.world_from_camera(v);
+
+    if (info.side<0) { // marker is fixed to trough, angular reference only
+      w -= camera_TF.camera; // marker positions are camera-relative
+      float deg=(atan2(w.y,w.x))*(180.0/M_PI); // observed position
+      float ref=info.shift.z; // theoretical position
+      printf("Angle shift %.1f (ref %.0f, observed %.1f, (%.2f,%.2f,%.2f)\n",
+          deg-ref, ref, deg, w.x,w.y,w.z);
+      angle_correction=deg-ref;
+      return;
+    }
     
     
     // bin.angle=180.0/M_PI*atan2(m.at<float>(2,0),m.at<float>(0,0));
@@ -333,17 +357,49 @@ int main(int argc,const char *argv[])
     int framecount=0;
     int writecount=0;
     int nextwrite=1;
+
+    int obstacle_scan=0; // frames remaining for obstacle scan
+    int obstacle_scan_target=-999; // angle at which we want to do the scan
     
     aruco_localizer aruco_loc;
 
     obstacle_grid obstacles;
     
+    aurora_beacon_command_server command_server;
+    
     rs2::frameset frames;  
     while (true)  
     {  
+        // Check for network data
+        try {
+        aurora_beacon_command cmd;
+        if (command_server.request(cmd)) {
+          if (cmd.letter=='P') { // point request
+            stepper.absolute_seek(cmd.angle);
+            command_server.response(); 
+          }
+          else if (cmd.letter=='O') { // turn-off request
+            sys_error=system("sudo shutdown -h now");
+            command_server.response(); 
+          }
+          else if (cmd.letter=='S') { // scan for obstacles
+            stepper.absolute_seek(cmd.angle);
+            obstacle_scan_target=cmd.angle;
+            obstacle_scan=15;  // frames (FIXME: wait until target, actually scan, send back response with obstacles)
+          }
+          else { // unknown command
+            printf("Ignoring unknown command request '%c'\n", cmd.letter);
+            command_server.response(); 
+          }
+        }
+        }
+        catch (...) {
+          printf("Ignoring network exception\n");
+        }
+
         // Figure out coordinate system for this capture
         stepper.serial_poll();
-        camera_transform camera_TF(pan_stepper?stepper.get_angle_deg():90);
+        camera_transform camera_TF(stepper.get_angle_deg());
 
 #if DO_GCODE
         camera_TF.camera=vec3(); // zero out camera position
@@ -380,12 +436,12 @@ int main(int argc,const char *argv[])
         
         framecount++;
   
+        void *color_data = (void*)color_frame.get_data();  
+          
+        // Make OpenCV version of raw pixels (no copy, so this is cheap)
+        Mat color_image(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
         if (do_color) 
         {
-          void *color_data = (void*)color_frame.get_data();  
-          
-          // Make OpenCV versions of raw pixels:
-          Mat color_image(Size(color_w, color_h), CV_8UC3, color_data, Mat::AUTO_STEP);  
           //imshow("RGB", color_image);
 
           marker_watcher_print p(camera_TF);
@@ -402,7 +458,11 @@ int main(int argc,const char *argv[])
           if (camera_TF.camera.y!=0.0)
 #endif
           aruco_loc.find_markers(color_image,p);
+          if (p.angle_correction!=0) {
+             stepper.angle_correction-=p.angle_correction;
+          }
           p.markers.pose.print();
+          p.markers.beacon=stepper.get_angle_deg();
           pose_pub.publish(p.markers);
           
           if (show_GUI) 
@@ -458,16 +518,23 @@ int main(int argc,const char *argv[])
   if ((pan_stepper && framecount>=30) || k == 'i') // image dump 
   {
     framecount=0;
-    char filename[100];
-    sprintf(filename,"world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
-    obstacles.write(filename);
-
-    printf("Stored image to file %s\n",filename);
+    char filename[500];
+    if (do_depth) {
+      sprintf(filename,"vidcaps/world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
+      obstacles.write(filename);
+      printf("Stored image to file %s\n",filename);
+    }
+    if (do_color) {
+      imwrite("vidcaps/latest.jpg",color_image);
+      sprintf(filename,"cp vidcaps/latest.jpg vidcaps/view_%04d_%03ddeg.jpg",writecount,(int)(0.5+stepper.get_angle_deg()));
+      sys_error=system(filename);
+    }
     
-    const int n_angles=5;
-    const static float angles[n_angles]={-45,0,+45,+90,0};
-    stepper.absolute_seek(angles[writecount%n_angles]);
-        
+    if (0) { // demo stepper seeking, in pattern
+      const int n_angles=5;
+      const static float angles[n_angles]={-45,0,+45,+60,0};
+      stepper.absolute_seek(angles[writecount%n_angles]);
+    }
 
     writecount++;
   }

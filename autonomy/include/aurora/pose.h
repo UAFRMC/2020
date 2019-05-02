@@ -60,12 +60,16 @@ public:
 */
 class robot_markers_all {
 public:
+
   // Integrated robot position
   robot_pose pose;
 
   // Raw sensed pose for each marker
   enum {NMARKER=35}; // <- all tag25h9 markers
   robot_pose markers[NMARKER];
+  
+  // Angle of receiver beacon, in degrees, up from horizontal (+X)
+  float beacon;
   
   /// Add another sensed marker:
   ///    across points across the marker horizontally, in plane of marker
@@ -89,8 +93,8 @@ public:
     switch(side) {  // FIXME: check these transforms!
     case 0: next.fwd=+across; next.rgt=+out; break; // left
     case 1: next.fwd=-across; next.rgt=-out; break; // rgt 
-    case 2: next.fwd=-out; next.rgt=-across; break; // back
-    case 3: next.fwd=+out; next.rgt=+across; break; // fwd
+    case 2: next.fwd=-out; next.rgt=+across; break; // back
+    case 3: next.fwd=+out; next.rgt=-across; break; // fwd
     }
     pose.weighted_update(next); // FIXME: weighted average here
   }

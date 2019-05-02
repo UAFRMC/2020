@@ -40,11 +40,18 @@ public:
   zmq::context_t context;
   zmq::socket_t subscriber;
   
-  pose_subscriber(const char *serverID) 
+  pose_subscriber(void) 
     :context(1),
      subscriber(context,ZMQ_SUB)
   {
-    subscriber.connect(serverID);
+    std::string server="tcp://10.10.10.100";
+    const char *beacon_str=getenv("BEACON");
+    if (beacon_str) {
+      server="tcp://";
+      server+=beacon_str;
+    }
+    server+=":" ZMQ_POSE_PORT;
+    subscriber.connect(server.c_str());
     subscriber.setsockopt(ZMQ_SUBSCRIBE,"",0);
   }
   
