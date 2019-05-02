@@ -384,7 +384,7 @@ int main(int argc,const char *argv[])
           else if (cmd.letter=='S') { // scan for obstacles
             stepper.absolute_seek(cmd.angle);
             obstacle_scan_target=cmd.angle;
-            obstacle_scan=15; 
+            obstacle_scan=15;  // frames (FIXME: wait until target, actually scan, send back response with obstacles)
           }
           else { // unknown command
             printf("Ignoring unknown command request '%c'\n", cmd.letter);
@@ -394,7 +394,7 @@ int main(int argc,const char *argv[])
 
         // Figure out coordinate system for this capture
         stepper.serial_poll();
-        camera_transform camera_TF(pan_stepper?stepper.get_angle_deg():90);
+        camera_transform camera_TF(stepper.get_angle_deg());
 
 #if DO_GCODE
         camera_TF.camera=vec3(); // zero out camera position
@@ -453,9 +453,12 @@ int main(int argc,const char *argv[])
           if (camera_TF.camera.y!=0.0)
 #endif
           aruco_loc.find_markers(color_image,p);
+          if (p.angle_correction!=0) {
+             stepper.angle_correction=p.angle_correction;
+          }
           p.markers.pose.print();
+          p.markers.beacon=stepper.get_angle_deg();
           pose_pub.publish(p.markers);
-          stepper.angle_correction=p.angle_correction;
           
           if (show_GUI) 
             imshow("Color Image",color_image);
@@ -522,9 +525,11 @@ int main(int argc,const char *argv[])
       sys_error=system(filename);
     }
     
-    const int n_angles=5;
-    const static float angles[n_angles]={-45,0,+45,+60,0};
-    stepper.absolute_seek(angles[writecount%n_angles]);
+    if (0) { // demo stepper seeking, in pattern
+      const int n_angles=5;
+      const static float angles[n_angles]={-45,0,+45,+60,0};
+      stepper.absolute_seek(angles[writecount%n_angles]);
+    }
 
     writecount++;
   }

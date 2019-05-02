@@ -178,19 +178,6 @@ void robot_display_setup(const robot_base &robot) {
 	glVertex2i(0,field_y_size);
 	glEnd();
 
-// Draw beacon
-	glBegin(GL_LINES);
-	for (int angle=-30;angle<=+30;angle+=30) {
-		float color[4]={0.2,0.2,0.2,1.0};
-		glColor4fv(color);
-		float ang=angle*(M_PI/180.0);
-		float c=cos(ang), s=sin(ang);
-		vec2 start(field_x_beacon,field_y_beacon);
-		glVertex2fv(start);
-		glVertex2fv(start+200.0*vec2(c,s));
-	}
-	glEnd();
-
 // Draw current robot configuration (side view)
 	glBegin(GL_TRIANGLES);
 	double robot_draw_y=75; // size of side view image
@@ -420,6 +407,19 @@ void robot_display_markers(const robot_markers_all &m)
     printf("Marker %d: ",i); m.markers[i].print();
     robot_display_pose(m.markers[i]);
   }
+  
+  // Draw beacon field of view
+	glBegin(GL_LINES);
+	for (int angle=-30;angle<=+30;angle+=30) {
+		float color[4]={0.2,0.2,0.2,1.0};
+		glColor4fv(color);
+		float ang=(angle+m.beacon)*(M_PI/180.0);
+		float c=cos(ang), s=sin(ang);
+		vec2 start(field_x_beacon,field_y_beacon);
+		glVertex2fv(start);
+		glVertex2fv(start+200.0*vec2(c,s));
+	}
+	glEnd();
 }
 
 
