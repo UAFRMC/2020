@@ -184,7 +184,7 @@ public:
     sim.loc.angle=((rand()%8)*8)/360;
     sim.loc.confidence=1.0;
     
-    
+    /*
     // Add obstacles around the scoring trough
     for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
     for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
@@ -200,7 +200,7 @@ public:
     
     // Isolated tall obstacle in middle
     navigator.mark_obstacle(130,y,40);
-    
+    */
     
     // Recompute proximity costs after marking obstacles
     const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
@@ -372,7 +372,9 @@ private:
     
     vec2 cur(sim.loc.x,sim.loc.y); // robot location
     float cur_angle=90-sim.loc.angle; // <- sim angle is Y-relative (STUPID!)
-    
+
+    if (fmod(cur_time,10.0)<8.0) return false; // periodic stop
+
     bool path_planning_OK=false;
     double forward=0.0; // forward-backward
     double turn=0.0; // left-right
