@@ -9,6 +9,8 @@
 #define __AURORA_BEACON_CMD_H
 
 #include <zmq.hpp>
+#include <unistd.h> // for sleep
+#include <thread>
 
 // Command letters:
 enum {
@@ -66,34 +68,53 @@ void send_aurora_beacon_command(char letter,
     (int)nreturn,(int)sizeof(T));
 }
 
+/* ZMQ doesn't seem to have a decent 'check if client connected' interface,
+   so use the blocking interface from a thread.  Silly! */
+inline void zmq_thread_poll_on_socket(zmq::socket_t &socket,
+      volatile aurora_beacon_command &cmd) 
+{
+  while (1) {
+    zmq::message_t cmdbuf;
+    socket.recv(&cmdbuf);
+    if (cmdbuf.size()>0) {
+      if (sizeof(cmd)==cmdbuf.size())
+      {
+        memcpy((void *)&cmd,cmdbuf.data(),sizeof(cmd));
+        while (cmd.letter!=0) {
+           sleep(0); // yield CPU
+        }
+      }
+      else 
+        printf("WARNING: Size mismatch, expected %d, got %d bytes\n",
+          (int)sizeof(cmd), (int)cmdbuf.size());
+    }
+  }
+}
+
 // Receives beacon commands (on the beacon)
 class aurora_beacon_command_server {
   zmq::context_t context;
   zmq::socket_t socket;
+  aurora_beacon_command cmd;
 public:
+
   aurora_beacon_command_server() 
     :context(1), socket(context,ZMQ_REP)
   {
     socket.bind("tcp://*:" aurora_beacon_command_port);
+    cmd.letter=0;
+    new std::thread(zmq_thread_poll_on_socket,std::ref(socket),std::ref(cmd));
   }
   
   // Front half of request: receive a command and return true,
   //  or else return false.
   // If this returns true, you MUST send a response, even if it's empty.
   bool request(aurora_beacon_command &c) {
-    zmq::message_t cmdbuf;
-    int err=socket.recv(&cmdbuf,ZMQ_NOBLOCK);
-    if (err==0) { // we got one!
-      if (sizeof(c)==cmdbuf.size())
-        memcpy(&c,cmdbuf.data(),sizeof(c));
-      else 
-        printf("WARNING: Size mismatch, expected %d, got %d bytes\n",
-          (int)sizeof(c), (int)cmdbuf.size());
-      printf("Incoming beacon command %c (angle %d)\n",
-        c.letter, (int)c.angle);
-      return true;
-    }
-    else return false;
+    if (cmd.letter==0) return false;
+    printf("Incoming beacon command %c (angle %d)\n",
+       cmd.letter, (int)cmd.angle);
+    c=cmd;
+    return true;
   }
   
   // Back half of request: send any response data
@@ -102,6 +123,7 @@ public:
     zmq::message_t responsebuf(ndata);
     memcpy(responsebuf.data(),data,ndata);
     socket.send(responsebuf);
+    cmd.letter=0; // signal thread the socket is theirs again
   }
 };
 
