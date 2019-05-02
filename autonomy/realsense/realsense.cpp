@@ -459,7 +459,7 @@ int main(int argc,const char *argv[])
 #endif
           aruco_loc.find_markers(color_image,p);
           if (p.angle_correction!=0) {
-             stepper.angle_correction=p.angle_correction;
+             stepper.angle_correction-=p.angle_correction;
           }
           p.markers.pose.print();
           p.markers.beacon=stepper.get_angle_deg();
