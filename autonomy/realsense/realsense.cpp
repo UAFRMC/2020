@@ -371,6 +371,7 @@ int main(int argc,const char *argv[])
     while (true)  
     {  
         // Check for network data
+        try {
         aurora_beacon_command cmd;
         if (command_server.request(cmd)) {
           if (cmd.letter=='P') { // point request
@@ -390,6 +391,10 @@ int main(int argc,const char *argv[])
             printf("Ignoring unknown command request '%c'\n", cmd.letter);
             command_server.response(); 
           }
+        }
+        }
+        catch (...) {
+          printf("Ignoring network exception\n");
         }
 
         // Figure out coordinate system for this capture
