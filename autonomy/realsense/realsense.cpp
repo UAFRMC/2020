@@ -14,6 +14,8 @@
 #include "../firmware/field_geometry.h"
 
 #include "aurora/beacon_commands.h"
+#include "find_obstacles.h"
+
 
 #include "aruco_localize.cpp"
   
@@ -296,13 +298,14 @@ int main(int argc,const char *argv[])
     rs2::config cfg;  
   
     bool bigmode=true; // high res 720p input
-    bool do_depth=true; // read depth frames, parse to grid
+    bool do_depth=false; // auto-read depth frames, parse into grid
     bool do_color=true; // read color frames, look for vision markers
     int fps=6; // framerate (USB 2.0 compatible by default)
     
     for (int argi=1;argi<argc;argi++) {
       std::string arg=argv[argi];
       if (arg=="--nogui") show_GUI=false;
+      else if (arg=="--depth") do_depth=true;
       else if (arg=="--nodepth") do_depth=false;
       else if (arg=="--nocolor") do_color=false;
       else if (arg=="--coarse") bigmode=false; // lowres mode
@@ -382,10 +385,11 @@ int main(int argc,const char *argv[])
             sys_error=system("sudo shutdown -h now");
             command_server.response(); 
           }
-          else if (cmd.letter=='S') { // scan for obstacles
+          else if (cmd.letter=='T') { // scan for obstacles
             stepper.absolute_seek(cmd.angle);
             obstacle_scan_target=cmd.angle;
-            obstacle_scan=15;  // frames (FIXME: wait until target, actually scan, send back response with obstacles)
+            obstacles.clear();
+            obstacle_scan=18;  // frames to scan 
           }
           else { // unknown command
             printf("Ignoring unknown command request '%c'\n", cmd.letter);
@@ -469,7 +473,13 @@ int main(int argc,const char *argv[])
             imshow("Color Image",color_image);
         }
         
-        if (do_depth) 
+        bool do_scan=(obstacle_scan>0);
+        if (do_scan && pan_stepper && fabs(obstacle_scan_target-stepper.get_angle_deg())>4.0)
+        {
+          do_scan=false; // wait until stepper reaches target (FIXME: hangs if coords corrected during seek?)
+        }
+        
+        if (do_depth || obstacle_scan>0) 
         {
           typedef unsigned short depth_t;
           depth_t *depth_data = (depth_t*)depth_frame.get_data();
@@ -483,7 +493,7 @@ int main(int argc,const char *argv[])
           
           //Mat debug_image(Size(depth_w, depth_h), CV_8UC3, cv::Scalar(0));
           
-          if (framecount<=10) obstacles.clear(); // clear the grid
+          // if (obstacle_scan>=16) obstacles.clear(); // clear the grid
           
           const int realsense_left_start=50; // invalid data left of here
           for (int y = 0; y < depth_h; y++)
@@ -510,12 +520,24 @@ int main(int argc,const char *argv[])
           }   
           //imshow("Depth image",debug_image);
           
-          cv::Mat world_depth=obstacles.get_debug_2D(6);
-          if (show_GUI) imshow("2D World",world_depth);    
+          if (show_GUI) {
+            cv::Mat world_depth=obstacles.get_debug_2D(6);
+            imshow("2D World",world_depth);    
+          }
+          if (obstacle_scan>0) { 
+            obstacle_scan--;
+            if (obstacle_scan==0) {
+              // Done with scan--report results to backend
+              std::vector<aurora_detected_obstacle> obstacle_list;
+              find_obstacles(obstacles,obstacle_list);
+              command_server.response(&obstacle_list[0],
+                sizeof(obstacle_list[0])*obstacle_list.size()); 
+            }
+          }
         }    
         
         int k = waitKey(10);  
-  if ((pan_stepper && framecount>=30) || k == 'i') // image dump 
+  if ((framecount>=30) || k == 'i') // image dump 
   {
     framecount=0;
     char filename[500];
@@ -523,6 +545,7 @@ int main(int argc,const char *argv[])
       sprintf(filename,"vidcaps/world_depth_%03d",(int)(0.5+stepper.get_angle_deg()));
       obstacles.write(filename);
       printf("Stored image to file %s\n",filename);
+      obstacles.clear();
     }
     if (do_color) {
       imwrite("vidcaps/latest.jpg",color_image);
@@ -530,7 +553,7 @@ int main(int argc,const char *argv[])
       sys_error=system(filename);
     }
     
-    if (0) { // demo stepper seeking, in pattern
+    if (0 && pan_stepper) { // demo stepper seeking, in pattern
       const int n_angles=5;
       const static float angles[n_angles]={-45,0,+45,+60,0};
       stepper.absolute_seek(angles[writecount%n_angles]);

@@ -14,7 +14,7 @@
 
 // Command letters:
 enum {
-  aurora_beacon_command_scan='S', // scan for obstacles
+  aurora_beacon_command_scan='T', // take a scan for obstacles
   aurora_beacon_command_point='P', // point sensor this direction
   aurora_beacon_command_off='O', // power off the beacon
 };
@@ -27,6 +27,11 @@ struct aurora_beacon_command {
   // Angle, used by scan and point commands.
   //   Angle is in degrees up from the +X axis.
   aurora_beacon_command_angle_t angle;
+};
+
+struct aurora_detected_obstacle {
+  signed short x,y; // location on field (cm, field coords)
+  signed short height; // height above/below neighbors
 };
 
 
@@ -110,10 +115,12 @@ public:
   //  or else return false.
   // If this returns true, you MUST send a response, even if it's empty.
   bool request(aurora_beacon_command &c) {
-    if (cmd.letter==0) return false;
+    if (cmd.letter==0) return false; // nothing there yet
+    if (cmd.letter=='b') return false; // still blocked on last request
     printf("Incoming beacon command %c (angle %d)\n",
        cmd.letter, (int)cmd.angle);
     c=cmd;
+    cmd.letter='b'; // blocked on last request
     return true;
   }
   
