@@ -58,7 +58,7 @@ enum {
   field_angle_trough=180, // Robot's heading angle when dumping at trough (right)
 #endif
   
-  field_y_trough_center=105, // Center of scoring trough
+  field_y_trough_center=105, // Center of scoring trough, minus space for beacon
   field_x_trough_center=37, // X
   
   field_y_trough_size=165, // length of trough in Y axis

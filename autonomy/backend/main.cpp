@@ -19,6 +19,7 @@
 #include "aurora/ui.h"
 #include "aurora/robot_serial.h"
 #include "aurora/pose_network.h"
+#include "aurora/beacon_commands.h"
 
 #include <SOIL/SOIL.h>
 
@@ -49,11 +50,9 @@ bool driver_test=false; // --driver_test, path planning testing
 
 bool nodrive=false; // --nodrive flag (for testing indoors)
 
-
-
 /** X,Y field target location where we drive to, before finally backing up */
-vec2 dump_target_loc(field_x_size/2,field_y_trough_center); // rough area
-vec2 dump_align_loc(field_x_trough_edge,field_y_trough_center); // final alignment
+vec2 dump_target_loc(field_x_size/2,field_y_trough_center-40); // rough area, below beacon
+vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y); // final alignment
 float dump_target_angle=field_angle_trough;
 
 /** X,Y field target location that we target for mining */
@@ -143,6 +142,183 @@ public:
 
 
 /**
+ This is the autonomous path planning object.
+*/
+class robot_autodriver
+{
+public:
+  rmc_navigator navigator;
+  enum {navigator_res=rmc_navigator::GRIDSIZE};
+  typedef rmc_navigator::navigator_t::searchposition planned_path_t;
+  
+  bool has_path;
+  std::deque<planned_path_t> planned_path;
+  rmc_navigator::navigator_t::drive_t last_drive;
+  int replan_counter;
+  
+  robot_autodriver()
+  {
+    flush();
+    
+    // Add obstacles around the scoring trough
+    for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
+    for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
+      navigator.mark_obstacle(x, y, 55);
+    
+    // And mark off the beacon
+    int beaconsize=15;
+    for (int dx=-beaconsize;dx<=beaconsize;dx+=navigator_res/2)
+    for (int dy=-beaconsize;dy<=beaconsize;dy+=navigator_res/2)
+      navigator.mark_obstacle(field_x_beacon+dx, field_y_beacon+dy, 55);
+
+    if (false && simulate_only) {
+      // Add a few hardcoded obstacles, to show off path planning
+      int x=130;
+      int y=290;
+      
+      //Hard wall
+      if (true)
+       for (;x<=250;x+=navigator_res) navigator.mark_obstacle(x,y,15);
+      
+      // Isolated tall obstacle in middle
+      navigator.mark_obstacle(130,y,40);
+    }
+    
+    compute_proximity();
+  }
+  
+  // Mark this field location as an obstacle of this height
+  //  (you MUST call compute_proximity after marking obstacles)
+  inline void mark_obstacle(int x,int y,int ht) { navigator.mark_obstacle(x,y,ht); }
+  
+  // Recompute proximity costs (after marking obstacles)
+  void compute_proximity() {
+    // Recompute proximity costs after marking obstacles
+    const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
+    navigator.navigator.compute_proximity(obstacle_proximity);
+  }
+  
+  // Dump proximity and debug data to plain text file
+  void debug_dump(const char *filename="debug_nav.txt") {
+    // Debug dump obstacles, field, etc.
+    std::ofstream navdebug(filename);
+    navdebug<<"Raw obstacles:\n";
+    navigator.navigator.obstacles.print(navdebug,10);
+    
+    for (int angle=0;angle<=20;angle+=10) {
+      navdebug<<"\n\nAngle "<<angle<<" expanded obstacles:\n";
+      navigator.navigator.slice[angle].obstacle.print(navdebug,10);
+      
+      navdebug<<"Proximity:\n";
+      navigator.navigator.slice[angle].proximity.print(navdebug,1);
+    }
+  }
+  
+  // Flush autonomous drive state
+  void flush() {
+    has_path=false;
+    replan_counter=0;
+    planned_path=std::deque<planned_path_t>();
+  }
+  
+  // Compute autonomous drive 
+  //   cur and target are (x,y) cm field coords and deg x angles.
+  bool autodrive(vec2 cur,float cur_angle,
+    vec2 target,float target_angle,
+    double &forward,double &turn) 
+  {
+    const int replan_interval=1; // 1==every frame.  10==every 10 frames.
+    
+    const int plan_averaging=2; // steps in new plan to average together
+    const int replan_length=2*plan_averaging; // distance of new plan to keep
+    static rmc_navigator::navigator_t::drive_t last_drive;
+    
+    if (planned_path.size()<plan_averaging || (--replan_counter)<=0) 
+    { // refill planned path
+      replan_counter=replan_interval;
+      flush(); // flush old planned path
+      
+      // Start position: robot's position
+      rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
+      // End position: at target
+      rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
+
+      rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
+      int steps=0;
+      for (const rmc_navigator::searchposition &p : plan.path)
+      {
+        planned_path.push_back(p);
+        if (steps<replan_length)
+        {
+          p.print();
+        }
+        steps++;
+      }
+      
+      printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
+          cur.x,cur.y,cur_angle,
+          target.x,target.y,target_angle, steps);
+      if (!plan.valid) {
+        printf("Path planning FAILED: searched %zd cells\n",plan.searched);
+        return false;
+      }
+    }
+    int pathslots=plan_averaging;
+    for (int slot=0;slot<plan_averaging;slot++) {
+      if (slot<(int)planned_path.size()) {
+        planned_path_t &p=planned_path[slot];
+        forward += p.drive.forward;
+        turn += p.drive.turn;
+      }
+      else { // short plan, use last known data
+        forward +=last_drive.forward;
+        turn +=last_drive.turn;
+      }
+    }
+    forward = forward/pathslots;
+    turn = turn/pathslots;
+    
+    // Cycle detection
+    static int cycle_count=0;
+    cycle_count--;
+    if (cycle_count<0) cycle_count=0;
+    if (forward * last_drive.forward <0 || turn * last_drive.turn <0) 
+    {
+      cycle_count+=2;
+      if (cycle_count>5) { 
+        printf("Path planning CYCLE DETECTED, counter %d, keeping last drive\n",
+          cycle_count);
+        cycle_count=0;
+        
+        // don't replan, just drive for a bit to clear the cycle
+        replan_counter=10; 
+        
+        //forward=last_drive.forward;
+        //turn=last_drive.turn;
+      }
+    }
+    printf("Path planning forward %.1f, turn %.1f\n",forward,turn);
+    
+    // Update last_drive for next time
+    if (planned_path.size()>0) last_drive=planned_path[0].drive;
+    
+    return true;
+  }
+  
+  // Draw a planned path onscreen
+  void draw_path() {
+    glBegin(GL_LINE_STRIP);
+    for (const rmc_navigator::searchposition &p : planned_path) {
+      glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
+      glVertex2fv(p.pos.v);
+    }
+    glColor3f(1.0f,1.0f,1.0f);
+    glEnd();
+  }
+};
+
+
+/**
  This class represents everything the back end knows about the robot.
 */
 class robot_manager_t
@@ -155,11 +331,8 @@ public:
   robot_command command; // last-received command
   robot_comms comms; // network link to front end
   robot_ui ui; // keyboard interface
-
-  rmc_navigator navigator;
-  enum {navigator_res=rmc_navigator::GRIDSIZE};
-  typedef rmc_navigator::navigator_t::searchposition planned_path_t;
-  std::deque<planned_path_t> planned_path;
+  
+  robot_autodriver autodriver;
 
   robot_serial arduino;
 
@@ -183,41 +356,6 @@ public:
     sim.loc.x= (rand()%10)*20.0+100.0;
     sim.loc.angle=((rand()%8)*8)/360;
     sim.loc.confidence=1.0;
-    
-    /*
-    // Add obstacles around the scoring trough
-    for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
-    for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
-      navigator.mark_obstacle(x, y, 55);
-
-    // Add a few hardcoded obstacles, to show off path planning
-    int x=130;
-    int y=290;
-    
-    //Hard wall
-    if (true)
-     for (;x<=250;x+=navigator_res) navigator.mark_obstacle(x,y,15);
-    
-    // Isolated tall obstacle in middle
-    navigator.mark_obstacle(130,y,40);
-    */
-    
-    // Recompute proximity costs after marking obstacles
-    const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
-    navigator.navigator.compute_proximity(obstacle_proximity);
-    
-    // Debug dump obstacles, field, etc.
-    std::ofstream navdebug("debug_nav.txt");
-    navdebug<<"Raw obstacles:\n";
-    navigator.navigator.obstacles.print(navdebug,10);
-    
-    for (int angle=0;angle<=20;angle+=10) {
-      navdebug<<"\n\nAngle "<<angle<<" expanded obstacles:\n";
-      navigator.navigator.slice[angle].obstacle.print(navdebug,10);
-      
-      navdebug<<"Proximity:\n";
-      navigator.navigator.slice[angle].proximity.print(navdebug,1);
-    }
     
     if (getenv("BEACON")) {
       pose_net=new pose_subscriber();
@@ -266,7 +404,7 @@ private:
   void enter_state(robot_state_t new_state)
   {
     // Flush old planned path on state change
-    planned_path=std::deque<planned_path_t>();
+    autodriver.flush();
     
     if (new_state==state_raise) { autonomy_start_time=cur_time; }
     // if(!(robot.autonomous)) { new_state=state_drive; }
@@ -372,104 +510,21 @@ private:
     
     vec2 cur(sim.loc.x,sim.loc.y); // robot location
     float cur_angle=90-sim.loc.angle; // <- sim angle is Y-relative (STUPID!)
-
-    if (fmod(cur_time,10.0)<8.0) return false; // periodic stop
+    
+    gl_draw_grid(autodriver.navigator.navigator.obstacles);
+    
+    if (!simulate_only && fmod(cur_time,5.0)<3.0) 
+      return false; // periodic stop (for safety, and for re-localization)
 
     bool path_planning_OK=false;
     double forward=0.0; // forward-backward
     double turn=0.0; // left-right
     if (should_plan_paths) 
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
-      path_planning_OK=true;
-      
-      gl_draw_grid(navigator.navigator.obstacles);
-      
-      
-      static int replan_counter=0;
-      const int replan_interval=1; // 1==every frame.  10==every 10 frames.
-      
-      const int plan_averaging=2; // steps in new plan to average together
-      const int replan_length=2*plan_averaging; // distance of new plan to keep
-      static rmc_navigator::navigator_t::drive_t last_drive;
-      
-      if (planned_path.size()<plan_averaging || (--replan_counter)<=0) 
-      { // refill planned path
-        replan_counter=replan_interval;
-        while (planned_path.size()>0) planned_path.pop_back(); // flush old planned path
-        
-        // Start position: robot's position
-        rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
-        // End position: at target
-        rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
-
-        rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
-        glBegin(GL_LINE_STRIP);
-        //static double smoothdrive=0.0, smoothturn=0.0;
-        int steps=0;
-        for (const rmc_navigator::searchposition &p : plan.path)
-        {
-          if (steps<replan_length)
-          {
-            planned_path.push_back(p);
-            p.print();
-          }
-          glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
-          glVertex2fv(p.pos.v);
-          steps++;
-        }
-        glColor3f(1.0f,1.0f,1.0f);
-        glEnd();
-        
-        printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
-            cur.x,cur.y,cur_angle,
-            target.x,target.y,target_angle, steps);
-        if (!plan.valid) {
-          path_planning_OK=false;
-          printf("Path planning FAILED: searched %zd cells\n",plan.searched);
-          if (true) exit(1);
-        }
-      }
-      int pathslots=plan_averaging;
-      for (int slot=0;slot<plan_averaging;slot++) {
-        if (slot<(int)planned_path.size()) {
-          planned_path_t &p=planned_path[slot];
-          forward += p.drive.forward;
-          turn += p.drive.turn;
-        }
-        else { // short plan, use last known data
-          forward +=last_drive.forward;
-          turn +=last_drive.turn;
-        }
-      }
-      forward = forward/pathslots;
-      turn = turn/pathslots;
-      
-      // Cycle detection
-      static int cycle_count=0;
-      cycle_count--;
-      if (cycle_count<0) cycle_count=0;
-      if (forward * last_drive.forward <0 || turn * last_drive.turn <0) 
-      {
-        cycle_count+=2;
-        if (cycle_count>5) { 
-          printf("Path planning CYCLE DETECTED, counter %d, keeping last drive\n",
-            cycle_count);
-          cycle_count=0;
-          
-          // don't replan, just drive for a bit
-          replan_counter=10; 
-          
-          //forward=last_drive.forward;
-          //turn=last_drive.turn;
-        }
-      }
-      printf("Path planning forward %.1f, turn %.1f\n",forward,turn);
-      // Update last_drive for next time
-      if (planned_path.size()>0) last_drive=planned_path[0].drive;
-      
-      //forward=smoothforward; turn=smoothturn;
-      //smoothforward*=0.7; smoothturn*=0.7;
-      
+      path_planning_OK=autodriver.autodrive(
+        cur,cur_angle,target,target_angle, 
+        forward,turn);
+      if (path_planning_OK) autodriver.draw_path();
     }
     if (!path_planning_OK) 
     {
@@ -481,11 +536,11 @@ private:
 
       turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
       forward=-dot(orient,should); // dot product (like distance)
-      printf("Planning path FAILURE: manual greedy mode %.0f,%.0f\n", forward,turn);
+      printf("Path planning FAILURE: manual greedy mode %.0f,%.0f\n", forward,turn);
     }
     set_drive_powers(forward,turn);
 
-    return length(cur-target)<=2*navigator_res; // we're basically there
+    return length(cur-target)<=2*rmc_navigator::GRIDSIZE; // we're basically there
   }
 
   // Force this angle (or angle difference) to be between -180 and +180,
@@ -599,8 +654,17 @@ void robot_manager_t::autonomous_state()
       }
     }
   }
-
-
+  //state_scan_obstacles: Scan for obstacles
+  else if (robot.state==state_scan_obstacles)
+  {
+    std::vector<aurora_detected_obstacle> seen_obstacles;
+    send_aurora_beacon_command('T',seen_obstacles,45);
+    // Upload obstacles to autodrive
+    for (aurora_detected_obstacle &o : seen_obstacles)
+      autodriver.mark_obstacle(o.x,o.y,o.height);
+    autodriver.compute_proximity();
+    enter_state(state_drive_to_mine);
+  }
   //state_drive_to_mine: Drive to mining area
   else if (robot.state==state_drive_to_mine)
   {
@@ -1019,9 +1083,8 @@ void robot_manager_t::update(void) {
       robot.sensor.Rcount=0;
     }
 
-    float wheelbase=130.0; // cm between wheels (tracks)
-
-    float drivecount2cm=9*(19.0/27.0)*0.050/36*100.0; // cm of driving per wheel encoder tick, ==9 sprocket drive pegs at 50mm apart, 36 encoder counts per revolution
+    float wheelbase=132-10; // cm between track centerlines
+    float drivecount2cm=8*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
 
     locator.move_wheels(
       fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm,

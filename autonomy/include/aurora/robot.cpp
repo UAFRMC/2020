@@ -10,6 +10,7 @@ const char *state_to_string(robot_state_t state)
 	"autonomy",
 	"raise",
 	"find_camera",
+	"scan_obstacles",
 
 	"drive_to_mine", ///< autonomous: drive to mining area
 
