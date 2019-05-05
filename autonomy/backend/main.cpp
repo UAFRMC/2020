@@ -631,7 +631,7 @@ void robot_manager_t::autonomous_state()
     else if (robot.loc.confidence>0.5) { // we know where we are!
       sim.loc=robot.loc; // reset simulator to real detected values
 
-      enter_state(state_drive_to_mine);
+      enter_state(state_scan_obstacles);
     }
     else // don't know where we are yet--turn left
     {
