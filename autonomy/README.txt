@@ -29,12 +29,8 @@ For the kinect classifier:
 
 For the aruco marker viewer:
 	sudo apt-get install cmake libopencv-dev
-	cd aruco
-	tar xvf aruco-*tgz
-	cd aruco-*/
-	mkdir build
-	cd build
-	cmake ..
+	cd aruco/aruco-3.0.11
+	cmake .
 	make
 	sudo make install
 	cd ../../viewer
