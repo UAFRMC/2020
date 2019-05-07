@@ -89,7 +89,7 @@ namespace nano_net
         int command=last_command.speed[m];
         if (command<0) dir=-1;
         else if (command>0) dir=+1;
-        encoders[s].last_dir=dir;
+        if (dir) encoders[s].last_dir=dir;
       }
     }
   }
