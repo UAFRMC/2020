@@ -28,7 +28,7 @@ public:
 	float left, right, front, mine, dump, roll, head_extend;
 
 	//UI stall states
-	bool Mstall; 
+	bool Mstall;
 
 	// Human-readable description of current state
 	std::string description;
@@ -148,7 +148,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 
 // Power limits:
 	float driveLimit=0.3;
-	float mineLimit=0.50;
+	float mineLimit=0.75;
 	float dumpLimit=1.0;
 	float rollLimit=0.5;
 	float head_extend_limit = 1.0;
@@ -180,7 +180,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 
 	static bool joyDrive=false;
 	bool joyDone=false; // subtle:
-	
+
 
 
 /*  Fix: Uses only the left analog stick for driving the robot */

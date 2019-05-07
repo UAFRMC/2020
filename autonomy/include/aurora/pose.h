@@ -91,8 +91,8 @@ public:
     next.confidence=m.confidence;
     next.pos=pos+shift.y*out+shift.x*across;
     switch(side) {  // FIXME: check these transforms!
-    case 0: next.fwd=+across; next.rgt=+out; break; // left
-    case 1: next.fwd=-across; next.rgt=-out; break; // rgt 
+    case 0: next.fwd=-across; next.rgt=-out; break; // left
+    case 1: next.fwd=+across; next.rgt=+out; break; // rgt 
     case 2: next.fwd=-out; next.rgt=+across; break; // back
     case 3: next.fwd=+out; next.rgt=-across; break; // fwd
     }
