@@ -3,3 +3,4 @@ autonomy/backend/debug_nav.txt
 autonomy/backend/log.txt
 autonomy/frontend/frontend
 autonomy/frontend/log.txt
+autonomy/realsense/beacon_command/beacon
