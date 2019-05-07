@@ -9,6 +9,7 @@ const char *state_to_string(robot_state_t state)
 
 	"autonomy",
 	"raise",
+	"extend", // deploy the mining head, must be done before driving
 	"find_camera",
 	"scan_obstacles",
 

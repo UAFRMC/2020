@@ -145,6 +145,7 @@ typedef enum {
 
 	state_autonomy, ///< full autonomy start state
 	state_raise, ///< raise conveyor before driving
+	state_extend, ///< extend mining head before driving
 	state_find_camera, ///< turn until camera is visible
 	state_scan_obstacles, ///< scan for obstacles
 

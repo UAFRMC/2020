@@ -465,8 +465,8 @@ private:
     if(mining_head_lowered && cur_time-state_start_time <10)
       robot.power.dump = 127;
     mining_head_lowered=false;
-    
-    return true; // Kept for compatiiblity 
+
+    return true; // Kept for compatiiblity
   }
 
   // Autonomous driving rate:
@@ -621,8 +621,22 @@ void robot_manager_t::autonomous_state()
       robot.power.dump=power_full_fw; // raise bin
     }
     else{
-      enter_state(state_find_camera);
+		//enter_state(state_find_camera);
+		enter_state(state_extend);
     }
+  }
+  // state_extend: extend the mining head so it does not get dragged
+  else if (robot.state==state_extend)
+  {
+	if (time_in_state<10.0)
+    {
+        robot.power.head_extend = 1; // 1 for extend, 127 for tuck
+	}
+	else
+	{
+		mining_head_extended = true;
+		enter_state(state_find_camera);
+	}
   }
   //state_find_camera: line up with centerline
   else if (robot.state==state_find_camera)
@@ -697,7 +711,7 @@ void robot_manager_t::autonomous_state()
     if (!tryMineMode()) { // too high to mine (sanity check)
       robot.power.dump=power_full_bw; // lower bucket
       mining_head_lowered=true;
-    } 
+    }
 
     double mine_time=cur_time-mine_start_time;
     double mine_duration=12.0;
