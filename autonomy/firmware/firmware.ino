@@ -138,7 +138,7 @@ void send_motors(void)
   nano_commands[0].speed[0]=scale_from_64(robot.power.right);
   nano_commands[0].speed[1]=scale_from_64(robot.power.mine);
   nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
-  nano_commands[0].speed[3]=scale_from_64(robot.power.head_extend);
+  nano_commands[0].speed[3]=-scale_from_64(robot.power.head_extend);
 
   nano_commands[1].speed[0]=-scale_from_64(robot.power.left);
   nano_commands[1].speed[1]=-scale_from_64(robot.power.roll);
@@ -276,27 +276,6 @@ void low_latency_ops() {
   robot.sensor.McountL = encoder_mining_left.count_mono;
   encoder_mining_right.read();
   robot.sensor.McountR = encoder_mining_right.count_mono;
-
-  //Encoder for roll motor
-  encoder_R.read();
-  robot.sensor.Rcount=encoder_R.count_dir;
-
-  //Encoder stuff for left drive track
-  encoder_DL1.read();
-  robot.sensor.DL1count=encoder_DL1.count_dir;
-
-  encoder_DL2.read();
-  robot.sensor.DL2count=encoder_DL2.count_dir;
-
-  //Encoder stuff for right drive track
-  encoder_DR1.read();
-  robot.sensor.DR1count=encoder_DR1.count_dir;
-
-  encoder_DR2.read();
-  robot.sensor.DR2count=encoder_DR2.count_dir;
-
-  limit_top.read();
-  limit_bottom.read();
 */
 
 
@@ -312,14 +291,6 @@ void low_latency_ops() {
 
 void setup()
 {
-  // The nanos are soft-powered from the mega's digital output pins 22-25.
-  for (int powerpin=22;powerpin<=25;powerpin++) {
-    int sign=(powerpin%2)?LOW:HIGH;
-    digitalWrite(powerpin,sign);
-    pinMode(powerpin,OUTPUT);
-    digitalWrite(powerpin,sign);
-  }
-
   aurora::PCport.begin(57600); // Control connection to PC via USB
 
   for (int n=0;n<nano_net::n_nanos;n++)
