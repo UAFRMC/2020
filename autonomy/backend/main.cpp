@@ -397,6 +397,9 @@ private:
   double state_start_time; // cur_time when we entered the current state
   double mine_start_time; // cur_time when we last started mining
   double autonomy_start_time; // cur_time when we started full autonomy
+  bool mining_head_extended=false;
+  bool mining_head_lowered=true;
+
 
   robot_state_t last_state;
 
@@ -445,7 +448,7 @@ private:
 
   // Run autonomous mining, if possible
   bool tryMineMode(void) {
-    if (robot.sensor.bucket<head_bar_clear) {
+    if (drive_posture()) {
       robot.power.mine=100; // TUNE THIS!
       robot.power.mineMode = true; // Start PID based mining
       return true;
@@ -453,20 +456,17 @@ private:
     return false;
   }
 
-  // Set the front wheels and bucket to natural driving posture
+  // Set the mining head linear and dump linear to natural driving posture
   //  Return true if we're safe to drive
   bool drive_posture() {
-    int tolerance=10; // dead zone (to prevent hunting)
-    if (robot.sensor.bucket<head_mine_drive-tolerance)
-    {
-      robot.power.dump=power_full_fw; // raise
-      return false; // too low to drive yet
-    }
-    if (robot.sensor.bucket>head_mine_drive+tolerance)
-    {
-      robot.power.dump=power_full_bw; // lower
-    }
-    return true;
+    if (!mining_head_extended && (cur_time-state_start_time <10))
+      robot.power.head_extend = 127;
+    mining_head_extended = true;
+    if(mining_head_lowered && cur_time-state_start_time <10)
+      robot.power.dump = 127;
+    mining_head_lowered=false;
+    
+    return true; // Kept for compatiiblity 
   }
 
   // Autonomous driving rate:
@@ -688,47 +688,30 @@ void robot_manager_t::autonomous_state()
 
   //state_mine_lower: enter mining state
   else if (robot.state==state_mine_lower) {
-    robot.power.dump=power_full_bw; // lower bucket
     tryMineMode();
-
-    if(robot.sensor.bucket<=head_mine_start || time_in_state>10.0)
-    {
-      mine_start_time=cur_time; // update mine start time
-      enter_state(state_mine);
-    }
+    mine_start_time=cur_time; // update mine start time
+    enter_state(state_mine);
   }
   else if (robot.state==state_mine)
   {
     if (!tryMineMode()) { // too high to mine (sanity check)
       robot.power.dump=power_full_bw; // lower bucket
-    } else {
-    if (robot.sensor.bucket>head_mine_stop) {
-      robot.power.dump=64-20; // lower gently
-    }
+      mining_head_lowered=true;
+    } 
 
     double mine_time=cur_time-mine_start_time;
     double mine_duration=12.0;
-    if(
-      // sim.loc.x<field_x_max && // field left to mine
-      mine_time<mine_duration) // and there's room in the box
-    { // keep mining
-
-      if (robot.sensor.bucket<head_mine_start && (fmod(mine_time,2.0)<0.3)) {
-      // ready to mine: slowly creep forward (with PID)
-        set_drive_powers(0.1,0.0);
-      }
-
-      if(robot.sensor.Mstall) { enter_state(state_mine_stall);}
-    }
-    else { enter_state(state_mine_raise);} // done mining
-    }
+    if(mine_time>mine_duration)
+    {
+        enter_state(state_mine_raise);
+    } // done mining
   }
 
   // state_mine_stall: Detect mining head stall. Raise head until cleared
   else if (robot.state==state_mine_stall)
   {
     tryMineMode(); // Start PID based mining
-    if(robot.sensor.Mstall && robot.sensor.bucket<head_mine_start)
+    if(robot.sensor.Mstall && time_in_state<2)
     {
       robot.power.dump=power_full_fw; // raise bucket
     }
@@ -738,14 +721,8 @@ void robot_manager_t::autonomous_state()
   //state_mine_raise: Raise mining conveyor before starting to backup towards Lunarbin
   else if (robot.state==state_mine_raise)
   {
-    if(robot.sensor.bucket<head_mine_drive && time_in_state<10.0)
-    {
-      robot.power.dump=power_full_fw;
-    }
-    else
-    {
+    if(drive_posture())
       enter_state(state_drive_to_dump);
-    }
   }
 
   // Drive back to trough
@@ -784,15 +761,7 @@ void robot_manager_t::autonomous_state()
   // raise bucket to dump
   else if (robot.state==state_dump_raise)
   {
-    // FIXME: Time this process
-    if(robot.sensor.bucket<head_mine_dump && time_in_state<10.0)
-    {
-      robot.power.dump=power_full_fw;
-    }
-    else
-    {
-      enter_state(state_dump_pull);
-    }
+      enter_state(state_dump_pull);//2-19: Already in dump position
   }
   // Raise box
   else if(robot.state==state_dump_pull)
@@ -820,38 +789,18 @@ void robot_manager_t::autonomous_state()
     int cur=(signed short)robot.sensor.Rcount;
     int target=0;
     if (!speed_limit(howfast,cur,target,-1)  || time_in_state>15.0)
-      enter_state(state_dump_lower);
+      enter_state(state_drive_to_mine);
     else
       robot.power.roll=64-howfast; // backward
   }
-  // lower bucket to safe driving height
-  else if (robot.state==state_dump_lower)
-  {
-    if(robot.sensor.bucket>head_drive_safe  && time_in_state<20.0)
-    {
-      robot.power.dump=power_full_bw;
-    }
-    else
-    {
-      enter_state(state_drive_to_mine);
-    } // back to start again
-
-  }
   else if (robot.state==state_stow)
   {
-    if (robot.sensor.bucket>head_mine_stow) {
-      robot.power.mine=power_full_fw; // empty out conveyor (and rattle)
-    }
-    if (robot.sensor.bucket>head_mine_dump || time_in_state>40.0)
-    {
-      enter_state(state_stow_clean);
-    }
-  }
-  else if (robot.state==state_stow_clean)
-  {
-    if (robot.sensor.bucket>head_mine_stow) {
-      robot.power.dump=power_full_bw; // keep lowering
-    }
+    if(mining_head_lowered)
+      drive_posture();
+    if(time_in_state<20)
+      robot.power.dump=127;
+    enter_state(state_stowed);
+
   }
   else if (robot.state==state_stowed)
   {
