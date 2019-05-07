@@ -76,6 +76,11 @@ void robot_serial::update(robot_base &robot){
 			}
 			else if (p.command==0x3)
 			{
+				static int32_t Rcount8=0;
+				int32_t old_Rcount8=Rcount8;
+				static int32_t Rcount16=robot.sensor.Rcount;
+				int32_t old_Rcount16=Rcount16;
+
 				// sensor data
 				if (!p.get(robot.sensor))
 				{
@@ -88,6 +93,10 @@ void robot_serial::update(robot_base &robot){
 					//{ // user pressed key to zero out rollcount
 					//	Rdiff=-robot.sensor.Rcount;
 					//}
+
+					Rcount8=robot.sensor.Rcount;
+					Rcount16=((signed char)(Rcount8-old_Rcount8))+old_Rcount16;
+					robot.sensor.Rcount=Rcount16;
 
 					// got valid sensor report: arduino is OK
 					robot.status.arduino=1;

@@ -37,7 +37,7 @@ CommunicationChannel<HardwareSerial> nanos[nano_net::n_nanos]={
 //   And send commands / read sensors from the right spots.
 nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
   /* Nano 0: on Serial1, right side of robot by e-stop */ {
-    /* Motors: */ { 
+    /* Motors: */ {
     /* motor[0] */ '0', // drive right
     /* motor[1] */ '1', // mine 1
     /* motor[2] */ '1', // mine 2 (same encoder as 1)
@@ -47,13 +47,13 @@ nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
     /* sensor[0] */ '0', // drivetrain
     /* sensor[1] */ '1', // mining head
     /* sensor[2] */ 'B', // unused from here
-    /* sensor[3] */ 'B', 
+    /* sensor[3] */ 'B',
     /* sensor[4] */ 'B', // back-up right?
-    /* sensor[5] */ 'C', 
+    /* sensor[5] */ 'C',
     },
   },
   /* Nano 1: on Serial3, left side of robot */ {
-    /* Motors: */ { 
+    /* Motors: */ {
     /* motor[0] */ '0', // drive left
     /* motor[1] */ '1', // roll bag
     /* motor[2] */ 'T', // UNUSED
@@ -65,7 +65,7 @@ nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
     /* sensor[2] */ 'B', // bag limit low
     /* sensor[3] */ 'B', // bag limit high
     /* sensor[4] */ 'B', // back-up left?
-    /* sensor[5] */ 'C', 
+    /* sensor[5] */ 'C',
     },
   },
 };
@@ -89,7 +89,7 @@ robot_base robot;
 // Read all robot sensors into robot.sensor
 void read_sensors(void) {
 
-  robot.sensor.battery=0; 
+  robot.sensor.battery=0;
   low_latency_ops();
 
   /*
@@ -101,20 +101,20 @@ void read_sensors(void) {
   */
   robot.sensor.DR1count = nano_sensors[0].counts[0];
   robot.sensor.DRstall = nano_sensors[0].stall&(1<<0);
-  
+
   robot.sensor.McountL = nano_sensors[0].counts[1];
   robot.sensor.Mstall = nano_sensors[0].stall&(1<<1);
-  
+
   robot.sensor.DL1count = nano_sensors[1].counts[0];
   robot.sensor.DLstall = nano_sensors[1].stall&(1<<0);
-  
-  robot.sensor.Rcount = nano_sensors[1].counts[1];
+
+  robot.sensor.Rcount = 255-nano_sensors[1].counts[1];
 
   robot.sensor.limit_bottom = nano_sensors[1].counts[4];
-  robot.sensor.limit_top = nano_sensors[1].counts[3];
-  
+  robot.sensor.limit_top = nano_sensors[1].counts[2];
+
   robot.sensor.heartbeat=milli;
-  
+
   robot.sensor.encoder_raw=int(nano_sensors[0].raw) | (int(nano_sensors[1].raw)<<nano_net::n_sensors);
 }
 
@@ -133,25 +133,25 @@ void send_motors(void)
     nano_commands[n].torque = robot.power.torqueControl;
     nano_commands[n].LED = ((milli%1024)<200); // mega tells nanos to blink
   }
-  
-  
+
+
   nano_commands[0].speed[0]=scale_from_64(robot.power.right);
   nano_commands[0].speed[1]=scale_from_64(robot.power.mine);
   nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
   nano_commands[0].speed[3]=scale_from_64(robot.power.head_extend);
-  
+
   nano_commands[1].speed[0]=-scale_from_64(robot.power.left);
   nano_commands[1].speed[1]=-scale_from_64(robot.power.roll);
   nano_commands[1].speed[2]=0;
   nano_commands[1].speed[3]=-scale_from_64(robot.power.dump);
 
-  
+
   /*
   if(robot.power.motorControllerReset!=0)
     digitalWrite(bts_enable_pin,LOW);
   else
     digitalWrite(bts_enable_pin,HIGH);
- 
+
   int drivePower=100;
   if(robot.power.high)
   {
@@ -159,7 +159,7 @@ void send_motors(void)
   }
   motor_drive_left.max_power=drivePower;
   motor_drive_right.max_power=drivePower;
-  
+
   int left1=encoder_DL1.update(robot.power.left,robot.power.torqueControl==0);
   send_motor_power(left1,motor_drive_left,encoder_DL1);
   set_direction(left1,encoder_DL2);
@@ -198,7 +198,7 @@ void send_motors(void)
   motor_front_linear.drive(robot.power.head_extend);
   motor_side_linears.drive(robot.power.dump);
   */
-  
+
 }
 
 // Structured communication with PC:
@@ -249,7 +249,7 @@ void handle_nano_packet(A_packet_formatter<HardwareSerial> &pkt,int n,const A_pa
   }
   else if (p.command==0) { // ping request
     aurora::send_PC_debug("n/ping");
-    
+
     // Send a command packet to start reports coming
     pkt.write_packet(0xC,sizeof(aurora::nano_commands[n]),&aurora::nano_commands[n]);
   }
@@ -294,7 +294,7 @@ void low_latency_ops() {
 
   encoder_DR2.read();
   robot.sensor.DR2count=encoder_DR2.count_dir;
-  
+
   limit_top.read();
   limit_bottom.read();
 */
@@ -318,10 +318,10 @@ void setup()
     digitalWrite(powerpin,sign);
     pinMode(powerpin,OUTPUT);
     digitalWrite(powerpin,sign);
-  } 
+  }
 
   aurora::PCport.begin(57600); // Control connection to PC via USB
-  
+
   for (int n=0;n<nano_net::n_nanos;n++)
     aurora::nanos[n].backend.begin(115200);
 
@@ -330,7 +330,7 @@ void setup()
   // Our ONE debug LED!
   pinMode(13,OUTPUT);
   digitalWrite(13,LOW);
-  
+
 
 /*
   // BTS Enable Pin (Controls all pins)
@@ -349,18 +349,18 @@ void loop()
   A_packet p;
   if (aurora::PC.read_packet(p)) aurora::handle_packet(aurora::PC.pkt,p);
   if (!(aurora::PC.is_connected)) aurora::robot.power.stop(); // disconnected?
-  
+
   for (int n=0;n<nano_net::n_nanos;n++)
-    if (aurora::nanos[n].read_packet(p)) 
+    if (aurora::nanos[n].read_packet(p))
       aurora::handle_nano_packet(aurora::nanos[n].pkt,n,p);
-  
+
   if (milli-next_milli_send>=5)
   { // Send commands to motors (via nanos)
     aurora::send_motors();
-    
+
     for (int n=0;n<nano_net::n_nanos;n++)
       aurora::nanos[n].pkt.write_packet(0xC,sizeof(aurora::nano_commands[n]),&aurora::nano_commands[n]);
-    
-    next_milli_send=milli; 
+
+    next_milli_send=milli;
   }
 }

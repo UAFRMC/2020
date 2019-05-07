@@ -98,12 +98,12 @@ public:
 	unsigned char paddingRoll:1;
 
   unsigned char head_extend:7; // Extend mining head linear
-  unsigned char padding_extend:1; 
+  unsigned char padding_extend:1;
 
 	robot_power() { stop(); }
 	void stop(void) {
 		left=right=mine=dump=roll=head_extend=drive_stop; // all-stop
-		high=dumpMode=mineMode=torqueControl=mineHooks=mineDump=mineEncoderReset=0;
+		high=dumpMode=mineMode=mineHooks=mineDump=mineEncoderReset=0;
 	}
 };
 
@@ -128,8 +128,10 @@ enum {
 		count_stop = 1, // encoder count to stop on
 		count_slow = 110, // run fast until you're here
 	// These 2 are used to tell whether the box is at max or min height
-	box_raise_max = 310,
-	box_raise_min = 0
+	box_raise_max = 425,
+	box_raise_min = 0,
+	box_raise_limit_high = 390,
+	box_raise_limit_low = 40
 	};
 /**
   This is a list of possible robot states.
@@ -211,7 +213,7 @@ public:
 #endif
 
 	/*
-	  Return a world coordinates unit 2D direction vector 
+	  Return a world coordinates unit 2D direction vector
 	  for this robot-relative angle.
 	  Angle==0 is facing along the robot's forward axis, in the direction of motion.
 	  Angle==90 is facing to the robot's right.
@@ -227,13 +229,13 @@ public:
 		float deg=world_deg-this->angle;
 		if (deg<-180.0) deg+=360.0;
 		if (deg>+180.0) deg-=360.0;
-		return deg; 
+		return deg;
 	}
-	
+
 	vec2 center(void) const { return vec2(this->x,this->y); }
 	vec2 forward(void) const { return dir_from_deg(0.0); }
 	vec2 right(void) const { return dir_from_deg(90.0); }
-	
+
 	/*
 	  Convert robot body coordinates (right, forward) to world coordinates.
 	*/
@@ -241,7 +243,7 @@ public:
 		return center()+r.x*right()+r.y*forward();
 	}
 
-	
+
 
 #endif
 };

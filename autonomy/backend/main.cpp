@@ -43,7 +43,7 @@
 
 using osl::quadric;
 
-bool show_GUI=true; 
+bool show_GUI=true;
 bool simulate_only=false; // --sim flag
 bool should_plan_paths=true; // --noplan flag
 bool driver_test=false; // --driver_test, path planning testing
@@ -150,21 +150,21 @@ public:
   rmc_navigator navigator;
   enum {navigator_res=rmc_navigator::GRIDSIZE};
   typedef rmc_navigator::navigator_t::searchposition planned_path_t;
-  
+
   bool has_path;
   std::deque<planned_path_t> planned_path;
   rmc_navigator::navigator_t::drive_t last_drive;
   int replan_counter;
-  
+
   robot_autodriver()
   {
     flush();
-    
+
     // Add obstacles around the scoring trough
     for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
     for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
       navigator.mark_obstacle(x, y, 55);
-    
+
     // And mark off the beacon
     int beaconsize=15;
     for (int dx=-beaconsize;dx<=beaconsize;dx+=navigator_res/2)
@@ -175,69 +175,69 @@ public:
       // Add a few hardcoded obstacles, to show off path planning
       int x=130;
       int y=290;
-      
+
       //Hard wall
       if (true)
        for (;x<=250;x+=navigator_res) navigator.mark_obstacle(x,y,15);
-      
+
       // Isolated tall obstacle in middle
       navigator.mark_obstacle(130,y,40);
     }
-    
+
     compute_proximity();
   }
-  
+
   // Mark this field location as an obstacle of this height
   //  (you MUST call compute_proximity after marking obstacles)
   inline void mark_obstacle(int x,int y,int ht) { navigator.mark_obstacle(x,y,ht); }
-  
+
   // Recompute proximity costs (after marking obstacles)
   void compute_proximity() {
     // Recompute proximity costs after marking obstacles
     const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
     navigator.navigator.compute_proximity(obstacle_proximity);
   }
-  
+
   // Dump proximity and debug data to plain text file
   void debug_dump(const char *filename="debug_nav.txt") {
     // Debug dump obstacles, field, etc.
     std::ofstream navdebug(filename);
     navdebug<<"Raw obstacles:\n";
     navigator.navigator.obstacles.print(navdebug,10);
-    
+
     for (int angle=0;angle<=20;angle+=10) {
       navdebug<<"\n\nAngle "<<angle<<" expanded obstacles:\n";
       navigator.navigator.slice[angle].obstacle.print(navdebug,10);
-      
+
       navdebug<<"Proximity:\n";
       navigator.navigator.slice[angle].proximity.print(navdebug,1);
     }
   }
-  
+
   // Flush autonomous drive state
   void flush() {
     has_path=false;
     replan_counter=0;
     planned_path=std::deque<planned_path_t>();
   }
-  
-  // Compute autonomous drive 
+
+  // Compute autonomous drive
   //   cur and target are (x,y) cm field coords and deg x angles.
   bool autodrive(vec2 cur,float cur_angle,
     vec2 target,float target_angle,
-    double &forward,double &turn) 
+    double &forward,double &turn)
   {
     const int replan_interval=1; // 1==every frame.  10==every 10 frames.
-    
+
     const int plan_averaging=2; // steps in new plan to average together
     const int replan_length=2*plan_averaging; // distance of new plan to keep
     static rmc_navigator::navigator_t::drive_t last_drive;
-    
-    if (planned_path.size()<plan_averaging || (--replan_counter)<=0) 
+
+    if (planned_path.size()<plan_averaging || (--replan_counter)<=0)
     { // refill planned path
       replan_counter=replan_interval;
       flush(); // flush old planned path
-      
+
       // Start position: robot's position
       rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
       // End position: at target
@@ -254,7 +254,7 @@ public:
         }
         steps++;
       }
-      
+
       printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
           cur.x,cur.y,cur_angle,
           target.x,target.y,target_angle, steps);
@@ -277,34 +277,34 @@ public:
     }
     forward = forward/pathslots;
     turn = turn/pathslots;
-    
+
     // Cycle detection
     static int cycle_count=0;
     cycle_count--;
     if (cycle_count<0) cycle_count=0;
-    if (forward * last_drive.forward <0 || turn * last_drive.turn <0) 
+    if (forward * last_drive.forward <0 || turn * last_drive.turn <0)
     {
       cycle_count+=2;
-      if (cycle_count>5) { 
+      if (cycle_count>5) {
         printf("Path planning CYCLE DETECTED, counter %d, keeping last drive\n",
           cycle_count);
         cycle_count=0;
-        
+
         // don't replan, just drive for a bit to clear the cycle
-        replan_counter=10; 
-        
+        replan_counter=10;
+
         //forward=last_drive.forward;
         //turn=last_drive.turn;
       }
     }
     printf("Path planning forward %.1f, turn %.1f\n",forward,turn);
-    
+
     // Update last_drive for next time
     if (planned_path.size()>0) last_drive=planned_path[0].drive;
-    
+
     return true;
   }
-  
+
   // Draw a planned path onscreen
   void draw_path() {
     glBegin(GL_LINE_STRIP);
@@ -331,13 +331,13 @@ public:
   robot_command command; // last-received command
   robot_comms comms; // network link to front end
   robot_ui ui; // keyboard interface
-  
+
   robot_autodriver autodriver;
 
   robot_serial arduino;
 
   robot_simulator sim;
-  
+
   pose_subscriber *pose_net;
   robot_markers_all markers; // last seen markers
 
@@ -356,10 +356,10 @@ public:
     sim.loc.x= (rand()%10)*20.0+100.0;
     sim.loc.angle=((rand()%8)*8)/360;
     sim.loc.confidence=1.0;
-    
+
     if (getenv("BEACON")) {
       pose_net=new pose_subscriber();
-    }    
+    }
   }
 
   // Do robot work.
@@ -405,7 +405,7 @@ private:
   {
     // Flush old planned path on state change
     autodriver.flush();
-    
+
     if (new_state==state_raise) { autonomy_start_time=cur_time; }
     // if(!(robot.autonomous)) { new_state=state_drive; }
 
@@ -474,15 +474,15 @@ private:
   float drive_speed(float forward,float turn=0.0) {
     return 0.8; // confident but conservative
   }
-  
+
   // Autonomous drive power from float values:
   //   "drive": forward +1.0, backward -1.0
   //   "turn": left turn +1.0, right turn -1.0 (like angle)
-  void set_drive_powers(double forward,double turn=0.0) 
+  void set_drive_powers(double forward,double turn=0.0)
   {
     double max_autonomous_drive=1.0; //<- can set a cap for debugging autonomous
-    
-    double drive_power=drive_speed(+1.0);  
+
+    double drive_power=drive_speed(+1.0);
     double t=limit(turn*0.5,drive_power);
     double d=limit(forward*0.5,drive_power);
     double L=d-t;
@@ -507,26 +507,26 @@ private:
   //  Returns true once we're basically at the target location.
   bool autonomous_drive(vec2 target,float target_angle) {
     if (!drive_posture()) return false; // don't drive yet
-    
+
     vec2 cur(sim.loc.x,sim.loc.y); // robot location
     float cur_angle=90-sim.loc.angle; // <- sim angle is Y-relative (STUPID!)
-    
+
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
-    
-    if (!simulate_only && fmod(cur_time,5.0)<3.0) 
+
+    if (!simulate_only && fmod(cur_time,5.0)<3.0)
       return false; // periodic stop (for safety, and for re-localization)
 
     bool path_planning_OK=false;
     double forward=0.0; // forward-backward
     double turn=0.0; // left-right
-    if (should_plan_paths) 
+    if (should_plan_paths)
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
       path_planning_OK=autodriver.autodrive(
-        cur,cur_angle,target,target_angle, 
+        cur,cur_angle,target,target_angle,
         forward,turn);
       if (path_planning_OK) autodriver.draw_path();
     }
-    if (!path_planning_OK) 
+    if (!path_planning_OK)
     {
       // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
       double angle=sim.loc.angle; // degrees (!?)
@@ -669,7 +669,7 @@ void robot_manager_t::autonomous_state()
   else if (robot.state==state_drive_to_mine)
   {
     if (drive_posture()) {
-      
+
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-sim.loc.y;
       if (autonomous_drive(mine_target_loc,90) ||
@@ -751,8 +751,8 @@ void robot_manager_t::autonomous_state()
   // Drive back to trough
   else if (robot.state==state_drive_to_dump)
   {
-    if (autonomous_drive(dump_target_loc,dump_target_angle) ) 
-    { 
+    if (autonomous_drive(dump_target_loc,dump_target_angle) )
+    {
       enter_state(state_dump_align);
     }
   }
@@ -762,7 +762,7 @@ void robot_manager_t::autonomous_state()
     target.y=sim.loc.y; // don't try to turn when this close
     if (autonomous_drive(target,dump_target_angle)
       || (fabs(sim.loc.y-target.y)<30 && fabs(sim.loc.x-field_x_trough_stop)<=5) )
-    { 
+    {
       if (driver_test) {
         mine_target_loc.x=50+(rand()%250); // retarget in mining area every run
         enter_state(state_drive_to_mine);
@@ -894,7 +894,7 @@ void robot_manager_t::update(void) {
 #endif
 
   if (pose_net) {
-    if (pose_net->update(markers)) 
+    if (pose_net->update(markers))
     if (markers.pose.confidence>0.2) {
       sim.loc.x=markers.pose.pos.x;
       sim.loc.y=markers.pose.pos.y;
@@ -915,14 +915,14 @@ void robot_manager_t::update(void) {
 
 /*
   // Check for an updated location from the vive
-  
+
   static osl::transform robot_tf;
   static file_ipc_link<osl::transform> robot_tf_link("robot.tf");
   if (robot_tf_link.subscribe(robot_tf)) {
     robot.loc.x=robot_tf.origin.x-field_x_hsize; // make bin the origin
     robot.loc.y=robot_tf.origin.y;
     robot.loc.z=robot_tf.origin.z;
-    
+
     robot.loc.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.x,robot_tf.basis.x.y);
     robot.loc.pitch=(180.0/M_PI)*robot_tf.basis.x.z;
   }
@@ -1038,14 +1038,14 @@ void robot_manager_t::update(void) {
   //Detect soft encoder limiters
   if(robot.sensor.Rcount>box_raise_max)
     can_raise_up=false;
-  if(robot.sensor.Rcount<0)
+  if(robot.sensor.Rcount<box_raise_min)
     can_raise_down=false;
 
   //Detect limit switches and reset encoder offset if needed
-  if(robot.sensor.limit_top%2!=0)
+  /*if(robot.sensor.limit_top%2!=0)
     can_raise_up=false;
   if(robot.sensor.limit_bottom%2!=0)
-    can_raise_down=false;
+    can_raise_down=false;*/
 
   //Stop raise/lower if limit detected
   if (!robot.power.torqueControl) //Override limit switches in torque control
@@ -1064,24 +1064,29 @@ void robot_manager_t::update(void) {
     robot.sensor.Rcount=0xffff&(int)sim.Rcount;
     robot.sensor.limit_top=0;
     robot.sensor.limit_bottom=0;
-  } else { // real arduino
+  }
+  else { // real arduino
     robot_sensors_arduino old_sensor=robot.sensor;
     arduino.update(robot);
-    
+
     // No hardware bucket height sensor: simulate in software
     robot.sensor.bucket=sim.bucket*(950-179)+179;
 
     //Reset encoder offset if needed
-    if(robot.sensor.limit_top%2!=0)
+    if(robot.sensor.limit_top==0)
     {
-      arduino.Rdiff+=box_raise_max-robot.sensor.Rcount;
-      robot.sensor.Rcount=box_raise_max;
+      arduino.Rdiff+=box_raise_limit_high-robot.sensor.Rcount;
+      robot.sensor.Rcount=box_raise_limit_high;
     }
-    if(robot.sensor.limit_bottom%2!=0)
+    if(robot.sensor.limit_bottom==0)
     {
-      arduino.Rdiff-=robot.sensor.Rcount;
-      robot.sensor.Rcount=0;
+      arduino.Rdiff+=box_raise_limit_low-robot.sensor.Rcount;
+      robot.sensor.Rcount=box_raise_limit_low;
     }
+    /*else
+    {
+		robot.sensor.Rcount+=fix_wrap256(original_arduino.Rcount-old_sensor.Rcount);
+	}*/
 
     float wheelbase=132-10; // cm between track centerlines
     float drivecount2cm=8*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
@@ -1117,7 +1122,7 @@ void robot_manager_t::update(void) {
 
   if (robot.loc.confidence>0.5)  // make sim track reality
     blend(sim.loc,robot.loc,robot.loc.confidence*dt);
-  
+
   if (simulate_only) // make reality track sim
   {
     robot.loc=sim.loc; // blend(robot.loc,sim.loc,0.1);
@@ -1127,7 +1132,7 @@ void robot_manager_t::update(void) {
       robot.loc.confidence*=0.9;
     robot.loc.confidence*=0.9;
 
-    if (robot.loc.y>100 && robot.loc.y<500) 
+    if (robot.loc.y>100 && robot.loc.y<500)
     { // simulate angle drift
       if ((rand()%300)==0) {
         sim.loc.angle+=2.0;
@@ -1213,7 +1218,7 @@ int main(int argc,char *argv[])
 
   robot_manager=new robot_manager_t;
   robot_manager->robot.loc.y=100;
-  
+
   if (show_GUI) {
     glutInitDisplayMode(GLUT_RGBA + GLUT_DOUBLE);
     glutInitWindowSize(w,h);
