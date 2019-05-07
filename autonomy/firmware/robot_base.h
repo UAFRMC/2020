@@ -165,7 +165,6 @@ typedef enum {
 	state_dump_pull, ///< pull box up
 	state_dump_rattle, ///< rattle mode to empty bucket
 	state_dump_push, ///< push box back down
-	state_dump_lower, ///< lowering bucket (after dump)
 
 	/* Semiauto dump mode entry point: */
 	state_stow, // begin stowing: raise bucket
