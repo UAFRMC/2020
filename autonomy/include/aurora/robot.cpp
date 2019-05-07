@@ -29,7 +29,6 @@ const char *state_to_string(robot_state_t state)
 	"dump_pull", ///< roll forward
 	"dump_rattle", ///< rattle mode to empty bucket
 	"dump_push", ///< push hook back
-	"dump_lower", ///< lowering bucket (after dump)
 
 	/* Stow mode (shutdown sequence) */
 	"stow", // begin stowing: raise bucket
