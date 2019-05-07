@@ -9,15 +9,15 @@ enum {
   robot_x=70/2, // Center to front-back of main robot, in cm
   robot_y=132/2, // Center to left-right of main body, in cm
   robot_track_y=20, // width of tracks, frame, motors, etc
-  robot_inside_clearance=30, // Z between box and tracks
+  robot_inside_clearance=25, // Z between box and tracks
   
   robot_box_y=30, // half of box width
-  robot_box_clearance=20, // Z clearance under storage box
+  robot_box_clearance=25, // Z clearance under storage box
   
   robot_mine_x=robot_x+19, // center of robot's mining head
   robot_mine_y=0, // mining head center
   robot_mine_radius=15, // radius around robot mining head
-  robot_mine_clearance=10, // Z under mining head
+  robot_mine_clearance=9, // Z under mining head
 };
 
 

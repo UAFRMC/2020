@@ -4,11 +4,11 @@ struct marker_info_t {
 	int id; // marker's ID, from 0-31
 	float true_size; // side length, in cm, of black part of pattern
 	
-	int side; // side of the robot (0==right side, 1==left side, 2==back side, 3==front side)
+	int side; // side of the robot (0==left side, 1==right side, 2==back side, 3==front side)
 	vec3 shift; // marker-relative cm translation to robot origin, in meters from center of pattern	
 };
-#define robot_frontback 33  // half the X front-back length of robot
-#define robot_side2side 66  // half the Y side-side width of robot
+#define robot_frontback (61.5/2)  // half the X front-back length of robot
+#define robot_side2side (128/2)  // half the Y side-side width of robot
 #define robot_side_vec(x) vec3(x,robot_side2side,0)
 
 const static marker_info_t marker_info[]={
@@ -23,30 +23,33 @@ const static marker_info_t marker_info[]={
 /*
            Robot FRONT
   Robot LEFT       Robot RIGHT
-     26 (18cm)        27 (18cm)
+     27 (18cm)        26 (18cm)
 17(4cm)
  
  14 (14.5cm)                16 (14.5cm)
  13 (25cm)                  25 (25cm)
 
-     6 (18cm)           7 (18cm)
+     7 (18cm)           6 (18cm)
            Robot BACK
 */
 
 #if 1 // NEW single markers
-   	{14, 14.5, 1, -robot_side_vec(0) }, // cat
-    {13, 25.0, 1, -robot_side_vec(23) }, // creeper (on 30cm full-size test plate)
+// Left
+   	{14, 14.5, 0, -robot_side_vec(-22) }, // cat
+    {13, 25.0, 0, -robot_side_vec(14) }, // creeper (on 30cm full-size test plate)
    	
-	{17, 4.0, 2, -robot_side_vec(0) }, // bird (on 20cm half-size test plate)
-
-	{16, 14.5, 0, +robot_side_vec(10) }, // elipsis (on tiny 5cm test plate)
-	{25, 25.0, 0, +robot_side_vec(0) }, // bleachers 
+   	// Extra left-side stickout
+	{17, 4.0, 2, vec3(robot_side2side+4,+robot_frontback,10) }, // bird (on 20cm half-size test plate)
 	
-	{ 6, 18.0, 2, -vec3(-robot_frontback,robot_side2side-11,10) }, // back left plate
-	{ 7, 18.0, 2, -vec3(-robot_frontback,-robot_side2side+11,10) }, // back right
+// Right
+	{16, 14.5, 1, -robot_side_vec(14) }, // elipsis (on tiny 5cm test plate)
+	{25, 25.0, 1, -robot_side_vec(-22) }, // bleachers 
+	
+	{ 7, 18.0, 2, vec3(robot_side2side-11,-robot_frontback,10) }, // back left plate
+	{ 6, 18.0, 2, vec3(-robot_side2side+11,-robot_frontback,10) }, // back right
   
-	{26, 18.0, 3, -vec3(robot_frontback,robot_side2side-11,10) }, // front left plate
-	{27, 18.0, 3, -vec3(robot_frontback,-robot_side2side+11,10) }, // front right
+	{27, 18.0, 3, -vec3(robot_side2side-11,robot_frontback,10) }, // front left plate
+	{26, 18.0, 3, -vec3(-robot_side2side+11,robot_frontback,10) }, // front right
     
 #else // OLD left side only marker	
 	// Left sideplate

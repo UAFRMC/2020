@@ -11,6 +11,7 @@
 #include <zmq.hpp>
 #include <unistd.h> // for sleep
 #include <thread>
+#include <vector>
 
 // Command letters:
 enum {
