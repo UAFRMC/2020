@@ -78,7 +78,7 @@ void robot_serial::update(robot_base &robot){
 			{
 				static int32_t Rcount8=0;
 				int32_t old_Rcount8=Rcount8;
-				static int32_t Rcount16=robot.sensor.Rcount;
+				static int32_t Rcount16=500;
 				int32_t old_Rcount16=Rcount16;
 
 				// sensor data

@@ -999,9 +999,9 @@ void robot_manager_t::update(void) {
   bool can_raise_down=true;
 
   //Detect soft encoder limiters
-  if(robot.sensor.Rcount>box_raise_max)
+  if(robot.sensor.Rcount>=box_raise_max)
     can_raise_up=false;
-  if(robot.sensor.Rcount<box_raise_min)
+  if(robot.sensor.Rcount<=box_raise_min)
     can_raise_down=false;
 
   //Detect limit switches and reset encoder offset if needed

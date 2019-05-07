@@ -130,9 +130,9 @@ enum {
 		count_stop = 1, // encoder count to stop on
 		count_slow = 110, // run fast until you're here
 	// These 2 are used to tell whether the box is at max or min height
-	box_raise_max = 501,
+	box_raise_max = 1000,
 	box_raise_min = 25,
-	box_raise_limit_high = 500,
+	box_raise_limit_high = 1000,
 	box_raise_limit_low = 26
 	};
 /**
