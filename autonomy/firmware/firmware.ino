@@ -103,7 +103,7 @@ void read_sensors(void) {
   robot.sensor.DRstall = nano_sensors[0].stall&(1<<0);
 
   robot.sensor.McountL = nano_sensors[0].counts[1];
-  robot.sensor.Mstall = nano_sensors[0].stall&(1<<1);
+  robot.sensor.Mstall = (nano_sensors[0].stall>>1)&1;
 
   robot.sensor.DL1count = nano_sensors[1].counts[0];
   robot.sensor.DLstall = nano_sensors[1].stall&(1<<0);
@@ -116,6 +116,7 @@ void read_sensors(void) {
   robot.sensor.heartbeat=milli;
 
   robot.sensor.encoder_raw=int(nano_sensors[0].raw) | (int(nano_sensors[1].raw)<<nano_net::n_sensors);
+  robot.sensor.stall_raw=int(nano_sensors[0].stall) | (int(nano_sensors[1].stall)<<nano_net::n_sensors);
 }
 
 // Scale Sabertooth style 0..64..127 to -100 .. 0 .. +100

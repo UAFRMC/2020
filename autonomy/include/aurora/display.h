@@ -314,6 +314,18 @@ void robot_display_setup(const robot_base &robot) {
 	}
 	robotPrintln(encoder_str.c_str());
 
+	std::string str("Stall Raw ");
+	for(int ii=12-1;ii>=0;--ii)
+	{
+		if((robot.sensor.stall_raw&(1<<ii))!=0)
+			str+="1";
+		else
+			str+="0";
+		if(ii==6)
+			str += " ";
+	}
+	robotPrintln(str.c_str());
+
 	if (robot.status.arduino)
 	{ // arduino connected: print status
 		std::string status="";

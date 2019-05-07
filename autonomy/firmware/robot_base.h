@@ -62,6 +62,8 @@ public:
 	uint32_t limit_bottom:8;
 
 	uint32_t encoder_raw:16;
+  uint32_t stall_raw:16;
+  uint32_t pad:16; // round up to 32
 };
 
 /**

@@ -170,12 +170,10 @@ namespace nano_net
     int stall=0;
     for (int m=0;m<n_motors;m++) {
       if (speed_controllers[m].stalled)
-        stall=1<<m; // set that bit of stall
+        stall|=1<<m; // set that bit of stall
     }
     next_sensors.stall=stall;
   }
-
-
 
   
   void handle_mega_packet(A_packet_formatter<HardwareSerial> &pkt,const A_packet &p)
