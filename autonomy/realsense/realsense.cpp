@@ -143,8 +143,11 @@ class stepper_controller
 #define stepper_angle_to_step (400.0 / 360.0)  /* scale degrees to step count */
 #define stepper_angle_zero -73 /* degrees for stepper zero */
   
-  void read_serial() {
+  /* Poll on the serial port.  Return true if stuff was read. */
+  bool read_serial() {
+    bool read_stuff=false;
     while (stepper_serial.available()) {
+      read_stuff=true;
       unsigned char pos255=stepper_serial.read();
       camera_Z_angle=(pos255 / stepper_angle_to_step)+stepper_angle_zero;
       
@@ -154,6 +157,7 @@ class stepper_controller
         last=pos255;
       }
     }
+    return read_stuff;
   }
 
   void seek_steps(int step) {
@@ -184,10 +188,11 @@ public:
       }
     }
   }
-  void serial_poll(void) {
+  bool serial_poll(void) {
     if (pan_stepper) {
-      read_serial();
+      return read_serial();
     }
+    else return true;
   }
   
   void setup_seek(void) {
@@ -334,7 +339,8 @@ int main(int argc,const char *argv[])
 #endif
     
     stepper_controller stepper;
-    // stepper.setup_seek();  // <- assumes startup in most clockwise angle
+    stepper.setup_seek();  // <- assumes startup in most clockwise angle
+    stepper.absolute_seek(0);
 
     int depth_w=1280, depth_h=720; // high res mode: definitely more detail visible
     int color_w=1280, color_h=720; 
@@ -377,12 +383,20 @@ int main(int argc,const char *argv[])
         try {
         aurora_beacon_command cmd;
         if (command_server.request(cmd)) {
+          cmd.letter=toupper(cmd.letter); // uppercase request char
           if (cmd.letter=='P') { // point request
             stepper.absolute_seek(cmd.angle);
             command_server.response(); 
           }
           else if (cmd.letter=='O') { // turn-off request
             sys_error=system("sudo shutdown -h now");
+            command_server.response(); 
+          }
+          else if (cmd.letter=='H') { // hard-home the stepper
+            stepper.setup_seek();
+            while (!stepper.serial_poll()) { /* wait for stepper to home */ }
+            stepper.angle_correction=0.0;
+            stepper.absolute_seek(cmd.angle);
             command_server.response(); 
           }
           else if (cmd.letter=='T') { // scan for obstacles
