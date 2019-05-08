@@ -17,6 +17,7 @@
 enum {
   aurora_beacon_command_scan='T', // take a scan for obstacles
   aurora_beacon_command_point='P', // point sensor this direction
+  aurora_beacon_command_home='H', // point sensor this direction
   aurora_beacon_command_off='O', // power off the beacon
 };
 typedef signed short aurora_beacon_command_angle_t;

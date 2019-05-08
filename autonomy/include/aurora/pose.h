@@ -74,14 +74,14 @@ public:
   /// Add another sensed marker:
   ///    across points across the marker horizontally, in plane of marker
   ///    out points out horizontally from plane of marker
-  void add(int markerID,  vec3 pos,vec3 across,vec3 out,  vec3 shift,int side) 
+  void add(int markerID,  vec3 pos,vec3 across,vec3 out,  vec3 shift,float weight,int side) 
   {
     across=normalize(across);
     out=normalize(out);
     
     // Raw data goes into markers array
     robot_pose &m=markers[markerID];
-    m.confidence=0.8;
+    m.confidence=weight;
     m.pos=pos;
     m.fwd=across;
     m.rgt=out;

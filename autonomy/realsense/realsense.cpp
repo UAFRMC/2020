@@ -284,7 +284,7 @@ public:
           );
     }
   
-    markers.add(info.id, w,axes[0],axes[1], info.shift, info.side);
+    markers.add(info.id, w,axes[0],axes[1], info.shift, info.weight, info.side);
     markers.markers[info.id].print();
 
     fflush(stdout);
