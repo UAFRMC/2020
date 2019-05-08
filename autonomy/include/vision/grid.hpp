@@ -47,7 +47,6 @@ int compare(grid_square a, grid_square b);
 /// Make it easy to swap between float (fast for big arrays) and double
 typedef float real_t;
 
-
 /// Keeps track of location of obstacles
 class obstacle_grid {
 public:
@@ -65,6 +64,12 @@ public:
   obstacle_grid() 
     :grid(obstacle_grid::GRIDTOTAL)
   {
+  }
+  
+  /* Return true if this point has data (in range, and count >0) */
+  bool in_bounds(int x,int y) const {
+    if (x<0 || x>=GRIDX || y<0 || y>=GRIDY) return false;
+    return true;
   }
 
   /* Flush all stored points */

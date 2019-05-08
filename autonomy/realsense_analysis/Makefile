@@ -1,6 +1,6 @@
 CFLAGS=-I../../autonomy/include
 CFLAGS += `pkg-config opencv --cflags --libs` 
-OPTS=-g -O4
+OPTS=-g -O4 -Wall
 
 
 all: main
