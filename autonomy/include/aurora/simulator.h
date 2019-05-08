@@ -32,7 +32,6 @@ void blend(robot_localization &dest, const robot_localization &src, float weight
 class robot_simulator {
 public:
 	// Actuators:
-	double dump; // linear actuators, 0-1 range
 	double DLcount, DRcount; // driving left/right track counts
 	double Mcount; // mining head counter
 	double Rcount; // roll motor
@@ -40,8 +39,7 @@ public:
 	robot_localization loc; // current location of robot
 	
 	robot_simulator() {
-		dump=0.0; // lowered
-		bucket=0.5; // lowered
+		bucket=0.6; // lowered
 		Mcount=0;
 		Rcount=0;
 	}

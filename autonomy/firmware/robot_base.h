@@ -119,16 +119,13 @@ enum {
 		DN 240 conservative mining depth
 		DN 180 fully down
 */
-		head_mine_stop=250, // stop lowering at this mining height
-		head_mine_start=310, // start mining at this height
-		head_mine_drive=500, // normal driving height
-		head_drive_safe=800, // can safely drive below this height (without tipping over)
-		head_mine_dump=890, // dumping height
-		head_mine_stow = 250, // stow height, where frame is level
-		head_bar_clear=320, //mining head will not drag on bar
-		// These 2 are used for speed control while aligning and releasing hooks
-		count_stop = 1, // encoder count to stop on
-		count_slow = 110, // run fast until you're here
+		head_mine_stop=0, // stop lowering at this mining height
+		head_mine_start=700, // start mining at this height
+		head_mine_drive=900, // normal driving height
+		head_drive_safe=940, // can safely drive below this height (without tipping over)
+		head_mine_dump=940, // dumping height
+		head_mine_stow = 850, // stow height, where frame is level
+
 	// These 2 are used to tell whether the box is at max or min height
 	box_raise_max = 1000,
 	box_raise_min = 25,

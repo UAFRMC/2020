@@ -367,7 +367,10 @@ private:
   double state_start_time; // cur_time when we entered the current state
   double mine_start_time; // cur_time when we last started mining
   double autonomy_start_time; // cur_time when we started full autonomy
+  
+  // If true, the mining head has been extended
   bool mining_head_extended=false;
+  // If true, the mining head is down in the dirt
   bool mining_head_lowered=true;
 
   robot_state_t last_state;
@@ -417,12 +420,14 @@ private:
 
   // Run autonomous mining, if possible
   bool tryMineMode(void) {
-    if (drive_posture()) {
-      robot.power.mine=100; // TUNE THIS!
-      robot.power.mineMode = true; // Start PID based mining
-      return true;
-    }
-    return false;
+    //if (drive_posture()) {    
+    robot.power.mine=120; // TUNE THIS mining head rate
+    robot.power.dump=64-8; // TUNE THIS lowering rate
+    robot.power.mineMode = true; // Start PID based mining
+    mining_head_lowered=true;
+    
+    
+    return true;
   }
 
   // Set the mining head linear and dump linear to natural driving posture
@@ -433,7 +438,9 @@ private:
     mining_head_extended = true;
     if(mining_head_lowered && cur_time-state_start_time <10)
       robot.power.dump = 127;
-    mining_head_lowered=false;
+    if (sim.bucket>0.9) { // we're back up in driving range
+      mining_head_lowered=false;
+    }
 
     return true; // Kept for compatiiblity
   }
@@ -683,18 +690,20 @@ void robot_manager_t::autonomous_state()
     }
 
     double mine_time=cur_time-mine_start_time;
-    double mine_duration=12.0;
+    double mine_duration=250.0;
     if(mine_time>mine_duration)
     {
         enter_state(state_mine_raise);
     } // done mining
+    
+    if (robot.sensor.Mstall) enter_state(state_mine_stall);
   }
 
   // state_mine_stall: Detect mining head stall. Raise head until cleared
   else if (robot.state==state_mine_stall)
   {
     tryMineMode(); // Start PID based mining
-    if(robot.sensor.Mstall && time_in_state<2)
+    if(robot.sensor.Mstall && time_in_state<1)
     {
       robot.power.dump=power_full_fw; // raise bucket
     }
@@ -953,9 +962,11 @@ void robot_manager_t::update(void) {
 
   // Send commands to Arduino
   robot_sensors_arduino old_sensor=robot.sensor;
+  // Fake the bucket sensor from the sim (no hardware sensor for now)
+  robot.sensor.bucket=sim.bucket*(950-179)+179;
+    
   if (simulate_only) { // build fake arduino data
     robot.status.arduino=1; // pretend it's connected
-    robot.sensor.bucket=sim.bucket*(950-179)+179;
     robot.sensor.McountL=0xff&(int)sim.Mcount;
     robot.sensor.Rcount=0xffff&(int)sim.Rcount;
     robot.sensor.DL1count=0xffff&(int)sim.DLcount;
@@ -965,9 +976,6 @@ void robot_manager_t::update(void) {
   }
   else { // real arduino
     arduino.update(robot);
-
-    // No hardware bucket height sensor: simulate in software
-    robot.sensor.bucket=sim.bucket*(950-179)+179;
 
     //Reset encoder offset if needed
     if(robot.sensor.limit_top==0)
@@ -980,10 +988,6 @@ void robot_manager_t::update(void) {
       arduino.Rdiff+=box_raise_limit_low-robot.sensor.Rcount;
       robot.sensor.Rcount=box_raise_limit_low;
     }
-    /*else
-    {
-		robot.sensor.Rcount+=fix_wrap256(original_arduino.Rcount-old_sensor.Rcount);
-	}*/
   }
 
   float wheelbase=132-10; // cm between track centerlines
