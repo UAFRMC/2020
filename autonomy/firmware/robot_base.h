@@ -203,6 +203,13 @@ public:
 
 // Confidence in our position (1.0: recent detection; 0.0: no idea)
 	float confidence;
+	
+	robot_localization() {
+	  x=y=z=0;
+	  angle=0;
+	  pitch=0;
+	  confidence=0;
+	}
 
 
 #ifdef __OSL_VEC2_H

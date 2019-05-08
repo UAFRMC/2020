@@ -327,6 +327,7 @@ public:
     sim.loc.y=80.0;
     sim.loc.x= (rand()%10)*20.0+100.0;
     sim.loc.angle=((rand()%8)*8)/360;
+    sim.loc.pitch=0;
     sim.loc.confidence=1.0;
 
     if (getenv("BEACON")) {
@@ -1021,7 +1022,7 @@ void robot_manager_t::update(void) {
   if (dt>0.1) dt=0.1;
   last_time=cur_time;
 
-  if (locator.merged.confidence>0.2)  // make sim track reality
+  if (locator.merged.confidence>0.1)  // make sim track reality
     sim.loc=locator.merged;
 
   if (simulate_only) // make reality track sim

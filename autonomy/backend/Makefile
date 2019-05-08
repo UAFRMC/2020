@@ -20,7 +20,7 @@ else
 	endif
 endif
 
-OPTS=-O
+OPTS=-g -O4
 CFLAGS=$(OPTS) -Wall -Wno-deprecated-declarations -Wno-char-subscripts
 
 all: backend

@@ -12,11 +12,11 @@
 void blend_angles(float &dest,const float &src,float weight) {
 	if(fabs(src - dest) > 180) { // must reduce source to match dest
 		float sa=src;
-		while (sa>dest+180) sa-=360;
-		while (sa<dest-180) sa+=360;
+		if (sa>dest+180) sa-=360;
+		if (sa<dest-180) sa+=360;
 		dest=sa*weight+dest*(1.0-weight);
-		while (dest>180) dest-=360;
-		while (dest<-180) dest+=360;
+		if (dest>180) dest-=360;
+		if (dest<-180) dest+=360;
 	} else {
 		dest=src*weight+dest*(1.0-weight);
 	}
