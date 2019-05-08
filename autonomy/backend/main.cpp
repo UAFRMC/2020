@@ -74,35 +74,7 @@ class robot_locator {
 public:
   /** Merged location */
   robot_localization merged;
-
-  /** Values from computer vision */
-  location_binary vision;
-  location_reader vision_reader;
-
-  /** Update computer vision values */
-  bool update_vision(const char *marker_path) {
-    if (vision_reader.updated(marker_path,vision)) {
-      if (vision.valid) {
-        if (fabs(vision.x)<2.5 && vision.y>-0.5 && vision.y<3.0) {
-          //merged=vision; // <- HACK!  Always trusts camera, even if it's bouncing around.
-          merged.x=vision.x;
-          merged.y=vision.y;
-          merged.z=vision.z;
-          merged.angle=vision.angle;
-          merged.confidence=0.8; // vision.confidence;
-          return true;
-        }
-        else {
-          robotPrintln("Ignoring vision X %.1f  Y %.1f  angle %.0f\n",
-            vision.x,vision.y,vision.angle);
-        }
-      }
-      // merged.vidcap_count=vision.vidcap_count;
-    }
-    return false;
-  }
-
-
+  
   /* Update absolute robot position based on these incremental
      wheel encoder distances.
      These are normalized such that left and right are the
@@ -390,8 +362,6 @@ private:
     glEnd();
   }
 
-
-
   // Autonomy support:
   double cur_time; // seconds since start of backend program
   double state_start_time; // cur_time when we entered the current state
@@ -399,7 +369,6 @@ private:
   double autonomy_start_time; // cur_time when we started full autonomy
   bool mining_head_extended=false;
   bool mining_head_lowered=true;
-
 
   robot_state_t last_state;
 
@@ -508,8 +477,8 @@ private:
   bool autonomous_drive(vec2 target,float target_angle) {
     if (!drive_posture()) return false; // don't drive yet
 
-    vec2 cur(sim.loc.x,sim.loc.y); // robot location
-    float cur_angle=90-sim.loc.angle; // <- sim angle is Y-relative (STUPID!)
+    vec2 cur(locator.merged.x,locator.merged.y); // robot location
+    float cur_angle=90-locator.merged.angle; // <- sim angle is Y-relative (STUPID!)
 
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
@@ -529,7 +498,7 @@ private:
     if (!path_planning_OK)
     {
       // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
-      double angle=sim.loc.angle; // degrees (!?)
+      double angle=locator.merged.angle; // degrees (!?)
       double arad=angle*M_PI/180.0; // radians
       vec2 orient(sin(arad),cos(arad)); // orientation vector (forward vector of robot)
       vec2 should=normalize(cur-target); // we should be facing this way
@@ -555,10 +524,10 @@ private:
   bool autonomous_turn(double angle_target_deg=0.0,bool do_posture=true)
   {
     if (do_posture) { if (!drive_posture()) return false; } // don't drive yet
-    double angle_err_deg=sim.loc.angle-angle_target_deg;
+    double angle_err_deg=locator.merged.angle-angle_target_deg;
     reduce_angle(angle_err_deg);
     robotPrintln("Autonomous turn to %.0f from %.0f deg\n",
-      angle_target_deg, sim.loc.angle);
+      angle_target_deg, locator.merged.angle);
 
     double turn=angle_err_deg*0.1; // proportional control
     double maxturn=drive_speed(0.0,1.0);
@@ -569,10 +538,10 @@ private:
 
   // Make sure we're still facing the collection bin.  If not, pivot to face it.
   bool check_angle() {
-    if (robot.loc.confidence<0.2) return true; // we don't know where we are--just keep driving?
-    double target=180.0/M_PI*atan2(robot.loc.x,robot.loc.y+200.0);
-    double err=sim.loc.angle-target;
-    robotPrintln("check_angle: cur %.1f deg, target %.1f deg",sim.loc.angle,target);
+    if (locator.merged.confidence<0.2) return true; // we don't know where we are--just keep driving?
+    double target=180.0/M_PI*atan2(locator.merged.x,locator.merged.y+200.0);
+    double err=locator.merged.angle-target;
+    robotPrintln("check_angle: cur %.1f deg, target %.1f deg",locator.merged.angle,target);
     reduce_angle(err);
     if (fabs(err)<10.0) return true; // keep driving--straight enough
     else return autonomous_turn(target,false); // turn to face target
@@ -642,8 +611,8 @@ void robot_manager_t::autonomous_state()
   else if (robot.state==state_find_camera)
   {
     if (!drive_posture()) { /* correct posture first */ }
-    else if (robot.loc.confidence>0.5) { // we know where we are!
-      sim.loc=robot.loc; // reset simulator to real detected values
+    else if (locator.merged.confidence>0.1) { // we know where we are!
+      sim.loc=locator.merged; // reset simulator to real detected values
 
       enter_state(state_scan_obstacles);
     }
@@ -685,7 +654,7 @@ void robot_manager_t::autonomous_state()
     if (drive_posture()) {
 
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
-      double distance=target_Y-sim.loc.y;
+      double distance=target_Y-locator.merged.y;
       if (autonomous_drive(mine_target_loc,90) ||
           distance<0.0)  // we're basically there now
       {
@@ -750,9 +719,9 @@ void robot_manager_t::autonomous_state()
   else if (robot.state==state_dump_align)
   {
     vec2 target=dump_align_loc;
-    target.y=sim.loc.y; // don't try to turn when this close
+    target.y=locator.merged.y; // don't try to turn when this close
     if (autonomous_drive(target,dump_target_angle)
-      || (fabs(sim.loc.y-target.y)<30 && fabs(sim.loc.x-field_x_trough_stop)<=5) )
+      || (fabs(locator.merged.y-target.y)<30 && fabs(locator.merged.x-field_x_trough_stop)<=5) )
     {
       if (driver_test) {
         mine_target_loc.x=50+(rand()%250); // retarget in mining area every run
@@ -858,22 +827,24 @@ void robot_manager_t::update(void) {
 
   if (pose_net) {
     if (pose_net->update(markers))
-    if (markers.pose.confidence>0.2) {
-      sim.loc.x=markers.pose.pos.x;
-      sim.loc.y=markers.pose.pos.y;
-      sim.loc.z=markers.pose.pos.z;
-      sim.loc.angle=0; //<- don't recompute relative angle
-      sim.loc.angle=sim.loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
-      printf("Computed robot angle: %.0f deg\n",sim.loc.angle);
-      sim.loc.confidence=markers.pose.confidence;
-      robot.loc=sim.loc;
+    if (markers.pose.confidence>=0.1) 
+    { // Computer vision marker-based robot location
+      robot_localization loc;
+      loc.x=markers.pose.pos.x;
+      loc.y=markers.pose.pos.y;
+      loc.z=markers.pose.pos.z;
+      loc.angle=0; //<- don't re-recompute relative angle
+      loc.angle=loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
+      printf("Computed robot angle: %.0f deg\n",loc.angle);
+      loc.confidence=markers.pose.confidence;
+      blend(locator.merged,loc,loc.confidence*0.5);
+      blend(sim.loc,loc,loc.confidence*0.5);
     }
     robot_display_markers(markers);
   }
 
 // Show real and simulated robots
-  robot_display(robot.loc,0.2);
-  robot_display(sim.loc,0.4);
+  robot_display(locator.merged,0.4);
 
 
 /*
@@ -882,55 +853,16 @@ void robot_manager_t::update(void) {
   static osl::transform robot_tf;
   static file_ipc_link<osl::transform> robot_tf_link("robot.tf");
   if (robot_tf_link.subscribe(robot_tf)) {
-    robot.loc.x=robot_tf.origin.x-field_x_hsize; // make bin the origin
-    robot.loc.y=robot_tf.origin.y;
-    robot.loc.z=robot_tf.origin.z;
+    locator.merged.x=robot_tf.origin.x-field_x_hsize; // make bin the origin
+    locator.merged.y=robot_tf.origin.y;
+    locator.merged.z=robot_tf.origin.z;
 
-    robot.loc.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.x,robot_tf.basis.x.y);
-    robot.loc.pitch=(180.0/M_PI)*robot_tf.basis.x.z;
+    locator.merged.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.x,robot_tf.basis.x.y);
+    locator.merged.pitch=(180.0/M_PI)*robot_tf.basis.x.z;
   }
   */
 
 
-/*
-// Check for an updated location from the "camera" vision application
-  if (locator.update_vision("../aruco/viewer/marker.bin")) {
-    robot.loc=locator.merged; // copy out robot location
-
-//    robotPrintln("Location: X %.1f   Y %.1f   angle %.0f  (%s)",
-//      bin.x,bin.y,bin.angle,bin.valid?"valid":"invalid");
-
-    if (true)
-    {
-      robot_localization &bin=locator.merged;
-
-      float marker_dx=-60.0; // centimeters from bin center (X==0) to marker center (was -50 for marker to one side)
-      float marker_dy=0.0; // centimeters from bin lip (Y==0) to marker
-      vec2 loc(100.0*bin.x+marker_dx,100.0*bin.y+marker_dy); // center of camera
-
-      float arad=bin.angle*M_PI/180.0; // radians
-      vec2 right(cos(arad),-sin(arad)); // robot's right-hand axis
-      float camera_right=+67.0; // centimeters from camera to robot center
-      loc+=camera_right*right; // shift from camera to robot center
-
-      robot.loc.x=loc.x;
-      robot.loc.y=loc.y;
-      robot.loc.z=100.0*bin.z;
-      robot.loc.angle=bin.angle;
-      robot.loc.confidence=std::max(robot.loc.confidence+0.2,0.0);
-    }
-
-
-    static uint32_t last_vidcap=-1;
-    if (bin.vidcap_count!=last_vidcap) {
-      robotPrintln("Reading updated vidcap texture");
-      video_texture_ID=SOIL_load_OGL_texture(
-        "../aruco/viewer/vidcap.jpg",
-        0,video_texture_ID,
-        SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y);
-      last_vidcap=bin.vidcap_count;
-    }
-  //}*/
 
 // Check for a command broadcast (briefly)
   int n;
@@ -1020,16 +952,18 @@ void robot_manager_t::update(void) {
   }
 
   // Send commands to Arduino
+  robot_sensors_arduino old_sensor=robot.sensor;
   if (simulate_only) { // build fake arduino data
     robot.status.arduino=1; // pretend it's connected
     robot.sensor.bucket=sim.bucket*(950-179)+179;
     robot.sensor.McountL=0xff&(int)sim.Mcount;
     robot.sensor.Rcount=0xffff&(int)sim.Rcount;
+    robot.sensor.DL1count=0xffff&(int)sim.DLcount;
+    robot.sensor.DR1count=0xffff&(int)sim.DRcount;
     robot.sensor.limit_top=0;
     robot.sensor.limit_bottom=0;
   }
   else { // real arduino
-    robot_sensors_arduino old_sensor=robot.sensor;
     arduino.update(robot);
 
     // No hardware bucket height sensor: simulate in software
@@ -1050,15 +984,15 @@ void robot_manager_t::update(void) {
     {
 		robot.sensor.Rcount+=fix_wrap256(original_arduino.Rcount-old_sensor.Rcount);
 	}*/
-
-    float wheelbase=132-10; // cm between track centerlines
-    float drivecount2cm=8*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
-
-    locator.move_wheels(
-      fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm,
-      fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm,
-      wheelbase);
   }
+
+  float wheelbase=132-10; // cm between track centerlines
+  float drivecount2cm=8*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
+
+  locator.move_wheels(
+    fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm,
+    fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm,
+    wheelbase);
 
 
 // Send out telemetry
@@ -1072,7 +1006,7 @@ void robot_manager_t::update(void) {
     telemetry.status=robot.status;
     telemetry.sensor=robot.sensor;
     telemetry.power=robot.power;
-    telemetry.loc=robot.loc; robot.loc.confidence*=0.99;
+    telemetry.loc=locator.merged; locator.merged.confidence*=0.995;
 
     comms.broadcast(telemetry);
   }
@@ -1083,19 +1017,19 @@ void robot_manager_t::update(void) {
   if (dt>0.1) dt=0.1;
   last_time=cur_time;
 
-  if (robot.loc.confidence>0.5)  // make sim track reality
-    blend(sim.loc,robot.loc,robot.loc.confidence*dt);
+  if (locator.merged.confidence>0.2)  // make sim track reality
+    sim.loc=locator.merged;
 
   if (simulate_only) // make reality track sim
   {
-    robot.loc=sim.loc; // blend(robot.loc,sim.loc,0.1);
+    locator.merged=sim.loc; // blend(locator.merged,sim.loc,0.1);
     if (fabs(sim.loc.angle)<40.0) // camera in view
-      robot.loc.confidence+=0.1;
+      locator.merged.confidence+=0.1;
     else // camera not in view
-      robot.loc.confidence*=0.9;
-    robot.loc.confidence*=0.9;
+      locator.merged.confidence*=0.9;
+    locator.merged.confidence*=0.9;
 
-    if (robot.loc.y>100 && robot.loc.y<500)
+    if (locator.merged.y>100 && locator.merged.y<500)
     { // simulate angle drift
       if ((rand()%300)==0) {
         sim.loc.angle+=2.0;
@@ -1180,7 +1114,7 @@ int main(int argc,char *argv[])
   }
 
   robot_manager=new robot_manager_t;
-  robot_manager->robot.loc.y=100;
+  robot_manager->locator.merged.y=100;
 
   if (show_GUI) {
     glutInitDisplayMode(GLUT_RGBA + GLUT_DOUBLE);

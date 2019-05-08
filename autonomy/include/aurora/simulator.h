@@ -33,6 +33,7 @@ class robot_simulator {
 public:
 	// Actuators:
 	double dump; // linear actuators, 0-1 range
+	double DLcount, DRcount; // driving left/right track counts
 	double Mcount; // mining head counter
 	double Rcount; // roll motor
 	double bucket; // linear actuators, 0-1 range
@@ -89,6 +90,7 @@ public:
 		side[1]=world_from_robot(vec2(+wheelbase,wheelforward));
 
 		float sidepower[2];
+		float sideticks[2];
 		float topspeed=130.0; // <- speed in cm/sec at 100% power (hypothetical!)
 		sidepower[0]=power.left-64.0;
 		sidepower[1]=power.right-64.0;
@@ -97,9 +99,12 @@ public:
 			double torque=sidepower[s]; // wheel torque command
 			if (fabs(torque)>2.0) { // friction
 				double distance=torque/64*topspeed*dt;
+				sideticks[s]=distance;
 				side[s]+=distance*forward();
 			}
 		}
+		DLcount+=sideticks[0];
+		DRcount+=sideticks[1];
 		
 	// Set robot position and orientation from wheel positions
 		vec2 center=(side[0]+side[1])*0.5;
