@@ -128,9 +128,9 @@ enum {
 
 	// These 2 are used to tell whether the box is at max or min height
 	box_raise_max = 1000,
-	box_raise_min = 25,
+	box_raise_min = -500,
 	box_raise_limit_high = 1000,
-	box_raise_limit_low = 26
+	box_raise_limit_low = -500
 	};
 /**
   This is a list of possible robot states.
@@ -203,7 +203,7 @@ public:
 
 // Confidence in our position (1.0: recent detection; 0.0: no idea)
 	float confidence;
-	
+
 	robot_localization() {
 	  x=y=z=0;
 	  angle=0;
