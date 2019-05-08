@@ -542,6 +542,7 @@ int main(int argc,const char *argv[])
             obstacle_scan--;
             if (obstacle_scan==0) {
               // Done with scan--report results to backend
+              imwrite("raw_color.png",color_image);
               std::vector<aurora_detected_obstacle> obstacle_list;
               find_obstacles(obstacles,obstacle_list);
               command_server.response(&obstacle_list[0],
