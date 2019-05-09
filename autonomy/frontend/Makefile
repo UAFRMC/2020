@@ -1,4 +1,4 @@
-COMPILER=g++
+COMPILER=g++ -std=c++11
 
 DIRS=-I/usr/local/include -L/usr/local/lib -I../include
 
