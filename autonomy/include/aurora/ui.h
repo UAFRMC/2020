@@ -20,6 +20,7 @@
 class robot_ui {
 public:
 	robot_power power; // Last output power commands
+	robot_realsense_comms realsense_comms;
 	#ifdef MSL
 		msl::joystick_t* joystick;
 	#endif
@@ -247,6 +248,26 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 		description+="  LEFT DRIVE STALLED\n";
 	if(robot.sensor.DRstall)
 		description+="  RIGHT DRIVE STALLED\n";
+//Realsense beacon commands
+	realsense_comms.command = ' ';
+	float beacon_requested_angle=-1;
+	if(keys['1'])
+		beacon_requested_angle=-60;
+	if(keys['2'])
+		beacon_requested_angle=-45;
+	if(keys['3'])
+		beacon_requested_angle=-0;
+	if(keys['4'])
+		beacon_requested_angle=45;
+	if(keys['5'])
+		beacon_requested_angle=60;
+
+	if (beacon_requested_angle != -1)	
+		{
+			realsense_comms.requested_angle=(signed char)(beacon_requested_angle);
+			realsense_comms.command='P';
+			description+= " \n Requested Beacon Angle "+ std::to_string(realsense_comms.requested_angle) + "\n";
+		}
 
 // Drive keys:
 	float acceleration=.2;

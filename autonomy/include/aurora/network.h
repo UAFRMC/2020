@@ -45,6 +45,7 @@ public:
 	 
 	
 	robot_power power;
+	robot_realsense_comms realsense_comms;
 	
 	robot_command() { type='c'; command=command_STOP; state=state_STOP; }
 };

@@ -303,6 +303,7 @@ public:
   robot_command command; // last-received command
   robot_comms comms; // network link to front end
   robot_ui ui; // keyboard interface
+  robot_realsense_comms realsense_comms;
 
   robot_autodriver autodriver;
 
@@ -910,10 +911,19 @@ void robot_manager_t::update(void) {
           robotPrintln("IGNORING POWER: not in drive state\n");
         }
       }
+      if (command.realsense_comms.command=='P')
+      {
+        robotPrintln("Requesting Beacon Angle %f",float(command.realsense_comms.requested_angle));
+        std::vector<std::string> fake_return; 
+        //new std::thread(send_aurora_beacon_command,)
+        //zmq_thread_waiton_socket()
+        send_aurora_beacon_command('P', fake_return, aurora_beacon_command_angle_t(command.realsense_comms.requested_angle));
+      }
     } else {
       robotPrintln("ERROR: COMMAND VERSION MISMATCH!  Expected %d, got %d",
         sizeof(command),n);
     }
+
   }
 
 // Perform action based on state recieved from FrontEnd

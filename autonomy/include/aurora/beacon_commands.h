@@ -63,7 +63,8 @@ void send_aurora_beacon_command(char letter,
   c.letter=letter; c.angle=angle;
   memcpy(cmdbuf.data(),&c,sizeof(c));
   socket.send(cmdbuf);
-  
+  if(letter=='P')
+    socket.setsockopt(ZMQ_RCVTIMEO,1*1000); //1 sec timeout for Point commands
   zmq::message_t reply;
   socket.recv(&reply);
   
@@ -74,6 +75,24 @@ void send_aurora_beacon_command(char letter,
   printf("Response from beacon: %d data items of size %d bytes each\n",
     (int)nreturn,(int)sizeof(T));
 }
+
+// template<class T>
+// inline void zmq_thread_waiton_reply(std:vector<)
+// {
+//     while(1)
+//     {
+//         std::vector<T> beacon_reply;
+//         if(cmd.letter!=0)
+//         {
+//             send_aurora_beacon_command(cmd.letter,beacon_reply,cmd.angle);
+//         }
+//         while (cmd.letter!=0)
+//         {
+//             sleep(0);
+//         }
+//     }
+
+// }
 
 /* ZMQ doesn't seem to have a decent 'check if client connected' interface,
    so use the blocking interface from a thread.  Silly! */

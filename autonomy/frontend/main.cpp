@@ -37,6 +37,7 @@ public:
 	robot_command command; // next-sent command
 	double last_command_time;
 	robot_comms comms; // network link to back end
+	robot_realsense_comms realsense_comms;
 	
 	
 	// Do robot work.
@@ -71,6 +72,7 @@ void robot_manager_t::update(void) {
 			command.command=robot_command::command_power;
 			command.power=ui.power;
 			command.state=state_drive;
+			command.realsense_comms = ui.realsense_comms;
 		}
 		comms.broadcast(command);
 

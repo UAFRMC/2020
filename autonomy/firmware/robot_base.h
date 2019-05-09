@@ -211,7 +211,6 @@ public:
 	  confidence=0;
 	}
 
-
 #ifdef __OSL_VEC2_H
 // 2D vector utility functions:
 #ifndef M_PI
@@ -254,6 +253,19 @@ public:
 #endif
 };
 
+class robot_realsense_comms{
+public:
+	signed char current_angle;
+	signed char requested_angle;
+	char command;
+	
+	robot_realsense_comms()
+	{
+		command = ' ';
+		current_angle = (unsigned char)-1;
+		requested_angle = (unsigned char)-1;
+	}
+};
 
 // ********** //
 
@@ -268,6 +280,7 @@ robot_state_t state; ///< Current control state
 	robot_sensors_arduino sensor;  ///< Current hardware sensor values
 	robot_localization loc; ///< Location
 	robot_power power; // Current drive commands
+	robot_realsense_comms realsense_comms;
 
 	bool autonomous;
 };
