@@ -8,6 +8,8 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <thread>
+#include <mutex>
 
 #include "gridnav/gridnav_RMC.h"
 
@@ -289,6 +291,100 @@ public:
   }
 };
 
+/**
+  Re-points the realsense
+*/
+class beacon_pointing_thread_t {
+  FILE * tracefile=fopen("beacon_trace.txt","w+");
+  void trace(const char *where,float what=0.0) {
+    fprintf(tracefile,where,what);
+    fflush(tracefile);
+  }
+public:  
+  volatile bool busy; // true == thread is currently doing network stuff
+
+  // This lock protects cmd and data against threaded access
+  std::mutex cmd_data_lock;
+  
+  // Write requested beacon command here
+  //   cmd==0 means we're not busy
+  volatile aurora_beacon_command cmd;
+  
+  // Data from last beacon command (if you want it)
+  std::vector<unsigned char> data;
+  
+  beacon_pointing_thread_t();
+  
+  void run() {
+    trace("  Creating comm thread\n");
+    while(1) {
+      while (cmd.letter==0) sleep(0); // don't busywait
+      busy=true;
+      
+      trace("  Comm thread request {\n");
+      cmd_data_lock.lock(); 
+      char letter=cmd.letter;
+      int angle=cmd.angle;
+      std::vector<unsigned char> ret;
+      send_aurora_beacon_command(letter,
+        ret,angle);
+      data=ret;
+      cmd.letter=0;
+      cmd_data_lock.unlock();
+      trace("  } Comm thread request\n");
+      
+      busy=false;
+    }
+  }
+  
+  std::vector<unsigned char> run_cmd(char letter,int angle) {
+    trace("Beacon command request {\n");
+    while (busy) sleep(0); // wait until thread is free for this command
+    
+    cmd_data_lock.lock();
+    cmd.angle=angle;
+    cmd.letter=letter;
+    cmd_data_lock.unlock();
+    
+    trace("Beacon command in progress\n");
+    while (busy) sleep(0); // wait until this command has finished
+    
+    cmd_data_lock.lock();
+    std::vector<unsigned char> ret=data; // copy out from thread
+    cmd_data_lock.unlock();
+    trace("} Beacon command request\n");
+    
+    return ret;
+  }
+  
+  void point_beacon(int target) {
+    if (busy) {
+      trace(".");
+      return; // skip re-pointing requests while we're busy
+    }
+    
+    run_cmd('P',target);
+  }
+}; 
+void beacon_pointing_thread_run(beacon_pointing_thread_t *thr) 
+{
+  thr->run();
+}
+beacon_pointing_thread_t::beacon_pointing_thread_t()
+  :busy(false)
+{
+  trace("Starting beacon thread\n");
+  cmd.letter=0;
+  cmd.angle=0;
+  new std::thread(beacon_pointing_thread_run,this);
+}
+beacon_pointing_thread_t *beacon_pointing_thread=0;
+void point_beacon(int target) {
+  if (beacon_pointing_thread) 
+    beacon_pointing_thread->point_beacon(target);
+}
+
+
 
 /**
  This class represents everything the back end knows about the robot.
@@ -334,6 +430,7 @@ public:
     if (getenv("BEACON")) {
       pose_net=new pose_subscriber();
     }
+    beacon_pointing_thread=new beacon_pointing_thread_t;
   }
 
   // Do robot work.
@@ -485,14 +582,25 @@ private:
   //  Returns true once we're basically at the target location.
   bool autonomous_drive(vec2 target,float target_angle) {
     if (!drive_posture()) return false; // don't drive yet
+    
+    
 
     vec2 cur(locator.merged.x,locator.merged.y); // robot location
     float cur_angle=90-locator.merged.angle; // <- sim angle is Y-relative (STUPID!)
 
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
-    if (!simulate_only && fmod(cur_time,5.0)<3.0)
+    if (!simulate_only && fmod(cur_time,5.0)<4.0) {
       return false; // periodic stop (for safety, and for re-localization)
+    } else { // re-point
+      float dx=locator.merged.x-field_x_beacon;
+      float dy=locator.merged.y-field_y_beacon;
+      float beacon_target_angle=atan2(dy,dx)*180.0/M_PI;
+      int quantize=10.0; 
+      float beacon_target=
+        (int)((beacon_target_angle+quantize/2)/quantize)*quantize;
+      point_beacon(beacon_target);
+    }
 
     bool path_planning_OK=false;
     double forward=0.0; // forward-backward
@@ -606,62 +714,52 @@ void robot_manager_t::autonomous_state()
   // state_extend: extend the mining head so it does not get dragged
   else if (robot.state==state_extend)
   {
-	if (time_in_state<10.0)
+	  if (time_in_state<10.0)
     {
-        robot.power.head_extend = 1; // 1 for extend, 127 for tuck
-	}
-	else
-	{
-		mining_head_extended = true;
-		enter_state(state_find_camera);
-	}
+      robot.power.head_extend = 1; // 1 for extend, 127 for tuck
+	  }
+	  else
+	  {
+		  mining_head_extended = true;
+		  enter_state(state_find_camera);
+	  }
   }
   //state_find_camera: line up with centerline
   else if (robot.state==state_find_camera)
   {
     if (!drive_posture()) { /* correct posture first */ }
-    else if (locator.merged.confidence>0.1) { // we know where we are!
+    else if (locator.merged.confidence>=0.1) { // we know where we are!
       sim.loc=locator.merged; // reset simulator to real detected values
 
       enter_state(state_scan_obstacles);
     }
-    else // don't know where we are yet--turn left
+    else // don't know where we are yet--change pointing
     {
-      bool stop=false;
-      if (time_in_state>20.0 && fmod(time_in_state,10.0)<1.5)
-      { // stop every 10 seconds (to avoid camera blur)
-        stop=true;
-      }
-
-      if (!stop) {
-        if (time_in_state<40.0) { // turn left
-          set_drive_powers(0.0,-1.0);
-        }
-        else if (time_in_state<80.0) { // stuck??? maybe turn right?
-          set_drive_powers(0.0,+1.0);
-        }
-        else { // HELP!
-          enter_state(state_drive);
-        }
-      }
+      if (time_in_state<5.0) point_beacon(0);
+      else if (time_in_state<10.0) point_beacon(-10);
+      else if (time_in_state<15.0) point_beacon(-30);
     }
   }
   //state_scan_obstacles: Scan for obstacles
   else if (robot.state==state_scan_obstacles)
   {
-    std::vector<aurora_detected_obstacle> seen_obstacles;
-    send_aurora_beacon_command('T',seen_obstacles,45);
-    // Upload obstacles to autodrive
-    for (aurora_detected_obstacle &o : seen_obstacles)
-      autodriver.mark_obstacle(o.x,o.y,o.height);
-    autodriver.compute_proximity();
-    enter_state(state_drive_to_mine);
+    if (time_in_state<10.0) {
+      point_beacon(+45);
+    } else { // really do the scan (blocking)
+      std::vector<aurora_detected_obstacle> seen_obstacles;
+      send_aurora_beacon_command('T',seen_obstacles,45);
+      // Upload obstacles to autodrive
+      for (aurora_detected_obstacle &o : seen_obstacles)
+        autodriver.mark_obstacle(o.x,o.y,o.height);
+      autodriver.compute_proximity();
+      if (robot.autonomous) enter_state(state_drive_to_mine);
+      else enter_state(state_drive);
+    }
   }
   //state_drive_to_mine: Drive to mining area
   else if (robot.state==state_drive_to_mine)
   {
     if (drive_posture()) {
-
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-locator.merged.y;
       if (autonomous_drive(mine_target_loc,90) ||
@@ -913,11 +1011,7 @@ void robot_manager_t::update(void) {
       }
       if (command.realsense_comms.command=='P')
       {
-        robotPrintln("Requesting Beacon Angle %f",float(command.realsense_comms.requested_angle));
-        std::vector<std::string> fake_return; 
-        //new std::thread(send_aurora_beacon_command,)
-        //zmq_thread_waiton_socket()
-        send_aurora_beacon_command('P', fake_return, aurora_beacon_command_angle_t(command.realsense_comms.requested_angle));
+        point_beacon(command.realsense_comms.requested_angle);
       }
     } else {
       robotPrintln("ERROR: COMMAND VERSION MISMATCH!  Expected %d, got %d",
