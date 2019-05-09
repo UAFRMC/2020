@@ -9,6 +9,52 @@
 #include "../osl/socket.h"
 
 
+#include "../gridnav/gridnav_RMC.h"
+#include "pose.h"
+#include "beacon_commands.h"
+
+/*
+ Huge bloated autonomy (debugging) state. 
+*/
+class robot_autonomy_state {
+public:
+  // stuff from gridnav_RMC.h:
+  // Target of the last planned path, or (0,0) if none.
+  rmc_navigator::fposition target;
+  
+  // Currently planned path
+  unsigned short plan_len;
+  enum {max_path_len=10}; 
+  typedef rmc_navigator::navigator_t::searchposition path_t;
+  rmc_navigator::fposition path_plan[max_path_len];
+  
+  // stuff from beacon_commands.h:
+  // Visible markers (at last report)
+  robot_markers_all markers;
+  
+  // Beacon-detected obstacles
+  unsigned short obstacle_len;
+  enum {max_obstacle_len=200}; // only 6 bytes each
+  aurora_detected_obstacle obstacles[max_obstacle_len];
+  
+  robot_autonomy_state() {
+    plan_len=0;
+    obstacle_len=0;
+  }
+};
+
+/*
+ Copy out a limited number of elements of this vector. 
+ Returns the number of elements copied.
+*/
+template <class T>
+inline int vector_copy_limited(T *dest,const std::vector<T> &src,int limit)
+{
+  int n=std::min(limit,(int)src.size());
+  for (int i=0;i<n;i++) dest[i]=src[i];
+  return n;
+}
+
 /**
  This is the simplest telemetry report from the robot.
  It's designed to minimize storage space, although the UDP header
@@ -25,6 +71,7 @@ public:
 	robot_sensors_arduino sensor; ///< Robot's current raw sensor values (bitfield).  
 	robot_localization loc; ///< Backend's current localization values. 
 	robot_power power; ///< Current actuator power values (for debugging only)
+	robot_autonomy_state autonomy;
 	
 	robot_telemetry() { type='h'; count=0; state=state_STOP; }
 };

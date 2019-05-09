@@ -255,14 +255,12 @@ public:
 
 class robot_realsense_comms{
 public:
-	signed char current_angle;
 	signed char requested_angle;
 	char command;
 	
 	robot_realsense_comms()
 	{
-		command = ' ';
-		current_angle = (unsigned char)-1;
+		command = 0;
 		requested_angle = (unsigned char)-1;
 	}
 };

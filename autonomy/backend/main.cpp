@@ -199,7 +199,8 @@ public:
   //   cur and target are (x,y) cm field coords and deg x angles.
   bool autodrive(vec2 cur,float cur_angle,
     vec2 target,float target_angle,
-    double &forward,double &turn)
+    double &forward,double &turn,
+    robot_autonomy_state &debug)
   {
     const int replan_interval=1; // 1==every frame.  10==every 10 frames.
 
@@ -211,11 +212,13 @@ public:
     { // refill planned path
       replan_counter=replan_interval;
       flush(); // flush old planned path
-
+      debug.plan_len=0;
+      
       // Start position: robot's position
       rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
       // End position: at target
       rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
+      debug.target=ftarget;
 
       rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
       int steps=0;
@@ -226,6 +229,12 @@ public:
         {
           p.print();
         }
+        if (steps<robot_autonomy_state::max_path_len)
+        {
+          debug.plan_len=steps+1;
+          debug.path_plan[steps]=p.pos;
+        }
+
         steps++;
       }
 
@@ -379,11 +388,6 @@ beacon_pointing_thread_t::beacon_pointing_thread_t()
   new std::thread(beacon_pointing_thread_run,this);
 }
 beacon_pointing_thread_t *beacon_pointing_thread=0;
-void point_beacon(int target) {
-  if (beacon_pointing_thread) 
-    beacon_pointing_thread->point_beacon(target);
-}
-
 
 
 /**
@@ -435,6 +439,16 @@ public:
 
   // Do robot work.
   void update(void);
+  
+  
+  void point_beacon(int target) {
+    if (simulate_only) {
+      telemetry.autonomy.markers.beacon=target;
+    }
+    if (beacon_pointing_thread) 
+      beacon_pointing_thread->point_beacon(target);
+  }
+
 
 private:
 
@@ -578,13 +592,19 @@ private:
       return true; // (robot.sensor.backL && robot.sensor.backR);
     }
   }
+  
+  // Compute the angle (deg) the beacon should face to see this field coordinate
+  float get_beacon_angle(float fx,float fy)
+  {
+    float dx=locator.merged.x-field_x_beacon;
+    float dy=locator.merged.y-field_y_beacon;
+    return atan2(dy,dx)*180.0/M_PI;
+  }
 
   //  Returns true once we're basically at the target location.
   bool autonomous_drive(vec2 target,float target_angle) {
     if (!drive_posture()) return false; // don't drive yet
     
-    
-
     vec2 cur(locator.merged.x,locator.merged.y); // robot location
     float cur_angle=90-locator.merged.angle; // <- sim angle is Y-relative (STUPID!)
 
@@ -592,10 +612,9 @@ private:
 
     if (!simulate_only && fmod(cur_time,5.0)<4.0) {
       return false; // periodic stop (for safety, and for re-localization)
-    } else { // re-point
-      float dx=locator.merged.x-field_x_beacon;
-      float dy=locator.merged.y-field_y_beacon;
-      float beacon_target_angle=atan2(dy,dx)*180.0/M_PI;
+    } else { // re-point beacon while robot is driving
+      float beacon_target_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
+      // Move in jumps (to avoid motion blur from re-pointing all the time)
       int quantize=10.0; 
       float beacon_target=
         (int)((beacon_target_angle+quantize/2)/quantize)*quantize;
@@ -609,7 +628,7 @@ private:
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
       path_planning_OK=autodriver.autodrive(
         cur,cur_angle,target,target_angle,
-        forward,turn);
+        forward,turn, telemetry.autonomy);
       if (path_planning_OK) autodriver.draw_path();
     }
     if (!path_planning_OK)
@@ -678,7 +697,7 @@ bool is_stalled(const robot_base &robot) {
 bool speed_limit(int &howfast,int cur,int target,int dir=+1)
 {
   int dist_left=(target-cur)*dir;
-  if (dist_left<0) {
+  if (dist_left<=0) {
     return false;
   }
   int max_speed=10+dist_left/5;
@@ -707,8 +726,7 @@ void robot_manager_t::autonomous_state()
       robot.power.dump=power_full_fw; // raise bin
     }
     else{
-		//enter_state(state_find_camera);
-		enter_state(state_extend);
+      enter_state(state_extend);
     }
   }
   // state_extend: extend the mining head so it does not get dragged
@@ -743,14 +761,26 @@ void robot_manager_t::autonomous_state()
   //state_scan_obstacles: Scan for obstacles
   else if (robot.state==state_scan_obstacles)
   {
-    if (time_in_state<10.0) {
-      point_beacon(+45);
-    } else { // really do the scan (blocking)
+    int scan_angle=45;
+    if (time_in_state<10.0) { // line up the beacon correctly
+      point_beacon(scan_angle);
+    }
+    else 
+    { // really do the scan (blocking)
       std::vector<aurora_detected_obstacle> seen_obstacles;
-      send_aurora_beacon_command('T',seen_obstacles,45);
+      send_aurora_beacon_command('T',seen_obstacles,scan_angle);
+      
+      static std::vector<aurora_detected_obstacle> all_obstacles;
+      
       // Upload obstacles to autodrive
       for (aurora_detected_obstacle &o : seen_obstacles)
+      {
+        all_obstacles.push_back(o);
         autodriver.mark_obstacle(o.x,o.y,o.height);
+      }
+      telemetry.autonomy.obstacle_len=vector_copy_limited(
+        telemetry.autonomy.obstacles, all_obstacles,
+        robot_autonomy_state::max_obstacle_len);
       autodriver.compute_proximity();
       if (robot.autonomous) enter_state(state_drive_to_mine);
       else enter_state(state_drive);
@@ -936,25 +966,29 @@ void robot_manager_t::update(void) {
 
   if (pose_net) {
     if (pose_net->update(markers))
-    if (markers.pose.confidence>=0.1) 
-    { // Computer vision marker-based robot location
-      robot_localization loc;
-      loc.x=markers.pose.pos.x;
-      loc.y=markers.pose.pos.y;
-      loc.z=markers.pose.pos.z;
-      loc.angle=0; //<- don't re-recompute relative angle
-      loc.angle=loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
-      printf("Computed robot angle: %.0f deg\n",loc.angle);
-      loc.confidence=markers.pose.confidence;
-      blend(locator.merged,loc,loc.confidence*0.5);
-      blend(sim.loc,loc,loc.confidence*0.5);
+    {
+      telemetry.autonomy.markers=markers; // copy out so front end can see
+      if (markers.pose.confidence>=0.1) 
+      { // Computer vision marker-based robot location
+        robot_localization loc;
+        loc.x=markers.pose.pos.x;
+        loc.y=markers.pose.pos.y;
+        loc.z=markers.pose.pos.z;
+        loc.angle=0; //<- don't re-recompute relative angle
+        loc.angle=loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
+        printf("Computed robot angle: %.0f deg\n",loc.angle);
+        loc.confidence=markers.pose.confidence;
+        blend(locator.merged,loc,loc.confidence*0.5);
+        blend(sim.loc,loc,loc.confidence*0.5);
+      }
     }
-    robot_display_markers(markers);
+    // robot_display_markers(markers);
   }
 
 // Show real and simulated robots
-  robot_display(locator.merged,0.4);
+  robot_display(locator.merged);
 
+	robot_display_autonomy(telemetry.autonomy);
 
 /*
   // Check for an updated location from the vive
@@ -1126,11 +1160,17 @@ void robot_manager_t::update(void) {
   if (dt>0.1) dt=0.1;
   last_time=cur_time;
 
-  if (locator.merged.confidence>0.1)  // make sim track reality
+  if (locator.merged.confidence>=0.1)  // make sim track reality
     sim.loc=locator.merged;
 
   if (simulate_only) // make reality track sim
   {
+    float view_robot_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
+    float beacon_FOV=30; // field of view of beacon (markers)
+    if (beacon_FOV>fabs(telemetry.autonomy.markers.beacon - view_robot_angle))
+      locator.merged.confidence+=0.1;
+    locator.merged.confidence=std::min(1.0,locator.merged.confidence*(1.0-dt));
+      
   /*
     locator.merged=sim.loc; // blend(locator.merged,sim.loc,0.1);
     if (fabs(sim.loc.angle)<40.0) // camera in view
