@@ -339,8 +339,8 @@ int main(int argc,const char *argv[])
 #endif
     
     stepper_controller stepper;
-    stepper.setup_seek();  // <- assumes startup in most clockwise angle
-    stepper.absolute_seek(0);
+    //stepper.setup_seek();  // <- assumes startup in most clockwise angle
+    stepper.absolute_seek(0); // start in about the right direction
 
     int depth_w=1280, depth_h=720; // high res mode: definitely more detail visible
     int color_w=1280, color_h=720; 
