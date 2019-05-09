@@ -724,7 +724,7 @@ void robot_manager_t::autonomous_state()
   // raise: raise the mining head to clear ground for driving
   else if (robot.state==state_setup_raise)
   {
-    if(robot.sensor.bucket<head_mine_drive && time_in_state<5.0)// raises until bucket_drive
+    if(robot.sensor.bucket<head_mine_drive && time_in_state<2.0)// raises until bucket_drive
     {
       robot.power.dump=power_full_fw; // raise bin
     }
@@ -735,7 +735,7 @@ void robot_manager_t::autonomous_state()
   // state_setup_extend: extend the mining head so it does not get dragged
   else if (robot.state==state_setup_extend)
   {
-	  if (time_in_state<10.0)
+	  if (time_in_state<7.0)
     {
       robot.power.dump=power_full_fw; // raise bin
       robot.power.head_extend = 127; // 127 for extend, 1 for tuck
@@ -752,6 +752,7 @@ void robot_manager_t::autonomous_state()
 	  if (time_in_state<5.0)
     {
       robot.power.roll = 40; // lower box slowly
+      robot.power.head_extend = 127;
 	  }
 	  else
 	  {
