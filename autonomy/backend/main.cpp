@@ -737,7 +737,7 @@ void robot_manager_t::autonomous_state()
   {
 	  if (time_in_state<10.0)
     {
-      robot.power.head_extend = 1; // 1 for extend, 127 for tuck
+      robot.power.head_extend = 127; // 127 for extend, 1 for tuck
 	  }
 	  else
 	  {
