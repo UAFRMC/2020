@@ -63,8 +63,6 @@ void send_aurora_beacon_command(char letter,
   c.letter=letter; c.angle=angle;
   memcpy(cmdbuf.data(),&c,sizeof(c));
   socket.send(cmdbuf);
-  if(letter=='P')
-    socket.setsockopt(ZMQ_RCVTIMEO,1*1000); //1 sec timeout for Point commands
   zmq::message_t reply;
   socket.recv(&reply);
   
