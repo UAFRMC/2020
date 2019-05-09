@@ -69,6 +69,9 @@ float fix_wrap256(unsigned char diff) {
   else return diff;
 }
 
+int last_Mcount=0;
+int speed_Mcount=0;
+float smooth_Mcount=0.0;
 
 /**
   This class is used to localize the robot
@@ -1122,8 +1125,6 @@ void robot_manager_t::update(void) {
 
   // Send commands to Arduino
   robot_sensors_arduino old_sensor=robot.sensor;
-  // Fake the bucket sensor from the sim (no hardware sensor for now)
-  robot.sensor.bucket=sim.bucket*(950-179)+179;
     
   if (simulate_only) { // build fake arduino data
     robot.status.arduino=1; // pretend it's connected
@@ -1149,6 +1150,15 @@ void robot_manager_t::update(void) {
       robot.sensor.Rcount=box_raise_limit_low;
     }
   }
+  speed_Mcount=robot.sensor.McountL-last_Mcount;
+  float smoothing=0.3;
+  smooth_Mcount=speed_Mcount*smoothing + smooth_Mcount*(1.0-smoothing);
+  robotPrintln("Mcount smoothed: %.1f, speed %d\n",
+     smooth_Mcount, speed_Mcount);
+  last_Mcount=robot.sensor.McountL;
+
+  // Fake the bucket sensor from the sim (no hardware sensor for now)
+  robot.sensor.bucket=sim.bucket*(950-179)+179;
 
   float wheelbase=132-10; // cm between track centerlines
   float drivecount2cm=8*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
