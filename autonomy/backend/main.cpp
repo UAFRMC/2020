@@ -54,6 +54,7 @@ bool nodrive=false; // --nodrive flag (for testing indoors)
 
 /** X,Y field target location where we drive to, before finally backing up */
 vec2 dump_target_loc(field_x_size/2,field_y_trough_center-30); // rough area, below beacon
+//vec2 dump_align_loc(field_x_trough_edge+robot_x/2-10,dump_target_loc.y-20); // final alignment
 vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y-20); // final alignment
 float dump_target_angle=field_angle_trough;
 
@@ -589,7 +590,7 @@ private:
   {
     if(!(drive_posture())) {return false;}
     else {
-      set_drive_powers(-0.3);
+      set_drive_powers(-0.1);
 
       // FIXME: back-up sensors?
       return true; // (robot.sensor.backL && robot.sensor.backR);
@@ -878,7 +879,7 @@ void robot_manager_t::autonomous_state()
     vec2 target=dump_align_loc;
     target.y=locator.merged.y; // don't try to turn when this close
     if (autonomous_drive(target,dump_target_angle)
-      || (fabs(locator.merged.y-target.y)<30 && fabs(locator.merged.x-field_x_trough_stop)<=5) )
+      || (fabs(locator.merged.y-target.y)<30 && fabs(locator.merged.x-field_x_trough_stop)<=10) )
     {
       if (driver_test) {
         mine_target_loc.x=50+(rand()%250); // retarget in mining area every run
@@ -892,7 +893,8 @@ void robot_manager_t::autonomous_state()
   //Semiauto dump mode entry point: dock and dump mode
   else if (robot.state==state_dump_contact) // final backup to Lunarbin
   {
-    if (back_up() || time_in_state>30.0)
+    back_up();
+    if (time_in_state>1.0)
     {
       enter_state(state_dump_raise);
     }
