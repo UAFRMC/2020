@@ -366,13 +366,14 @@ public:
     return ret;
   }
   
-  void point_beacon(int target) {
+  bool point_beacon(int target) {
     if (busy) {
       trace(".");
-      return; // skip re-pointing requests while we're busy
+      return false; // skip re-pointing requests while we're busy
     }
     
     run_cmd('P',target);
+    return true;
   }
 }; 
 void beacon_pointing_thread_run(beacon_pointing_thread_t *thr) 
@@ -446,7 +447,9 @@ public:
       telemetry.autonomy.markers.beacon=target;
     }
     if (beacon_pointing_thread) 
-      beacon_pointing_thread->point_beacon(target);
+      if (beacon_pointing_thread->point_beacon(target)) {
+        robotPrintln("Pointed beacon toward %.0f deg\n",target);
+      }
   }
 
 
