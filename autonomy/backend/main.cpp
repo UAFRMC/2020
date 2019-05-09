@@ -749,9 +749,9 @@ void robot_manager_t::autonomous_state()
   // state_setup_lower: lower the box
   else if (robot.state==state_setup_lower)
   {
-	  if (time_in_state<8.0)
+	  if (time_in_state<7.0)
     {
-      robot.power.roll = 30; // lower box slowly
+      robot.power.roll = 30; // lower box somewhat slowly
       robot.power.head_extend = 127;
 	  }
 	  else
@@ -792,8 +792,11 @@ void robot_manager_t::autonomous_state()
       // Upload obstacles to autodrive
       for (aurora_detected_obstacle &o : seen_obstacles)
       {
-        all_obstacles.push_back(o);
-        autodriver.mark_obstacle(o.x,o.y,o.height);
+        if (o.y<field_y_mine_zone+50) // ignore obstacles way into mining zone
+        {
+          all_obstacles.push_back(o);
+          autodriver.mark_obstacle(o.x,o.y,o.height);
+        }
       }
       telemetry.autonomy.obstacle_len=vector_copy_limited(
         telemetry.autonomy.obstacles, all_obstacles,
