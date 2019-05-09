@@ -564,7 +564,7 @@ private:
   // Autonomous driving rate:
   //  Returns 0-1.0 float power value.
   float drive_speed(float forward,float turn=0.0) {
-    return 0.1; // confident but conservative
+    return 0.2; // confident but conservative
   }
 
   // Autonomous drive power from float values:
@@ -613,7 +613,7 @@ private:
 
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
-    if (!simulate_only && fmod(cur_time,5.0)<4.0) {
+    if (!simulate_only && fmod(cur_time,3.0)<2.0) {
       return false; // periodic stop (for safety, and for re-localization)
     } else { // re-point beacon while robot is driving
       float beacon_target_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
@@ -801,9 +801,7 @@ void robot_manager_t::autonomous_state()
         if (driver_test) enter_state(state_drive_to_dump);
         else enter_state(state_mine_lower); // start mining!
       }
-      if (time_in_state>50.0) { // stuck?  high power mode!
-        set_drive_powers(1.0,0.0);
-      }
+      
     }
   }
 
