@@ -126,23 +126,35 @@ void find_obstacles(const obstacle_grid & obstacles,
   }
   imwrite("03_hits_blur.png",hits);
   
-  int thresh=50; // brightness in each blurred channel
+  int thresh=45; // brightness in each blurred channel
   int nbor_frac=nbors*nbors*2; // required extant neighboring pixels
   int min_height=3;
   
   for (int y = 0; y < h; y++)
   for (int x = 0; x < w; x++)
   {
+    bool is_obstacle=false;
+    auto &me=obstacles.at(x,y);
+    float my_height=me.getTrimmedMean();
+    float neighbor_heights=range_heights[y*w+x].getTrimmedMean();
+    float height=my_height-neighbor_heights;
+
     cv::Vec3b pixel=hits.at<cv::Vec3b>(obstacle_grid::GRIDY-1-y,x);
     if (pixel[0]>thresh && pixel[2]>thresh 
        && range_counts[y*w+x].getCount()>nbor_frac
      ) 
-    { // a true obstacle!
-      float my_height=obstacles.at(x,y).getTrimmedMean();
-      float neighbor_heights=range_heights[y*w+x].getTrimmedMean();
-      float height=my_height-neighbor_heights;
+    { // a shadow-detected obstacle
       if (height>=min_height) {
+	is_obstacle=true;
         mark_hit(point(x,y), 0,255,height);        
+      }
+    }
+    if (!is_obstacle && me.getCount()>100 && height>=10 && height<=60) 
+    { // a height-detected obstacle
+      mark_hit(point(x,y), 255,255,height);        
+      is_obstacle=true;
+    }
+    if (is_obstacle) {
         aurora_detected_obstacle det;
         det.x=x*obstacle_grid::GRIDSIZE;
         det.y=y*obstacle_grid::GRIDSIZE;
@@ -151,9 +163,10 @@ void find_obstacles(const obstacle_grid & obstacles,
         
         printf("Obstacle at (%d,%d) cm, height %d cm\n",
           (int)det.x,(int)det.y,(int)height);
-      }
     }
   }
+
+
   imwrite("04_marked.png",hits);
   
   
