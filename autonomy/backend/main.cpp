@@ -750,7 +750,7 @@ void robot_manager_t::autonomous_state()
   // state_setup_lower: lower the box
   else if (robot.state==state_setup_lower)
   {
-	  if (time_in_state<8.0 && !robot.sensor.limit_bottom)
+	  if (time_in_state<8.0 && robot.sensor.limit_bottom==1)
     {
       robot.power.roll = 30; // lower box somewhat slowly
       robot.power.head_extend = 127;
