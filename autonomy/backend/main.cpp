@@ -1131,6 +1131,7 @@ void robot_manager_t::update(void) {
 
   if (simulate_only) // make reality track sim
   {
+  /*
     locator.merged=sim.loc; // blend(locator.merged,sim.loc,0.1);
     if (fabs(sim.loc.angle)<40.0) // camera in view
       locator.merged.confidence+=0.1;
@@ -1161,6 +1162,7 @@ void robot_manager_t::update(void) {
           sim.loc.y+=del;
       }
     }
+    */
   }
   sim.simulate(robot.power,dt);
 }
@@ -1224,6 +1226,7 @@ int main(int argc,char *argv[])
 
   robot_manager=new robot_manager_t;
   robot_manager->locator.merged.y=100;
+  if (simulate_only) robot_manager->locator.merged.x=150;
 
   if (show_GUI) {
     glutInitDisplayMode(GLUT_RGBA + GLUT_DOUBLE);

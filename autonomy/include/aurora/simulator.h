@@ -40,6 +40,7 @@ public:
 	
 	robot_simulator() {
 		bucket=0.6; // lowered
+		DLcount=DRcount=0;
 		Mcount=0;
 		Rcount=0;
 	}
@@ -87,8 +88,8 @@ public:
 		side[0]=world_from_robot(vec2(-wheelbase,wheelforward));
 		side[1]=world_from_robot(vec2(+wheelbase,wheelforward));
 
-		float sidepower[2];
-		float sideticks[2];
+		float sidepower[2]={0.0,0.0};
+		float sideticks[2]={0.0,0.0};
 		float topspeed=130.0; // <- speed in cm/sec at 100% power (hypothetical!)
 		sidepower[0]=power.left-64.0;
 		sidepower[1]=power.right-64.0;
