@@ -67,7 +67,7 @@ enum {
   field_y_trough_end=field_y_trough_center+field_y_trough_hsize,
   
   field_y_beacon=field_y_trough_end-10, // center point of beacon
-  field_x_beacon=field_x_trough_edge,
+  field_x_beacon=field_x_trough_edge+15, // beacon sticks out this far from sieve lip
   
   
 	field_x_GUI=field_x_size+20, // start X for GUI display
