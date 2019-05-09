@@ -497,7 +497,7 @@ private:
     // Flush old planned path on state change
     autodriver.flush();
 
-    if (new_state==state_raise) { autonomy_start_time=cur_time; }
+    if (new_state==state_setup_raise) { autonomy_start_time=cur_time; }
     // if(!(robot.autonomous)) { new_state=state_drive; }
 
     // Log state timings to dedicate state timing file:
@@ -719,29 +719,42 @@ void robot_manager_t::autonomous_state()
   // full autonomy start
   if (robot.state==state_autonomy) {
     robot.autonomous=true;
-    enter_state(state_raise);
+    enter_state(state_setup_raise);
   }
   // raise: raise the mining head to clear ground for driving
-  else if (robot.state==state_raise)
+  else if (robot.state==state_setup_raise)
   {
     if(robot.sensor.bucket<head_mine_drive && time_in_state<5.0)// raises until bucket_drive
     {
       robot.power.dump=power_full_fw; // raise bin
     }
     else{
-      enter_state(state_extend);
+      enter_state(state_setup_extend);
     }
   }
-  // state_extend: extend the mining head so it does not get dragged
-  else if (robot.state==state_extend)
+  // state_setup_extend: extend the mining head so it does not get dragged
+  else if (robot.state==state_setup_extend)
   {
 	  if (time_in_state<10.0)
     {
+      robot.power.dump=power_full_fw; // raise bin
       robot.power.head_extend = 127; // 127 for extend, 1 for tuck
 	  }
 	  else
 	  {
 		  mining_head_extended = true;
+		  enter_state(state_setup_lower);
+	  }
+  }
+  // state_setup_lower: lower the box
+  else if (robot.state==state_setup_lower)
+  {
+	  if (time_in_state<5.0)
+    {
+      robot.power.roll = 40; // lower box slowly
+	  }
+	  else
+	  {
 		  enter_state(state_find_camera);
 	  }
   }

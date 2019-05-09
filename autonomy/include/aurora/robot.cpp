@@ -8,8 +8,9 @@ const char *state_to_string(robot_state_t state)
 	"backend_driver", ///< drive from backend UI
 
 	"autonomy",
-	"raise",
-	"extend", // deploy the mining head, must be done before driving
+	"setup_raise",
+	"setup_extend", // deploy the mining head, must be done before driving
+	"setup_lower",
 	"find_camera",
 	"scan_obstacles",
 
