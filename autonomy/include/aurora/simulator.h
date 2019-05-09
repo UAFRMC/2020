@@ -27,6 +27,8 @@ void blend(robot_localization &dest, const robot_localization &src, float weight
 	dest.y=src.y*weight+dest.y*(1.0-weight);
 	blend_angles(dest.angle,src.angle,weight);
 	blend_angles(dest.pitch,src.pitch,weight);
+        dest.confidence = src.confidence*weight + dest.confidence*(1.0-0.5*weight);
+	if (dest.confidence>1.0) dest.confidence=1.0;
 }
 
 class robot_simulator {

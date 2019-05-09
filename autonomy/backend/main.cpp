@@ -982,7 +982,7 @@ void robot_manager_t::update(void) {
     if (pose_net->update(markers))
     {
       telemetry.autonomy.markers=markers; // copy out so front end can see
-      if (markers.pose.confidence>=0.1) 
+      if (markers.pose.confidence>=0.01) 
       { // Computer vision marker-based robot location
         robot_localization loc;
         loc.x=markers.pose.pos.x;
