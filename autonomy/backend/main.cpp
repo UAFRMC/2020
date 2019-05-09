@@ -561,7 +561,7 @@ private:
   // Autonomous driving rate:
   //  Returns 0-1.0 float power value.
   float drive_speed(float forward,float turn=0.0) {
-    return 0.8; // confident but conservative
+    return 0.1; // confident but conservative
   }
 
   // Autonomous drive power from float values:
