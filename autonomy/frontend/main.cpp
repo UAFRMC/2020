@@ -144,6 +144,8 @@ void robot_manager_t::update(void) {
 	}*/
 	
 	robot_display(robot.loc);
+	
+	robot_display_autonomy(telemetry.autonomy);
 }
 
 extern "C" void display(void) {

@@ -8,6 +8,8 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <thread>
+#include <mutex>
 
 #include "gridnav/gridnav_RMC.h"
 
@@ -51,8 +53,8 @@ bool driver_test=false; // --driver_test, path planning testing
 bool nodrive=false; // --nodrive flag (for testing indoors)
 
 /** X,Y field target location where we drive to, before finally backing up */
-vec2 dump_target_loc(field_x_size/2,field_y_trough_center-40); // rough area, below beacon
-vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y); // final alignment
+vec2 dump_target_loc(field_x_size/2,field_y_trough_center-30); // rough area, below beacon
+vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y-20); // final alignment
 float dump_target_angle=field_angle_trough;
 
 /** X,Y field target location that we target for mining */
@@ -88,7 +90,7 @@ public:
     double ang_rads=merged.angle*M_PI/180.0; // 2D rotation of robot
 
   // Reconstruct coordinate system and wheel locations
-    vec3 FW=vec3(sin(ang_rads),cos(ang_rads),0.0); // forward vector
+    vec3 FW=vec3(cos(ang_rads),sin(ang_rads),0.0); // forward vector
     vec3 UP=vec3(0,0,1); // up vector
     vec3 LR=FW.cross(UP); // left-to-right vector
     vec3 wheel[2];
@@ -103,7 +105,7 @@ public:
     P=(wheel[0]+wheel[1])*0.5;
     LR=normalize(wheel[1]-wheel[0]);
     FW=UP.cross(LR);
-    ang_rads=atan2(FW.x,FW.y);
+    ang_rads=atan2(FW.y,FW.x);
 
   // Put back into merged absolute location
     merged.angle=180.0/M_PI*ang_rads;
@@ -197,7 +199,8 @@ public:
   //   cur and target are (x,y) cm field coords and deg x angles.
   bool autodrive(vec2 cur,float cur_angle,
     vec2 target,float target_angle,
-    double &forward,double &turn)
+    double &forward,double &turn,
+    robot_autonomy_state &debug)
   {
     const int replan_interval=1; // 1==every frame.  10==every 10 frames.
 
@@ -209,11 +212,13 @@ public:
     { // refill planned path
       replan_counter=replan_interval;
       flush(); // flush old planned path
-
+      debug.plan_len=0;
+      
       // Start position: robot's position
       rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
       // End position: at target
       rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
+      debug.target=ftarget;
 
       rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
       int steps=0;
@@ -224,6 +229,12 @@ public:
         {
           p.print();
         }
+        if (steps<robot_autonomy_state::max_path_len)
+        {
+          debug.plan_len=steps+1;
+          debug.path_plan[steps]=p.pos;
+        }
+
         steps++;
       }
 
@@ -289,6 +300,95 @@ public:
   }
 };
 
+/**
+  Re-points the realsense
+*/
+class beacon_pointing_thread_t {
+  FILE * tracefile=fopen("beacon_trace.txt","w+");
+  void trace(const char *where,float what=0.0) {
+    fprintf(tracefile,where,what);
+    fflush(tracefile);
+  }
+public:  
+  volatile bool busy; // true == thread is currently doing network stuff
+
+  // This lock protects cmd and data against threaded access
+  std::mutex cmd_data_lock;
+  
+  // Write requested beacon command here
+  //   cmd==0 means we're not busy
+  volatile aurora_beacon_command cmd;
+  
+  // Data from last beacon command (if you want it)
+  std::vector<unsigned char> data;
+  
+  beacon_pointing_thread_t();
+  
+  void run() {
+    trace("  Creating comm thread\n");
+    while(1) {
+      while (cmd.letter==0) sleep(0); // don't busywait
+      busy=true;
+      
+      trace("  Comm thread request {\n");
+      cmd_data_lock.lock(); 
+      char letter=cmd.letter;
+      int angle=cmd.angle;
+      std::vector<unsigned char> ret;
+      send_aurora_beacon_command(letter,
+        ret,angle);
+      data=ret;
+      cmd.letter=0;
+      cmd_data_lock.unlock();
+      trace("  } Comm thread request\n");
+      
+      busy=false;
+    }
+  }
+  
+  std::vector<unsigned char> run_cmd(char letter,int angle) {
+    trace("Beacon command request {\n");
+    while (busy) sleep(0); // wait until thread is free for this command
+    
+    cmd_data_lock.lock();
+    cmd.angle=angle;
+    cmd.letter=letter;
+    cmd_data_lock.unlock();
+    
+    trace("Beacon command in progress\n");
+    while (busy) sleep(0); // wait until this command has finished
+    
+    cmd_data_lock.lock();
+    std::vector<unsigned char> ret=data; // copy out from thread
+    cmd_data_lock.unlock();
+    trace("} Beacon command request\n");
+    
+    return ret;
+  }
+  
+  void point_beacon(int target) {
+    if (busy) {
+      trace(".");
+      return; // skip re-pointing requests while we're busy
+    }
+    
+    run_cmd('P',target);
+  }
+}; 
+void beacon_pointing_thread_run(beacon_pointing_thread_t *thr) 
+{
+  thr->run();
+}
+beacon_pointing_thread_t::beacon_pointing_thread_t()
+  :busy(false)
+{
+  trace("Starting beacon thread\n");
+  cmd.letter=0;
+  cmd.angle=0;
+  new std::thread(beacon_pointing_thread_run,this);
+}
+beacon_pointing_thread_t *beacon_pointing_thread=0;
+
 
 /**
  This class represents everything the back end knows about the robot.
@@ -334,10 +434,21 @@ public:
     if (getenv("BEACON")) {
       pose_net=new pose_subscriber();
     }
+    beacon_pointing_thread=new beacon_pointing_thread_t;
   }
 
   // Do robot work.
   void update(void);
+  
+  
+  void point_beacon(int target) {
+    if (simulate_only) {
+      telemetry.autonomy.markers.beacon=target;
+    }
+    if (beacon_pointing_thread) 
+      beacon_pointing_thread->point_beacon(target);
+  }
+
 
 private:
 
@@ -450,7 +561,7 @@ private:
   // Autonomous driving rate:
   //  Returns 0-1.0 float power value.
   float drive_speed(float forward,float turn=0.0) {
-    return 0.8; // confident but conservative
+    return 0.1; // confident but conservative
   }
 
   // Autonomous drive power from float values:
@@ -481,18 +592,34 @@ private:
       return true; // (robot.sensor.backL && robot.sensor.backR);
     }
   }
+  
+  // Compute the angle (deg) the beacon should face to see this field coordinate
+  float get_beacon_angle(float fx,float fy)
+  {
+    float dx=locator.merged.x-field_x_beacon;
+    float dy=locator.merged.y-field_y_beacon;
+    return atan2(dy,dx)*180.0/M_PI;
+  }
 
   //  Returns true once we're basically at the target location.
   bool autonomous_drive(vec2 target,float target_angle) {
     if (!drive_posture()) return false; // don't drive yet
-
+    
     vec2 cur(locator.merged.x,locator.merged.y); // robot location
-    float cur_angle=90-locator.merged.angle; // <- sim angle is Y-relative (STUPID!)
+    float cur_angle=locator.merged.angle; 
 
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
-    if (!simulate_only && fmod(cur_time,5.0)<3.0)
+    if (!simulate_only && fmod(cur_time,5.0)<4.0) {
       return false; // periodic stop (for safety, and for re-localization)
+    } else { // re-point beacon while robot is driving
+      float beacon_target_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
+      // Move in jumps (to avoid motion blur from re-pointing all the time)
+      int quantize=10.0; 
+      float beacon_target=
+        (int)((beacon_target_angle+quantize/2)/quantize)*quantize;
+      point_beacon(beacon_target);
+    }
 
     bool path_planning_OK=false;
     double forward=0.0; // forward-backward
@@ -501,7 +628,7 @@ private:
     { //<- fixme: move path planning to dedicated thread, to avoid blocking
       path_planning_OK=autodriver.autodrive(
         cur,cur_angle,target,target_angle,
-        forward,turn);
+        forward,turn, telemetry.autonomy);
       if (path_planning_OK) autodriver.draw_path();
     }
     if (!path_planning_OK)
@@ -509,7 +636,7 @@ private:
       // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
       double angle=locator.merged.angle; // degrees (!?)
       double arad=angle*M_PI/180.0; // radians
-      vec2 orient(sin(arad),cos(arad)); // orientation vector (forward vector of robot)
+      vec2 orient(cos(arad),sin(arad)); // orientation vector (forward vector of robot)
       vec2 should=normalize(cur-target); // we should be facing this way
 
       turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
@@ -548,7 +675,7 @@ private:
   // Make sure we're still facing the collection bin.  If not, pivot to face it.
   bool check_angle() {
     if (locator.merged.confidence<0.2) return true; // we don't know where we are--just keep driving?
-    double target=180.0/M_PI*atan2(locator.merged.x,locator.merged.y+200.0);
+    double target=180.0/M_PI*atan2(locator.merged.y+200.0,locator.merged.x);
     double err=locator.merged.angle-target;
     robotPrintln("check_angle: cur %.1f deg, target %.1f deg",locator.merged.angle,target);
     reduce_angle(err);
@@ -570,7 +697,7 @@ bool is_stalled(const robot_base &robot) {
 bool speed_limit(int &howfast,int cur,int target,int dir=+1)
 {
   int dist_left=(target-cur)*dir;
-  if (dist_left<0) {
+  if (dist_left<=0) {
     return false;
   }
   int max_speed=10+dist_left/5;
@@ -599,72 +726,73 @@ void robot_manager_t::autonomous_state()
       robot.power.dump=power_full_fw; // raise bin
     }
     else{
-		//enter_state(state_find_camera);
-		enter_state(state_extend);
+      enter_state(state_extend);
     }
   }
   // state_extend: extend the mining head so it does not get dragged
   else if (robot.state==state_extend)
   {
-	if (time_in_state<10.0)
+	  if (time_in_state<10.0)
     {
-        robot.power.head_extend = 1; // 1 for extend, 127 for tuck
-	}
-	else
-	{
-		mining_head_extended = true;
-		enter_state(state_find_camera);
-	}
+      robot.power.head_extend = 1; // 1 for extend, 127 for tuck
+	  }
+	  else
+	  {
+		  mining_head_extended = true;
+		  enter_state(state_find_camera);
+	  }
   }
   //state_find_camera: line up with centerline
   else if (robot.state==state_find_camera)
   {
     if (!drive_posture()) { /* correct posture first */ }
-    else if (locator.merged.confidence>0.1) { // we know where we are!
+    else if (locator.merged.confidence>=0.1) { // we know where we are!
       sim.loc=locator.merged; // reset simulator to real detected values
 
       enter_state(state_scan_obstacles);
     }
-    else // don't know where we are yet--turn left
+    else // don't know where we are yet--change pointing
     {
-      bool stop=false;
-      if (time_in_state>20.0 && fmod(time_in_state,10.0)<1.5)
-      { // stop every 10 seconds (to avoid camera blur)
-        stop=true;
-      }
-
-      if (!stop) {
-        if (time_in_state<40.0) { // turn left
-          set_drive_powers(0.0,-1.0);
-        }
-        else if (time_in_state<80.0) { // stuck??? maybe turn right?
-          set_drive_powers(0.0,+1.0);
-        }
-        else { // HELP!
-          enter_state(state_drive);
-        }
-      }
+      if (time_in_state<5.0) point_beacon(0);
+      else if (time_in_state<10.0) point_beacon(-10);
+      else if (time_in_state<15.0) point_beacon(-30);
     }
   }
   //state_scan_obstacles: Scan for obstacles
   else if (robot.state==state_scan_obstacles)
   {
-    std::vector<aurora_detected_obstacle> seen_obstacles;
-    send_aurora_beacon_command('T',seen_obstacles,45);
-    // Upload obstacles to autodrive
-    for (aurora_detected_obstacle &o : seen_obstacles)
-      autodriver.mark_obstacle(o.x,o.y,o.height);
-    autodriver.compute_proximity();
-    enter_state(state_drive_to_mine);
+    int scan_angle=45;
+    if (time_in_state<10.0) { // line up the beacon correctly
+      point_beacon(scan_angle);
+    }
+    else 
+    { // really do the scan (blocking)
+      std::vector<aurora_detected_obstacle> seen_obstacles;
+      send_aurora_beacon_command('T',seen_obstacles,scan_angle);
+      
+      static std::vector<aurora_detected_obstacle> all_obstacles;
+      
+      // Upload obstacles to autodrive
+      for (aurora_detected_obstacle &o : seen_obstacles)
+      {
+        all_obstacles.push_back(o);
+        autodriver.mark_obstacle(o.x,o.y,o.height);
+      }
+      telemetry.autonomy.obstacle_len=vector_copy_limited(
+        telemetry.autonomy.obstacles, all_obstacles,
+        robot_autonomy_state::max_obstacle_len);
+      autodriver.compute_proximity();
+      if (robot.autonomous) enter_state(state_drive_to_mine);
+      else enter_state(state_drive);
+    }
   }
   //state_drive_to_mine: Drive to mining area
   else if (robot.state==state_drive_to_mine)
   {
     if (drive_posture()) {
-
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-locator.merged.y;
-      if (autonomous_drive(mine_target_loc,90) ||
+      if (autonomous_drive(mine_target_loc,mine_target_angle) ||
           distance<0.0)  // we're basically there now
       {
         if (driver_test) enter_state(state_drive_to_dump);
@@ -838,25 +966,29 @@ void robot_manager_t::update(void) {
 
   if (pose_net) {
     if (pose_net->update(markers))
-    if (markers.pose.confidence>=0.1) 
-    { // Computer vision marker-based robot location
-      robot_localization loc;
-      loc.x=markers.pose.pos.x;
-      loc.y=markers.pose.pos.y;
-      loc.z=markers.pose.pos.z;
-      loc.angle=0; //<- don't re-recompute relative angle
-      loc.angle=loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
-      printf("Computed robot angle: %.0f deg\n",loc.angle);
-      loc.confidence=markers.pose.confidence;
-      blend(locator.merged,loc,loc.confidence*0.5);
-      blend(sim.loc,loc,loc.confidence*0.5);
+    {
+      telemetry.autonomy.markers=markers; // copy out so front end can see
+      if (markers.pose.confidence>=0.1) 
+      { // Computer vision marker-based robot location
+        robot_localization loc;
+        loc.x=markers.pose.pos.x;
+        loc.y=markers.pose.pos.y;
+        loc.z=markers.pose.pos.z;
+        loc.angle=0; //<- don't re-recompute relative angle
+        loc.angle=loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
+        printf("Computed robot angle: %.0f deg\n",loc.angle);
+        loc.confidence=markers.pose.confidence;
+        blend(locator.merged,loc,loc.confidence*0.5);
+        blend(sim.loc,loc,loc.confidence*0.5);
+      }
     }
-    robot_display_markers(markers);
+    // robot_display_markers(markers);
   }
 
 // Show real and simulated robots
-  robot_display(locator.merged,0.4);
+  robot_display(locator.merged);
 
+	robot_display_autonomy(telemetry.autonomy);
 
 /*
   // Check for an updated location from the vive
@@ -868,7 +1000,7 @@ void robot_manager_t::update(void) {
     locator.merged.y=robot_tf.origin.y;
     locator.merged.z=robot_tf.origin.z;
 
-    locator.merged.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.x,robot_tf.basis.x.y);
+    locator.merged.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.y,robot_tf.basis.x.x);
     locator.merged.pitch=(180.0/M_PI)*robot_tf.basis.x.z;
   }
   */
@@ -913,11 +1045,7 @@ void robot_manager_t::update(void) {
       }
       if (command.realsense_comms.command=='P')
       {
-        robotPrintln("Requesting Beacon Angle %f",float(command.realsense_comms.requested_angle));
-        std::vector<std::string> fake_return; 
-        //new std::thread(send_aurora_beacon_command,)
-        //zmq_thread_waiton_socket()
-        send_aurora_beacon_command('P', fake_return, aurora_beacon_command_angle_t(command.realsense_comms.requested_angle));
+        point_beacon(command.realsense_comms.requested_angle);
       }
     } else {
       robotPrintln("ERROR: COMMAND VERSION MISMATCH!  Expected %d, got %d",
@@ -1032,11 +1160,18 @@ void robot_manager_t::update(void) {
   if (dt>0.1) dt=0.1;
   last_time=cur_time;
 
-  if (locator.merged.confidence>0.1)  // make sim track reality
+  if (locator.merged.confidence>=0.1)  // make sim track reality
     sim.loc=locator.merged;
 
   if (simulate_only) // make reality track sim
   {
+    float view_robot_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
+    float beacon_FOV=30; // field of view of beacon (markers)
+    if (beacon_FOV>fabs(telemetry.autonomy.markers.beacon - view_robot_angle))
+      locator.merged.confidence+=0.1;
+    locator.merged.confidence=std::min(1.0,locator.merged.confidence*(1.0-dt));
+      
+  /*
     locator.merged=sim.loc; // blend(locator.merged,sim.loc,0.1);
     if (fabs(sim.loc.angle)<40.0) // camera in view
       locator.merged.confidence+=0.1;
@@ -1067,6 +1202,7 @@ void robot_manager_t::update(void) {
           sim.loc.y+=del;
       }
     }
+    */
   }
   sim.simulate(robot.power,dt);
 }
@@ -1130,6 +1266,7 @@ int main(int argc,char *argv[])
 
   robot_manager=new robot_manager_t;
   robot_manager->locator.merged.y=100;
+  if (simulate_only) robot_manager->locator.merged.x=150;
 
   if (show_GUI) {
     glutInitDisplayMode(GLUT_RGBA + GLUT_DOUBLE);

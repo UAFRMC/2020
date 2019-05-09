@@ -12,6 +12,7 @@
 #include <stdarg.h>  /* for varargs stuff below */
 #include "osl/vec2.h"
 #include "osl/quadric.h"
+#include "aurora/network.h"
 #include "aurora/pose.h"
 #include <string>
 
@@ -408,6 +409,7 @@ void robot_display_pose(const robot_pose &pose)
   glEnd();
 }
 
+
 void robot_display_markers(const robot_markers_all &m) 
 {
   robot_display_pose(m.pose);
@@ -434,6 +436,33 @@ void robot_display_markers(const robot_markers_all &m)
 	glEnd();
 }
 
+void robot_display_autonomy(const robot_autonomy_state &a)
+{
+  robot_display_markers(a.markers);
+  glBegin(GL_LINE_STRIP);
+    glColor3f(0.0,1.0,0.0); // green path to target
+    for (int i=0;i<(int)a.plan_len;i++)
+      glVertex2f(a.path_plan[i].v.x,a.path_plan[i].v.y);
+    
+    if (a.target.v.y!=0.0) {
+      glColor3f(0.0,1.0,1.0); // cyan target
+      glVertex2f(a.target.v.x,a.target.v.y);
+    }
+  glEnd();
+  
+  glPointSize(4.0f);
+  glBegin(GL_POINTS);
+    for (int i=0;i<(int)a.obstacle_len;i++) {
+      int z=a.obstacles[i].height;
+      float badness=z*(1.0/25.0);
+      if (badness>1.0) glColor3f(0.0,0.0,0.0); // black == can't even straddle
+      else glColor3f(1.0,1.0-badness,1.0-badness);
+      glVertex2f(a.obstacles[i].x,a.obstacles[i].y);
+    }
+  glEnd();
+  
+  glColor3f(1.0,1.0,1.0);
+}
 
 /*************************** Keyboard **********************************/
 /** Handle keyboard presses */
