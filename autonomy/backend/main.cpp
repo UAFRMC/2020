@@ -992,9 +992,10 @@ void robot_manager_t::update(void) {
         loc.angle=0; //<- don't re-recompute relative angle
         loc.angle=loc.deg_from_dir(vec2(markers.pose.fwd.x,markers.pose.fwd.y));
         printf("Computed robot angle: %.0f deg\n",loc.angle);
-        loc.confidence=markers.pose.confidence;
-        blend(locator.merged,loc,loc.confidence*0.5);
-        blend(sim.loc,loc,loc.confidence*0.5);
+        float conf=markers.pose.confidence;
+        loc.confidence=conf;
+        blend(locator.merged,loc,conf);
+        blend(sim.loc,loc,conf);
       }
     }
     // robot_display_markers(markers);
