@@ -17,7 +17,7 @@ enum {
   robot_mine_x=robot_x+19, // center of robot's mining head
   robot_mine_y=0, // mining head center
   robot_mine_radius=15, // radius around robot mining head
-  robot_mine_clearance=9, // Z under mining head
+  robot_mine_clearance=13, // Z under mining head
 };
 
 
