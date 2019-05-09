@@ -225,12 +225,12 @@ public:
 	*/
 	vec2 dir_from_deg(float ang_deg=0.0) const {
 		float ang=(this->angle+ang_deg)*M_PI/180.0;
-		return vec2(sin(ang),cos(ang)); // x=sin, y=cos due to angle 0 being Y axis (weird!)
+		return vec2(cos(ang),sin(ang)); 
 	}
 	// Return a robot coordinates angle from this direction vector.
 	//  angles range from -180 to +180
 	float deg_from_dir(const vec2 &dir) const {
-		float world_deg=(180.0/M_PI)*atan2(dir.x,dir.y); // x&y flipped, for same reason
+		float world_deg=(180.0/M_PI)*atan2(dir.y,dir.x); 
 		float deg=world_deg-this->angle;
 		if (deg<-180.0) deg+=360.0;
 		if (deg>+180.0) deg-=360.0;

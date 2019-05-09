@@ -53,8 +53,8 @@ bool driver_test=false; // --driver_test, path planning testing
 bool nodrive=false; // --nodrive flag (for testing indoors)
 
 /** X,Y field target location where we drive to, before finally backing up */
-vec2 dump_target_loc(field_x_size/2,field_y_trough_center-40); // rough area, below beacon
-vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y); // final alignment
+vec2 dump_target_loc(field_x_size/2,field_y_trough_center-30); // rough area, below beacon
+vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y-20); // final alignment
 float dump_target_angle=field_angle_trough;
 
 /** X,Y field target location that we target for mining */
@@ -90,7 +90,7 @@ public:
     double ang_rads=merged.angle*M_PI/180.0; // 2D rotation of robot
 
   // Reconstruct coordinate system and wheel locations
-    vec3 FW=vec3(sin(ang_rads),cos(ang_rads),0.0); // forward vector
+    vec3 FW=vec3(cos(ang_rads),sin(ang_rads),0.0); // forward vector
     vec3 UP=vec3(0,0,1); // up vector
     vec3 LR=FW.cross(UP); // left-to-right vector
     vec3 wheel[2];
@@ -105,7 +105,7 @@ public:
     P=(wheel[0]+wheel[1])*0.5;
     LR=normalize(wheel[1]-wheel[0]);
     FW=UP.cross(LR);
-    ang_rads=atan2(FW.x,FW.y);
+    ang_rads=atan2(FW.y,FW.x);
 
   // Put back into merged absolute location
     merged.angle=180.0/M_PI*ang_rads;
@@ -606,7 +606,7 @@ private:
     if (!drive_posture()) return false; // don't drive yet
     
     vec2 cur(locator.merged.x,locator.merged.y); // robot location
-    float cur_angle=90-locator.merged.angle; // <- sim angle is Y-relative (STUPID!)
+    float cur_angle=locator.merged.angle; 
 
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
@@ -636,7 +636,7 @@ private:
       // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
       double angle=locator.merged.angle; // degrees (!?)
       double arad=angle*M_PI/180.0; // radians
-      vec2 orient(sin(arad),cos(arad)); // orientation vector (forward vector of robot)
+      vec2 orient(cos(arad),sin(arad)); // orientation vector (forward vector of robot)
       vec2 should=normalize(cur-target); // we should be facing this way
 
       turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
@@ -675,7 +675,7 @@ private:
   // Make sure we're still facing the collection bin.  If not, pivot to face it.
   bool check_angle() {
     if (locator.merged.confidence<0.2) return true; // we don't know where we are--just keep driving?
-    double target=180.0/M_PI*atan2(locator.merged.x,locator.merged.y+200.0);
+    double target=180.0/M_PI*atan2(locator.merged.y+200.0,locator.merged.x);
     double err=locator.merged.angle-target;
     robotPrintln("check_angle: cur %.1f deg, target %.1f deg",locator.merged.angle,target);
     reduce_angle(err);
@@ -792,7 +792,7 @@ void robot_manager_t::autonomous_state()
     if (drive_posture()) {
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-locator.merged.y;
-      if (autonomous_drive(mine_target_loc,90) ||
+      if (autonomous_drive(mine_target_loc,mine_target_angle) ||
           distance<0.0)  // we're basically there now
       {
         if (driver_test) enter_state(state_drive_to_dump);
@@ -1000,7 +1000,7 @@ void robot_manager_t::update(void) {
     locator.merged.y=robot_tf.origin.y;
     locator.merged.z=robot_tf.origin.z;
 
-    locator.merged.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.x,robot_tf.basis.x.y);
+    locator.merged.angle=(180.0/M_PI)*atan2(robot_tf.basis.x.y,robot_tf.basis.x.x);
     locator.merged.pitch=(180.0/M_PI)*robot_tf.basis.x.z;
   }
   */

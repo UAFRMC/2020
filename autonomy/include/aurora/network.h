@@ -24,7 +24,7 @@ public:
   
   // Currently planned path
   unsigned short plan_len;
-  enum {max_path_len=10}; 
+  enum {max_path_len=50}; 
   typedef rmc_navigator::navigator_t::searchposition path_t;
   rmc_navigator::fposition path_plan[max_path_len];
   
