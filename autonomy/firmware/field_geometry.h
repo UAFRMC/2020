@@ -6,8 +6,8 @@
 
 /** These are the robot's dimensions, in centimeters. */
 enum {
-  robot_x=50/2, // Center to front-back of main robot, in cm
-  robot_y=100/2, // Center to left-right of main body, in cm
+  robot_x=100/2, // Center to front-back of main robot, in cm
+  robot_y=50/2, // Center to left-right of main body, in cm
   robot_track_y=20, // width of tracks, frame, motors, etc
   robot_inside_clearance=20, // Z between box and tracks
   
