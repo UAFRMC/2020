@@ -141,22 +141,34 @@ public:
     // Add obstacles around the scoring trough
     for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
     for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
-      navigator.mark_obstacle(x, y, 55);
+      mark_obstacle(x, y, 55);
 
     // And mark off the beacon
     int beaconsize=15;
     for (int dx=-beaconsize;dx<=beaconsize;dx+=navigator_res/2)
     for (int dy=-beaconsize;dy<=beaconsize;dy+=navigator_res/2)
-      navigator.mark_obstacle(field_x_beacon+dx, field_y_beacon+dy, 55);
+      mark_obstacle(field_x_beacon+dx, field_y_beacon+dy, 55);
+      
+      
+    if (simulate_only && getenv("OBSTACLES")) {
+      // seed random number generator with obstacles var
+      srand(atoi(getenv("OBSTACLES")));
+      for (int obs=0;obs<5;obs++) {
+        int x=rand()%(field_x_size-2*30)+30;
+        int y=rand()%(field_y_mine_zone-field_y_start_zone)+field_y_start_zone;
+        int ht=obs>=3?5:50;  // last few are craters
+        mark_disk_obstacle(x,y,ht,25);
+      }
+    }
 
-    if (false && simulate_only) {
+    if (simulate_only && false) {
       // Add a few hardcoded obstacles, to show off path planning
       int x=130;
       int y=290;
 
       //Hard wall
       if (true)
-       for (;x<=250;x+=navigator_res) navigator.mark_obstacle(x,y,15);
+       for (;x<=250;x+=navigator_res) mark_obstacle(x,y,15);
 
       // Isolated tall obstacle in middle
       navigator.mark_obstacle(130,y,40);
@@ -174,6 +186,19 @@ public:
     // Recompute proximity costs after marking obstacles
     const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
     navigator.navigator.compute_proximity(obstacle_proximity);
+  }
+  
+  // Create a disk obstacle of this diameter at this position
+  //   (mostly useful for generating test obstacles)
+  inline void mark_disk_obstacle(int cx,int cy,int ht,int radius)
+  {
+    int d=radius+1;
+    for (int y=-d;y<=+d;y++)
+    for (int x=-d;x<=+d;x++)
+    if (x*x+y*y<=radius*radius)
+    {
+      mark_obstacle(x+cx,y+cy,ht);
+    }
   }
 
   // Dump proximity and debug data to plain text file

@@ -22,7 +22,7 @@
 using namespace std;  
 using namespace cv;  
 
-bool show_GUI=true; // show debug windows onscreen
+int show_GUI=0; // show debug window onscreen: 0 none; 1 basic; 2 lots
 
 #define DO_GCODE 0 /* command 3D printer via serial gcode */
 #if DO_GCODE
@@ -31,7 +31,7 @@ bool show_GUI=true; // show debug windows onscreen
 #include "serial.cpp" /* for talking to stepper driver */
 
 SerialPort stepper_serial;
-bool pan_stepper=true; // automatically pan stepper motor around
+bool pan_stepper=false; // automatically pan stepper motor around
 
 int sys_error=0;
 
@@ -309,12 +309,12 @@ int main(int argc,const char *argv[])
     
     for (int argi=1;argi<argc;argi++) {
       std::string arg=argv[argi];
-      if (arg=="--nogui") show_GUI=false;
+      if (arg=="--gui") show_GUI++;
       else if (arg=="--depth") do_depth=true;
       else if (arg=="--nodepth") do_depth=false;
       else if (arg=="--nocolor") do_color=false;
       else if (arg=="--coarse") bigmode=false; // lowres mode
-      else if (arg=="--nostep") pan_stepper=false; // pan around
+      else if (arg=="--stepper") pan_stepper=true; // pan around
       else if (arg=="--fast") fps=30; // USB-3 only
       else {
         std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
@@ -499,8 +499,11 @@ int main(int argc,const char *argv[])
           depth_t *depth_data = (depth_t*)depth_frame.get_data();
           
           // Display raw data onscreen
-          //Mat depth_raw(Size(depth_w, depth_h), CV_16U, depth_data, Mat::AUTO_STEP);    
-          //imshow("Depth", depth_raw);
+          
+          if (show_GUI>1) { 
+            Mat depth_raw(Size(depth_w, depth_h), CV_16U, depth_data, Mat::AUTO_STEP);    
+            imshow("Depth", depth_raw);
+          }
           
           // Set up *static* 3D so we don't need to recompute xdir and ydir every frame.
           static realsense_projector depth_to_3D(depth_frame);
@@ -532,7 +535,7 @@ int main(int argc,const char *argv[])
             }
             //debug_image.at<cv::Vec3b>(y,x)=debug_color;
           }   
-          //imshow("Depth image",debug_image);
+          //imshow("Depth debug",debug_image);
           
           if (show_GUI) {
             cv::Mat world_depth=obstacles.get_debug_2D(6);

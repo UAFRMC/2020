@@ -6,13 +6,13 @@
 
 /** These are the robot's dimensions, in centimeters. */
 enum {
-  robot_x=70/2, // Center to front-back of main robot, in cm
-  robot_y=132/2, // Center to left-right of main body, in cm
+  robot_x=50/2, // Center to front-back of main robot, in cm
+  robot_y=100/2, // Center to left-right of main body, in cm
   robot_track_y=20, // width of tracks, frame, motors, etc
-  robot_inside_clearance=25, // Z between box and tracks
+  robot_inside_clearance=20, // Z between box and tracks
   
-  robot_box_y=30, // half of box width
-  robot_box_clearance=25, // Z clearance under storage box
+  robot_box_y=20, // half of box width
+  robot_box_clearance=15, // Z clearance under storage box
   
   robot_mine_x=robot_x+19, // center of robot's mining head
   robot_mine_y=0, // mining head center
@@ -28,17 +28,17 @@ enum {
   Both coordinates are always positive.
 */
 enum {
-	field_y_size=738, // Y-length of field, in centimeters
+	field_y_size=540, // Y-length of field, in centimeters
 //	field_y_size=500, // Y-length of field, in centimeters for the test arena
-	field_y_start_zone=183, // y end of start area, in centimeters
-	field_y_mine_zone=field_y_start_zone+294, // y where mining area starts
+	field_y_start_zone=150, // y end of start area, in centimeters
+	field_y_mine_zone=field_y_start_zone+200, // y where mining area starts
 	field_y_mine_start=field_y_mine_zone+30, // y where it's safe to start mining
 	
-  field_x_size=378, // X-width of field, in cm
+  field_x_size=360, // X-width of field, in cm
 
 #define TROUGH_LEFT 1
 #if TROUGH_LEFT
-  field_x_trough_edge=55, // Dump edge of scoring trough (left-side dump)
+  field_x_trough_edge=50, // Dump edge of scoring trough (left-side dump)
   field_x_trough_stop=field_x_trough_edge+(robot_x-10), // stop here
   
   field_x_trough_align=field_x_trough_edge+20, // drive target
@@ -58,10 +58,10 @@ enum {
   field_angle_trough=180, // Robot's heading angle when dumping at trough (right)
 #endif
   
-  field_y_trough_center=105, // Center of scoring trough, minus space for beacon
-  field_x_trough_center=37, // X
+  field_y_trough_center=75, // Center of scoring trough, minus space for beacon
+  field_x_trough_center=25, // X
   
-  field_y_trough_size=165, // length of trough in Y axis
+  field_y_trough_size=100, // length of trough in Y axis
   field_y_trough_hsize=field_y_trough_size/2, // length of trough in Y axis
   field_y_trough_start=field_y_trough_center-field_y_trough_hsize,
   field_y_trough_end=field_y_trough_center+field_y_trough_hsize,
