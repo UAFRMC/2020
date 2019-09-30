@@ -10,7 +10,7 @@ namespace nano_net
 {
   enum { n_motors=4 };
   enum { n_sensors=6 };
-  enum { n_nanos=2 };
+  enum { n_nanos=1 };
 
   // Motor control modes
   enum { 
@@ -65,5 +65,3 @@ namespace nano_net
 
 
 #endif
-
-
