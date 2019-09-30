@@ -14,7 +14,7 @@ The "Back End" runs on an on-robot PC, and it:
 
 
 Build instructions:
-	sudo apt-get install freeglut3-dev g++ make
+	sudo apt-get install freeglut3-dev g++ make libzmq3-dev
 
 For the vive viewer:
 	sudo cp vive/91-vive.rules /etc/udev/rules.d/
