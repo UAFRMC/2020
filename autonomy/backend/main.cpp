@@ -475,7 +475,7 @@ public:
     if (simulate_only) {
       telemetry.autonomy.markers.beacon=target;
     }
-    if (beacon_pointing_thread) 
+    else if (beacon_pointing_thread) 
       if (beacon_pointing_thread->point_beacon(target)) {
         robotPrintln("Pointed beacon toward %.0f deg\n",target);
       }
