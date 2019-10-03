@@ -134,10 +134,13 @@ public:
   /* Read this obstacle grid from this base filename */
   void read(std::string filename)
   {
-    FILE *f=fopen((filename+".bin").c_str(),"rb");
-    if (!fread(&grid[0],obstacle_grid::GRIDY*obstacle_grid::GRIDX,sizeof(grid[0]),f))
-      printf("Error doing read from %s\n",filename.c_str());
-    fclose(f);
+    FILE *f=fopen(filename.c_str(),"rb");
+    if (!f) printf("Error opening %s\n",filename.c_str());
+    else {
+      if (!fread(&grid[0],obstacle_grid::GRIDY*obstacle_grid::GRIDX,sizeof(grid[0]),f))
+        printf("Error doing read from %s\n",filename.c_str());
+      fclose(f);
+    }
   }
 };
 
