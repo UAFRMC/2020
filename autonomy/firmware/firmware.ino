@@ -40,15 +40,15 @@ nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
     /* Motors: */ {
     /* motor[0] */ '0', // drive right 
     /* motor[1] */ '1', // drive left
-    /* motor[2] */ 'T', // mine 2 (same encoder as 1)
-    /* motor[3] */ 'T', // extend mining head
+    /* motor[2] */ 'T', // ?
+    /* motor[3] */ 'T', // ?
     },
     /* Sensors: */ {
     /* sensor[0] */ '0', // drive right
     /* sensor[1] */ '1', // drive left
     /* sensor[2] */ 'B', // unused from here
     /* sensor[3] */ 'B',
-    /* sensor[4] */ 'B', // back-up right?
+    /* sensor[4] */ 'B', 
     /* sensor[5] */ 'C',
     },
   },
@@ -106,7 +106,7 @@ void read_sensors(void) {
 //  robot.sensor.Mstall = (nano_sensors[0].stall>>1)&1;
 
   robot.sensor.DL1count = nano_sensors[0].counts[1];
-  robot.sensor.DLstall = nano_sensors[0].stall&(1<<0);
+  robot.sensor.DLstall = nano_sensors[0].stall&(1<<1);
 
   robot.sensor.Rcount = 255-nano_sensors[1].counts[1];
 
@@ -136,12 +136,23 @@ void send_motors(void)
   }
 
 
-  nano_commands[0].speed[0]=scale_from_64(robot.power.right);
+  nano_commands[0].speed[0]=+scale_from_64(robot.power.right);
+  nano_commands[0].speed[2]=-scale_from_64(robot.power.right);
 //  nano_commands[0].speed[1]=scale_from_64(robot.power.mine);
 //  nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
 //  nano_commands[0].speed[3]=-scale_from_64(robot.power.head_extend);
 
   nano_commands[0].speed[1]=-scale_from_64(robot.power.left);
+  nano_commands[0].speed[3]=-scale_from_64(robot.power.left);
+  
+  if (robot.power.mine!=64) { // crab mode?
+    nano_commands[0].speed[0]=-scale_from_64(robot.power.mine)/2;
+    nano_commands[0].speed[2]=-scale_from_64(robot.power.mine)/2;
+
+    nano_commands[0].speed[1]=-scale_from_64(robot.power.mine)/2;
+    nano_commands[0].speed[3]=+scale_from_64(robot.power.mine)/2;
+  }
+  
 //  nano_commands[1].speed[1]=-scale_from_64(robot.power.roll);
 //  nano_commands[1].speed[2]=0;
 //  nano_commands[1].speed[3]=-scale_from_64(robot.power.dump);
