@@ -9,7 +9,7 @@
 int main(int argc,char *argv[]) {
 
   // Figure out which grid filename to read
-  std::string name="obstacles_debug";
+  std::string name="obstacles_debug.bin";
   if (argc>1) name=argv[1];
   printf("Grid size: %d x %d = %d cells\n",
     (int)obstacle_grid::GRIDX,
