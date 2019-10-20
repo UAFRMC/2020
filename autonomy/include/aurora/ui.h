@@ -148,7 +148,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	description="UI:\n";
 
 // Power limits:
-	float driveLimit=0.3;
+	float driveLimit=0.5;
 	float mineLimit=0.90;
 	float dumpLimit=1.0;
 	float rollLimit=0.5;
@@ -163,7 +163,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	if(power.high)
 	{
            description+="  ULTRA POWER\n";
-           driveLimit=0.8;
+           driveLimit=1.0;
 	}
 	// else spacebar not down--check other keys for manual control
 
