@@ -7,7 +7,9 @@
 #include <Arduino.h>
 #include "encoder.h"
 
-template<uint8_t AVERAGES>
+// AVERAGES: Number of ticks
+// HISTORY: Buffer of encoder value 
+template<uint8_t AVERAGES, uint8_t HISTORY>
 class speed_controller_t
 {
 public:
@@ -17,7 +19,9 @@ public:
 
   milli_t times[AVERAGES]; // milli between recent encoder ticks
   uint8_t times_ptr; // index into times array (cyclic buffer)
-
+  uint16_t count_history[HISTORY];
+  int8_t count_index;
+   
   milli_t last_power; // time we last sent power to the motor
   int last_dir; // direction at last check
   int last_err; // speed error (percent) at last check
@@ -28,12 +32,25 @@ public:
     :encoder(encoder_), times_ptr(0)
   {
     memset(times,0,sizeof(times));
+    memset(count_history,0,sizeof(count_history));
+    count_index=HISTORY-1;
     stalled=false;
     last_dir=0;
     last_change=last_power=milli;
     last_err=0;
   }
 
+  int history_wrap(int index){
+    while(index >= HISTORY-1)
+        index -= HISTORY;
+    while(index < 0)
+        index += HISTORY;
+   return index;
+  }
+
+  uint16_t get_speed(int start, int duration){
+    return count_history[history_wrap(count_index-start)] - count_history[history_wrap(count_index-start-duration)]; 
+  }
   // Update state for new commanded direction
   void set_dir(int dir) {
       if (dir!=last_dir) {
@@ -54,13 +71,21 @@ public:
   //   target RPM speed in speed control mode
   int update(int target,const bool torque_only,int rpm_scaler=3)
   {
-    // If torque control, leave immediately
+     
+    // If torque control,leave immediately
     if((!encoder) || torque_only) {
       last_change=milli;
       stalled=false;
       return target; // unmodified value
     }
-
+    count_index ++;
+    if (count_index>HISTORY-1)
+    {
+      count_index = 0;
+    }
+    count_history[count_index] = encoder->count_mono;
+    
+    
     // Follow the encoder
     if (encoder && encoder->value != last_encoder)
     { // encoder value just changed, update timings

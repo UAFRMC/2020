@@ -58,7 +58,7 @@ namespace nano_net
     },
   };
 
-  typedef speed_controller_t<4> speed_controller;
+  typedef speed_controller_t<4,100> speed_controller;
   speed_controller speed_controllers[n_motors];
   
   void got_setup() { // read last_setup and do it
@@ -133,7 +133,9 @@ namespace nano_net
       Serial.print(" ");
       Serial.print(speed);
       Serial.print(" ");
-      Serial.println(encoders[0].count_mono);
+      Serial.print(encoders[0].count_mono);
+      Serial.print(" ");
+      Serial.println(speed_controllers[0].get_speed(0,99));
     
   }  
 
@@ -225,7 +227,7 @@ void setup()
 
 void loop()
 {
-  delay(10);
+  delay(5);
   milli=micros()>>10;
   int command=0;
   nano_net::read_encoders();
