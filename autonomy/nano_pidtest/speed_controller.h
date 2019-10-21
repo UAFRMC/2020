@@ -48,8 +48,9 @@ public:
    return index;
   }
 
-  uint16_t get_speed(int start, int duration){
-    return count_history[history_wrap(count_index-start)] - count_history[history_wrap(count_index-start-duration)]; 
+  int get_speed(int start, int duration){
+    uint16_t speed = count_history[history_wrap(count_index-start)] - count_history[history_wrap(count_index-start-duration)]; 
+    return (int)speed;
   }
   // Update state for new commanded direction
   void set_dir(int dir) {
@@ -168,7 +169,8 @@ public:
 
       // Figure the corresponding PID terms, in percent motor power
       int32_t P=err/2; // proportional term
-      int32_t D=0; // FIXME * (err - last_err)
+      int dt=10; // timesteps for D average
+      int32_t D=10*(get_speed(dt,dt) - get_speed(0,dt)); // FIXME * (err - last_err)
       motor_value=P+D+motor_idle;
 
       last_err=err;
