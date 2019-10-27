@@ -127,15 +127,17 @@ namespace nano_net
           speed=speed_controllers[0].update(command,false);
         
       send_motor_power(motors[0],speed);
-      Serial.print(milli);
+      //Serial.print(milli);
       Serial.print(" ");
       Serial.print(command);
       Serial.print(" ");
       Serial.print(speed);
       Serial.print(" ");
-      Serial.print(encoders[0].count_mono);
+      //Serial.print(encoders[0].count_mono);
       Serial.print(" ");
-      Serial.println(speed_controllers[0].get_speed(0,99));
+      Serial.print(speed_controllers[0].get_speed(0,30));
+      Serial.print(" ");
+      Serial.println(speed_controllers[0].get_speed(10,10)-speed_controllers[0].get_speed(0,10));
     
   }  
 
@@ -235,9 +237,9 @@ void loop()
   //A_packet p;
   //if (mega.read_packet(p))
      //nano_net::handle_mega_packet(mega.pkt,p);
-  if(milli>1000)
+  if(milli%10000>1000)
   {
-    command=20;
+    command=20*(milli/10000+1);
   }
   nano_net::send_motors(command);
 }
