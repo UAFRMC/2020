@@ -25,6 +25,7 @@ public:
   milli_t last_power; // time we last sent power to the motor
   int last_dir; // direction at last check
   int last_err; // speed error (percent) at last check
+  int last_I;
   bool stalled;
   int debug;
 
@@ -38,6 +39,7 @@ public:
     last_dir=0;
     last_change=last_power=milli;
     last_err=0;
+    last_I=0;
   }
 
   int history_wrap(int index){
@@ -142,6 +144,22 @@ public:
     const int motor_min=10; // never give less power than this (keep spinning)
     const int motor_max=100; // never give more power than this
     const int motor_idle=10;
+    const int dt = 10; // iteration_time
+
+
+    // If you want to readjust these, start with Kp, Ki, and Kd at zero
+    
+    const float Kp = 0.41f;     // Proportion constant (Adjust me first until 
+                                 // Adjust me first until oscillation are steadyish
+    
+    const float Kd = 1.4f;    // Derivative constant
+                                 // Adjust me second to achieve tight oscillations 
+                                 // or until the system is semi-critically damp
+                           
+    const float Ki = 0.0000f;   // Integral constant
+                                // Adjust me third till the desired oscillations
+                                // are achieved. (You might want this at 0)
+    
     int32_t motor_value=0;
     {
       int16_t total=0;
@@ -166,14 +184,15 @@ public:
       int32_t err=(((int32_t)real_average-(int32_t)target_time)*100)/divide;
       if (err<0) err=0;
       if (err>200) err=200; // clamp range of error term
-
+      
       // Figure the corresponding PID terms, in percent motor power
-      int32_t P=err/2; // proportional term
-      int dt=10; // timesteps for D average
-      int32_t D=10*(get_speed(dt,dt) - get_speed(0,dt)); // FIXME * (err - last_err)
-      motor_value=P+D+motor_idle;
+      int32_t P=err; // proportional term
+      int32_t D=(err - last_err) / dt; // FIXME * (err - last_err)
+      int32_t I=last_I + (err*dt); 
+      motor_value=Kp*P+Ki*I+Kd*D+motor_idle;
 
       last_err=err;
+      last_I=I;
 
 #if 0
       // Debug prints
