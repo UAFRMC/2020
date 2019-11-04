@@ -129,15 +129,17 @@ namespace nano_net
       send_motor_power(motors[0],speed);
       //Serial.print(milli);
       Serial.print(" ");
-      Serial.print(command);
+      Serial.print(2*command);
       Serial.print(" ");
       Serial.print(speed);
       Serial.print(" ");
       //Serial.print(encoders[0].count_mono);
       Serial.print(" ");
-      Serial.print(speed_controllers[0].get_speed(0,30));
+      Serial.print(speed_controllers[0].pterm);
       Serial.print(" ");
-      Serial.println(speed_controllers[0].get_speed(10,10)-speed_controllers[0].get_speed(0,10));
+      Serial.print(speed_controllers[0].dterm);
+      Serial.print(" ");
+      Serial.println(speed_controllers[0].iterm);
     
   }  
 
