@@ -24,6 +24,32 @@ using namespace cv;
 int show_GUI=0; // show debug window onscreen: 0 none; 1 basic; 2 lots
 int sys_error=0;
 
+void mark_scaled_pixel(int x,int y, int depthscale,cv::Mat &out,cv::Vec3b color)
+{
+  for (int dx = 0; dx < depthscale; dx++)
+  for (int dy = 0; dy < depthscale; dy++)
+       out.at<cv::Vec3b>(obstacle_grid::GRIDY*depthscale-1-(y*depthscale+dy),(x*depthscale+dx))=color;
+}
+
+void mark_obstacles(const obstacle_grid &obstacles,int depthscale, cv::Mat &out)
+{ 
+  cv::Vec3b big(255,0,255);
+  cv::Vec3b big(255,0,0);
+  
+  // Loop over all points in the grid
+  int nbor=2;
+  
+  for (int y = nbor; y < obstacle_grid::GRIDY-nbor; y++)
+  for (int x = nbor; x < obstacle_grid::GRIDX-nbor; x++)
+  {
+    const grid_square &me=obstacles.at(x,y);
+    if (me.getMax()>8+me.getMin()) {
+      mark_scaled_pixel(x,y,depthscale,out,big);
+    }
+
+  }
+}
+
 
 int main(int argc,const char *argv[])  
 {  
@@ -35,11 +61,13 @@ int main(int argc,const char *argv[])
     bool do_color=true; // read color frames, look for vision markers
     int erode_depth=0; // image processing on depth image
     int fps=6; // framerate (USB 2.0 compatible by default)
+    float camera_tilt=30;
     
     for (int argi=1;argi<argc;argi++) {
       std::string arg=argv[argi];
       if (arg=="--gui") show_GUI++;
       else if (arg=="--depth") do_depth=true;
+      else if (arg=="--tilt") camera_tilt=atof(argv[++argi]);
       else if (arg=="--erode") erode_depth=atoi(argv[++argi]);
       else if (arg=="--nodepth") do_depth=false;
       else if (arg=="--nocolor") do_color=false;
@@ -84,7 +112,9 @@ int main(int argc,const char *argv[])
     rs2::frameset frames;  
     while (true)  
     {  
-        camera_transform camera_TF(90,-30);
+        camera_transform camera_TF(90,-camera_tilt);
+        camera_TF.camera.x=(field_x_size+30)/2;
+        camera_TF.camera.y=0;
 
         // Wait for a coherent pair of frames: depth and color
         frames = pipe.wait_for_frames();  
@@ -161,6 +191,7 @@ int main(int argc,const char *argv[])
             int i=y*depth_w + x;
             //float depth=depth_data[i]*depth2cm; // depth, in cm
             float depth=depth_raw.at<depth_t>(y,x)*depth2cm;
+            if (depth>250.0) continue; // <- depth gets high error when far away
             
             int depth_color=depth*(255.0/400.0);
             cv::Vec3b debug_color;
@@ -178,8 +209,11 @@ int main(int argc,const char *argv[])
             }
           }   
           
+          
           if (show_GUI) {
-            cv::Mat world_depth=obstacles.get_debug_2D(6);
+            int depthscale=10;
+            cv::Mat world_depth=obstacles.get_debug_2D(depthscale);
+            mark_obstacles(obstacles,depthscale,world_depth);
             imshow("2D World",world_depth);    
           }
         }    
