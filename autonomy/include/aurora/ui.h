@@ -148,7 +148,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	description="UI:\n";
 
 // Power limits:
-	float driveLimit=0.5;
+	float driveLimit=0.6;
 	float mineLimit=0.90;
 	float dumpLimit=1.0;
 	float rollLimit=0.5;
@@ -188,7 +188,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	/* Uses the left analog stick*/
 /* TODO: Map dumpMode to joystick*/
 	float forward=-js_axis(2,"Go Forward or Reverse"); // left Y
-	float turn=0.9*js_axis(1,"Turn Left or Right"); //left X, scaled for gentle turns
+	float turn=js_axis(1,"Turn Left or Right"); //left X, scaled for gentle turns
 
 	/* Oerate the mining head*/
 	 float dumpJoy=-js_axis(3,"Operate Dump Buckets");

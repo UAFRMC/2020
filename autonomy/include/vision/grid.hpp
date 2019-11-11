@@ -50,9 +50,15 @@ typedef float real_t;
 /// Keeps track of location of obstacles
 class obstacle_grid {
 public:
+#if 1 // robot versions
   enum {GRIDSIZE=4}; // cm per grid cell
   enum {GRIDX=(30+field_x_size+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
   enum {GRIDY=(30+field_y_size+GRIDSIZE-1)/GRIDSIZE};
+#else // eye candy versions
+  enum {GRIDSIZE=2}; // cm per grid cell
+  enum {GRIDX=(30+field_x_size+GRIDSIZE-1)/GRIDSIZE}; // xy grid cells for field
+  enum {GRIDY=(30+field_y_size+GRIDSIZE-1)/GRIDSIZE};
+#endif
   enum {GRIDTOTAL=GRIDX*GRIDY}; // total grid cells
 
   /* Raster pattern of GRIDX * GRIDY cells,

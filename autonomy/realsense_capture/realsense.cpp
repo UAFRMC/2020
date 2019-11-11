@@ -33,8 +33,13 @@ void mark_scaled_pixel(int x,int y, int depthscale,cv::Mat &out,cv::Vec3b color)
 
 void mark_obstacles(const obstacle_grid &obstacles,int depthscale, cv::Mat &out)
 { 
-  cv::Vec3b big(255,0,255);
-  cv::Vec3b big(255,0,0);
+  cv::Vec3b big(255,0,255); // big difference between max and min
+  cv::Vec3b high(0,255,0); // too high to be drivable (green)
+  cv::Vec3b low(255,0,0); // too low to be drivable (blue)
+  
+  const int big_thresh=8;
+  const int high_thresh=30.0;
+  const int low_thresh=-20.0;
   
   // Loop over all points in the grid
   int nbor=2;
@@ -43,7 +48,15 @@ void mark_obstacles(const obstacle_grid &obstacles,int depthscale, cv::Mat &out)
   for (int x = nbor; x < obstacle_grid::GRIDX-nbor; x++)
   {
     const grid_square &me=obstacles.at(x,y);
-    if (me.getMax()>8+me.getMin()) {
+    
+    if (me.getTrimmedMean() > high_thresh) {
+      mark_scaled_pixel(x,y,depthscale,out,high);
+    }
+    if (me.getTrimmedMean() < low_thresh) {
+      mark_scaled_pixel(x,y,depthscale,out,low);
+    }
+    
+    if (me.getMax() > big_thresh+me.getMin()) {
       mark_scaled_pixel(x,y,depthscale,out,big);
     }
 
@@ -213,8 +226,9 @@ int main(int argc,const char *argv[])
           if (show_GUI) {
             int depthscale=10;
             cv::Mat world_depth=obstacles.get_debug_2D(depthscale);
+            imshow("2D World Heights",world_depth);    
             mark_obstacles(obstacles,depthscale,world_depth);
-            imshow("2D World",world_depth);    
+            imshow("2D World Coded",world_depth);    
           }
         }    
         
