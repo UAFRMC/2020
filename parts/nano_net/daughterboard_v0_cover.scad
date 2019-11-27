@@ -9,7 +9,7 @@ module dxf(layer_name) {
 	import(dxf_name,layer=layer_name);
 }
 
-floor=0.9;
+floor=0.8;
 outerwall=1.5;
 outerwall_z=15; // height of holes in frame
 outerwall_z_full=floor+30-7; // complete top-bottom cover size
