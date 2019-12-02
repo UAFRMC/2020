@@ -1,0 +1,13 @@
+[Unit]
+Description=Example data exchange millitime service.
+
+[Service]
+Type=simple
+User=robot
+ExecStart=/home/robot/2020/autonomy/unitTests/data_exchange/millitime
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+
