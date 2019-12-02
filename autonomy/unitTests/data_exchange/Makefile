@@ -1,6 +1,6 @@
 OPTS=-g
 CFLAGS=-I../../include -std=c++11 $(OPTS)
-PROGS=send millitime
+PROGS=send millitime latcheck
 
 all: $(PROGS)
 
@@ -11,6 +11,9 @@ recv: recv.cpp
 	g++ $(CFLAGS) $< -o $@
 
 millitime: millitime.cpp
+	g++ $(CFLAGS) $< -o $@
+
+latcheck: latcheck.cpp
 	g++ $(CFLAGS) $< -o $@
 
 clean:
