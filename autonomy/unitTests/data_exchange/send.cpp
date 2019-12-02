@@ -6,7 +6,7 @@
 aurora::data_exchange<uint64_t> time_exchange("time.u64");
 
 int main() {
-	printf("Sender running.\n");
-	return 0;
+    printf("Sender running.\n");
+    return 0;
 }
 
