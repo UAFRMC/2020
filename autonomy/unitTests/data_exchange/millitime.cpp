@@ -4,24 +4,20 @@
 #include <time.h>
 #include "aurora/data_exchange.h"
 
-#define NANO_TO_MILLI 1000000UL
-
 int main() {
     typedef uint64_t millitime_t;
-    aurora::data_exchange<millitime_t> millitime("millitime.u64");
+    aurora::data_exchange<millitime_t> exchange_millitime("millitime.u64");
     
     while (true) {
         struct timespec tp;
         clock_gettime(CLOCK_REALTIME,&tp);
         millitime_t millis = tp.tv_sec*1000UL + tp.tv_nsec/NANO_TO_MILLI;
         static millitime_t start = millis;
-        millitime.write() = millis - start;
         
-        // Don't hog the CPU, give up our timeslice
-        struct timespec sleeptime;
-        sleeptime.tv_sec=0;
-        sleeptime.tv_nsec=1*NANO_TO_MILLI;
-        nanosleep(&sleeptime,NULL);
+        exchange_millitime.write_begin() = millis - start;
+        exchange_millitime.write_end();
+        
+        aurora::data_exchange_sleep(1);
     }
     return 0;
 }

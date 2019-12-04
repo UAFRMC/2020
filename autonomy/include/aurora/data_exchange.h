@@ -9,6 +9,7 @@ Orion Lawlor, Arsh Chauhan, Addeline Mitchell 2019-11-24
 #ifdef _WIN32
 #  error "Somebody needs to write a windows version of this header"
 #else
+#  include <atomic> // for std::atomic_thread_fence
 #  include <sys/mman.h> // for mmap
 #  include <unistd.h> // for seeks
 #  include <sys/stat.h> 
@@ -42,6 +43,10 @@ public:
     // This is the data being exchanged
     T data;
     
+    // This counter changes everytime somebody calls write().
+    //   It's more useful for finding hangs than really tracking changes.
+    uint64_t updates;
+    
     // This marks the end of the file
     enum{eof_value=0xe0f};
     uint64_t eof;
@@ -63,16 +68,33 @@ public:
     
     // Do a data consistency check--make sure the file is still OK.
     //   Throws if it finds problems.
-    void check(const char *when="");
+    // Returns the current write count.
+    uint64_t check(const char *when="");
+    
+    // Return true if this data has been updated since the last read()
+    bool updated(void) const {
+        return last_update != mem->updates;
+    }
     
     // Get a read-only copy of the file data
-    inline const T &read() const { return mem->data; }
-    
-    // Get a writeable copy of the file data
-    inline T &write() { 
-        mem->T_size = sizeof(T);
-        mem->eof = data_exchange_ondisk<T>::eof_value;
+    inline const T &read() { 
+        // Do I want a memory read fence here?  std::atomic_thread_fence();
+        last_update = mem->updates;
         return mem->data; 
+    }
+    
+    // Get a writeable copy of the file's stored data.
+    //   Returns a reference to writeable data.
+    inline T &write_begin(void) { 
+        mem->T_size = sizeof(T);
+        return mem->data; 
+    }
+    
+    // Finish a write operation, making these changes visible outside.
+    inline void write_end(void) {
+        last_update = ++mem->updates;
+        mem->eof = data_exchange_ondisk<T>::eof_value;
+        // Do I want a write fence here?  std::atomic_thread_fence(std::memory_order_release);
     }
     
     // Close this data_exchange
@@ -86,6 +108,7 @@ private:
     int fd; // UNIX open'd file
     data_exchange_ondisk<T> *mem; // mmap'd file
     size_t mmap_len; // length of file on disk (in pages)
+    uint64_t last_update; // last-seen value of updates
     
     // Don't copy or assign this type
     data_exchange(const data_exchange &e) =delete;
@@ -117,6 +140,11 @@ data_exchange<T>::data_exchange(const std::string &name)
     else if (errno!=EEXIST) 
     { // something actually went wrong making the directory
         throw std::runtime_error(std::string(__FILE__)+" can't create "+DATA_EXCHANGE_DIR+" because "+strerror(errno));
+    }
+    
+    // Warn if we're creating a new file
+    if (0!=access(filename.c_str(),F_OK)) {
+        printf("Creating new exchange file %s\n",filename.c_str());
     }
     
     // Open our file (and create it, if it doesn't already exist)
@@ -155,7 +183,7 @@ data_exchange<T>::data_exchange(const std::string &name)
     uint64_t new_size=sizeof(T);
     if (old_size != 0 && old_size != new_size) {
         printf("Upgrading data exchange file %s from %ld byte to %ld byte T size\n",
-            filename.c_str(), (long)old_len, (long)mmap_len);
+            filename.c_str(), (long)old_len, (long)new_size);
     }
     
     // Mark our size.  This will error out any incompatible copies.
@@ -166,8 +194,9 @@ data_exchange<T>::data_exchange(const std::string &name)
 }
 
 // Do a data consistency check--make sure the file is still OK.
+//   Returns the current update count.
 template <typename T>
-void data_exchange<T>::check(const char *when)
+uint64_t data_exchange<T>::check(const char *when)
 {
     bool bad_size = mem->T_size != sizeof(T);
     bool bad_eof = mem->eof != data_exchange_ondisk<T>::eof_value;
@@ -175,8 +204,23 @@ void data_exchange<T>::check(const char *when)
     {
         throw std::runtime_error(std::string("Data exchange error: ")+when+" "+__FILE__+" found unexpected data in "+filename+":"+(bad_size?" invalid header size":"")+(bad_eof?" invalid eof marker":"")+".  Is another version running using a different data size?");
     }
+    return mem->updates;
 }
 
+
+
+#define NANO_TO_MILLI 1000000UL
+/* Sleep for this many milliseconds.
+    1ms sleep -> about 1% CPU used.
+    10ms sleep -> under 0.1% CPU used.
+*/
+void data_exchange_sleep(int millisec=1) {
+    // Don't hog the CPU, give up our timeslice
+    struct timespec sleeptime;
+    sleeptime.tv_sec=0;
+    sleeptime.tv_nsec=millisec*NANO_TO_MILLI;
+    nanosleep(&sleeptime,NULL);
+}
 
 }; // end namespace aurora
 
