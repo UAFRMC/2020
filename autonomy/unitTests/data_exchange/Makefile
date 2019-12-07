@@ -1,6 +1,6 @@
 OPTS=-g
 CFLAGS=-I../../include -std=c++11 $(OPTS)
-PROGS=millitime latcheck lunatic_print_drive lunatic_print_encoders lunatic_print_stepper localizer
+PROGS=millitime latcheck lunatic_print_drive lunatic_print_encoders lunatic_print_stepper localizer pathplanner
 
 all: $(PROGS)
 
@@ -20,6 +20,9 @@ lunatic_print_stepper: lunatic_print_stepper.cpp
 	g++ $(CFLAGS) $< -o $@
 
 localizer: localizer.cpp
+	g++ $(CFLAGS) $< -o $@
+
+pathplanner: pathplanner.cpp
 	g++ $(CFLAGS) $< -o $@
 
 clean:
