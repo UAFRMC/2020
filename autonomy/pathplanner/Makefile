@@ -1,5 +1,5 @@
 OPTS=-g
-CFLAGS=-I../../include -std=c++11 $(OPTS)
+CFLAGS=-I../include -std=c++11 $(OPTS)
 PROGS=pathplanner
 
 all: $(PROGS)
