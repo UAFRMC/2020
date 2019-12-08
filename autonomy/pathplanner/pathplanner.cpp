@@ -14,16 +14,17 @@ int main() {
     //Data source needed to read from, these are defined by lunatic.h for what files we will be talk on
     MAKE_exchange_plan_target();
     MAKE_exchange_plan_current();
+    MAKE_exchange_field_drivable();
 
     while (true) {
         aurora::robot_loc2D old2dCoord = exchange_plan_current.read();
         aurora::robot_loc2D old3dCoord = exchange_plan_target.read();
-
+        aurora::field_drivable currField = exchange_field_drivable.read();
         //Some logic to determine what are the dive values
         //Currently just creates empty object needs some data?
         aurora::drive_commands newDrive;
-
-
+        //Set
+        
 
         //writing new data to files:
         exchange_drive_commands.write_begin() = newDrive;
