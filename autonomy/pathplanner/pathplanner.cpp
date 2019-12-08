@@ -24,7 +24,9 @@ int main() {
         //Currently just creates empty object needs some data?
         aurora::drive_commands newDrive;
         //Set
-
+        //spinning around in place
+        newDrive.left = 100.0;
+        newDrive.right = 0.0;
 
         //writing new data to files:
         exchange_drive_commands.write_begin() = newDrive;
