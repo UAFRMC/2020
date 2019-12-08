@@ -17,13 +17,15 @@ int main() {
     MAKE_exchange_obstacle_view();
 
     while (true) {
-        aurora::field_drivable newField; 
+        
         aurora::vision_marker_reports currMarkerReports = exchange_marker_reports.read();
         aurora::robot_coord3D currentRobotPos = exchange_plan_target.read();
         //with curent position and realsense data able to update the feild ?
         
 
-
+        aurora::field_drivable newField; 
+        // newField.at(currentRobotPos.X, currentRobotPos.y) = ?
+        
         exchange_field_drivable.write_begin() = newField;
         exchange_field_drivable.write_end();
 
