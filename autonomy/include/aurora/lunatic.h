@@ -169,7 +169,7 @@ project depth camera obstacles into field coordinates:
     Read by the obstacle detection subsystem
 Coordinate system: absolute field coordinates
 */
-#define MAKE_exchange_obstacle_view()   aurora::data_exchange<aurora::robot_coord3D> exchange_plan_target("plan_target.loc2D")
+#define MAKE_exchange_obstacle_view()   aurora::data_exchange<aurora::robot_coord3D> exchange_plan_target("plan_target.loc3D")
 
 
 
