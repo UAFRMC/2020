@@ -18,6 +18,7 @@ int main() {
 
     //Data source needed to write too, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_plan_current();
+    MAKE_exchange_obstacle_view();
 
     while (true) {
         aurora::drive_commands currentdrive = exchange_drive_commands.read();
