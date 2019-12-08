@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "aurora/data_exchange.h"
 #include "aurora/lunatic.h"
+typedef aurora::field_raster<unsigned char,4> field_drivable;
 
 int main() {
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
@@ -19,7 +20,7 @@ int main() {
     while (true) {
         aurora::robot_loc2D old2dCoord = exchange_plan_current.read();
         aurora::robot_loc2D old3dCoord = exchange_plan_target.read();
-        aurora::field_drivable currField = exchange_field_drivable.read();
+        aurora::field_raster<unsigned char, 4> currField = exchange_field_drivable.read();
         //Some logic to determine what are the dive values
         //Currently just creates empty object needs some data?
         aurora::drive_commands newDrive;
