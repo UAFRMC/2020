@@ -9,9 +9,9 @@
 #include "aurora/lunatic.h"
 
 int main() {
-    //Data sources need to write to, these are defined by lunatic.h for what files we will be talk on
+    //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_drive_commands();
-    //Data source needed to read from, these are defined by lunatic.h for what files we will be talk on
+    //Data source needed to read from, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_plan_target();
     MAKE_exchange_plan_current();
     MAKE_exchange_field_drivable();
@@ -24,7 +24,7 @@ int main() {
         //Currently just creates empty object needs some data?
         aurora::drive_commands newDrive;
         //Set
-        
+
 
         //writing new data to files:
         exchange_drive_commands.write_begin() = newDrive;
