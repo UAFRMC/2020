@@ -181,6 +181,7 @@ struct vision_marker_report {
     int32_t markerID; // 0 if invalid, or an Aruco marker ID
     enum {max_count=2};
 };
+//******This must be defined in the file using the #define Make_exchange*****
 // This is an array of reports for all currently visible markers
 typedef std::array<vision_marker_report, vision_marker_report::max_count> vision_marker_reports; 
 
@@ -241,7 +242,7 @@ enum {
     field_flat=120, // seen and looks flat(enough)
     field_driven=250 // we have driven here before (definitely safe)
 };
-
+//*******This must be defined in the file using the #define Make_exchange******
 typedef field_raster<unsigned char,4> field_drivable;
 
 /* This macro declares the variable used to 
