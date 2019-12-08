@@ -43,6 +43,16 @@
 #include <iostream>
 
 
+#include "aurora/lunatic.h"
+
+// Crude global variables for lunatic data exchange
+MAKE_exchange_drive_encoders();
+MAKE_exchange_stepper_request();
+MAKE_exchange_plan_target();
+MAKE_exchange_drive_commands();
+
+
+
 using osl::quadric;
 
 bool show_GUI=true;
@@ -1185,13 +1195,23 @@ void robot_manager_t::update(void) {
   // Fake the bucket sensor from the sim (no hardware sensor for now)
   robot.sensor.bucket=sim.bucket*(950-179)+179;
 
-  float wheelbase=132-10; // cm between track centerlines
-  float drivecount2cm=8*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
-
-  locator.move_wheels(
-    fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm,
-    fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm,
-    wheelbase);
+  float wheelbase=40; // cm between track centerlines
+  float drivecount2cm=6*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
+  float driveL = fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm;
+  float driveR = fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm;
+  
+  locator.move_wheels(driveL,driveR,wheelbase);
+  
+  // Update drive encoders data exchange
+  static float totalL = 0.0; //<- hacky!  Need total distance
+  static float totalR = 0.0;
+  totalL += driveL;
+  totalR += driveR;
+  aurora::drive_encoders enc;
+  enc.left =totalL;
+  enc.right=totalR;
+  exchange_drive_encoders.write_begin()=enc;
+  exchange_drive_encoders.write_end();
 
 
 // Send out telemetry
