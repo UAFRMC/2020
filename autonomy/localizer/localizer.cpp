@@ -30,9 +30,18 @@ int main() {
         //Some logic to determine what our next plan of movement is?
         //Currently just creates empty objects needs some data?
         aurora::robot_loc2D new2dcords;
+        // new2dcords.angle = ?;
+        // new2dcords.x = ?;
+        // new2dcords.y = ?;
+        // new2dcords.percent = ?;
+
+
         aurora::robot_coord3D new3dcords;
-
-
+        // new3dcords.X = ?;
+        // new3dcords.Y = ?;
+        // new3dcords.Z = ?;
+        // new3dcords.percent = ?;
+        // new3dcords.origin = ?;
 
         //writing new data to files:
         exchange_plan_current.write_begin() = new2dcords;
