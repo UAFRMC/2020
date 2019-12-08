@@ -156,7 +156,7 @@ data_exchange<T>::data_exchange(const std::string &name)
     // Change the file's length to match our datatype
     mmap_len = sizeof(data_exchange_ondisk<T>);
     
-    off_t old_len = lseek(fd,0,SEEK_END);
+    uint64_t old_len = lseek(fd,0,SEEK_END);
     if (old_len != 0 && old_len != mmap_len) {
         printf("Upgrading data exchange file %s from %ld byte to %ld byte file length\n",
             filename.c_str(), (long)old_len, (long)mmap_len);
