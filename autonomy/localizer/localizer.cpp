@@ -10,14 +10,13 @@
 
 int main() {
     typedef std::array<aurora::vision_marker_report, aurora::vision_marker_report::max_count> vision_marker_reports;
-    //Data sources need to read from, these are defined by lunatic.h for what files we will be talk on
+    //Data sources need to read from, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_drive_commands();
     MAKE_exchange_drive_encoders();
     MAKE_exchange_stepper_report();
     MAKE_exchange_marker_reports();
 
-    //Data source needed to write too, these are defined by lunatic.h for what files we will be talk on
-    MAKE_exchange_obstacle_view();
+    //Data source needed to write too, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_plan_current();
 
     while (true) {
