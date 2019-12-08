@@ -9,6 +9,8 @@
 #include "aurora/data_exchange.h"
 #include "aurora/lunatic.h"
 
+typedef std::array<aurora::vision_marker_report, aurora::vision_marker_report::max_count> vision_marker_reports; 
+typedef aurora::field_raster<unsigned char,4> field_drivable;
 
 int main() {
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
