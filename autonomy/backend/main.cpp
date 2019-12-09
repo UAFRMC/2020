@@ -1282,8 +1282,8 @@ void robot_manager_t::update(void) {
   locator.move_wheels(driveL,driveR,wheelbase);
   
   // Update drive encoders data exchange
-  static float totalL = 0.0; //<- hacky!  Need total distance
-  static float totalR = 0.0;
+  static aurora::drive_encoders::real_t totalL = 0.0; //<- hacky!  Need total distance
+  static aurora::drive_encoders::real_t totalR = 0.0;
   totalL += driveL;
   totalR += driveR;
   aurora::drive_encoders enc;

@@ -84,8 +84,9 @@ send the backend a drive command:
     After driving forwards by 1.5 meters, left=right=+50.0;
 */
 struct drive_encoders {
-    float left;
-    float right;
+    typedef double real_t;
+    real_t left;
+    real_t right;
     
     // Subtract two sets of encoder values (typically current-previous)
     // to get relative motion.
@@ -97,7 +98,7 @@ struct drive_encoders {
     }
     
     void print(FILE *f=stdout) const {
-        fprintf(f,"encoders: %5.2f L, %5.2f R\n", left, right);
+        fprintf(f,"encoders: %5.2f L, %5.2f R\n", (float)left, (float)right);
     }
 };
 
