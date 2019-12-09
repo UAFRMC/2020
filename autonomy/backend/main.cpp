@@ -44,14 +44,15 @@
 
 
 #include "aurora/lunatic.h"
-
+#include "../localizer/localize.h"
 // Crude global variables for lunatic data exchange
 MAKE_exchange_drive_encoders();
 MAKE_exchange_stepper_request();
 MAKE_exchange_plan_target();
 MAKE_exchange_drive_commands();
-
-
+//Needed for localization
+MAKE_exchange_plan_current();
+aurora::robot_loc2D currentLocation;
 
 using osl::quadric;
 
@@ -638,6 +639,13 @@ private:
   // Compute the angle (deg) the beacon should face to see this field coordinate
   float get_beacon_angle(float fx,float fy)
   {
+    // if(exchange_plan_current.updated())
+    // {
+    //   currentLocation = exchange_plan_current.read();
+    // }
+    // float dx=currentLocation.x-field_x_beacon;
+    // float dy=currentLocation.y-field_y_beacon; 
+
     float dx=locator.merged.x-field_x_beacon;
     float dy=locator.merged.y-field_y_beacon;
     return atan2(dy,dx)*180.0/M_PI;
@@ -647,15 +655,32 @@ private:
   bool autonomous_drive(vec2 target,float target_angle) {
     if (!drive_posture()) return false; // don't drive yet
     
-    vec2 cur(locator.merged.x,locator.merged.y); // robot location
-    float cur_angle=locator.merged.angle; 
+
+    //Read data from the localizer files?
+    // if(exchange_plan_current.updated())
+    // {
+    //   currentLocation = exchange_plan_current.read();
+    // }
+    // vec2 cur(currentLocation.x, currentLoction.y); // robot location
+    // float cur_angle=currentLocation.angle;
+
+     vec2 cur(locator.merged.x,locator.merged.y); // robot location
+    float cur_angle=locator.merged.angle;
 
     gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
     if (!simulate_only && fmod(cur_time,3.0)<2.0) {
       return false; // periodic stop (for safety, and for re-localization)
     } else { // re-point beacon while robot is driving
+    // The code for chaning to localizer updating the position
+      // if(exchange_plan_current.updated())
+      // {
+      //   currentLocation = exchange_plan_current.read();
+      // }
+      // float beacon_target_angle=get_beacon_angle(currentLocation.x,currentLocation.y);
+
       float beacon_target_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
+
       // Move in jumps (to avoid motion blur from re-pointing all the time)
       int quantize=10.0; 
       float beacon_target=
@@ -675,7 +700,14 @@ private:
     }
     if (!path_planning_OK)
     {
+      //Check for updates
+      // if(exchange_plan_current.updated())
+      // {
+      //   currentLocation = exchange_plan_current.read();
+      // }
       // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
+      // double angle=currentLocation.angle; // degrees (!?)
+
       double angle=locator.merged.angle; // degrees (!?)
       double arad=angle*M_PI/180.0; // radians
       vec2 orient(cos(arad),sin(arad)); // orientation vector (forward vector of robot)
@@ -702,11 +734,19 @@ private:
   bool autonomous_turn(double angle_target_deg=0.0,bool do_posture=true)
   {
     if (do_posture) { if (!drive_posture()) return false; } // don't drive yet
+    // if(exchange_plan_current.updated())
+    // {
+    //   currentLocation = exchange_plan_current.read();
+    // }
+    // double angle_err_deg=currentLocation.angle-angle_target_deg;
+    // robotPrintln("Autonomous turn to %.0f from %.0f deg\n",
+      // angle_target_deg, currentLocation.angle);
+    
     double angle_err_deg=locator.merged.angle-angle_target_deg;
     reduce_angle(angle_err_deg);
     robotPrintln("Autonomous turn to %.0f from %.0f deg\n",
       angle_target_deg, locator.merged.angle);
-
+   
     double turn=angle_err_deg*0.1; // proportional control
     double maxturn=drive_speed(0.0,1.0);
     turn=limit(turn,maxturn);
@@ -716,10 +756,20 @@ private:
 
   // Make sure we're still facing the collection bin.  If not, pivot to face it.
   bool check_angle() {
+    // if(exchange_plan_current.updated())
+    // {
+    //   currentLocation = exchange_plan_current.read();
+    // } 
+    // if (currentLocation.percent<0.2) return true; // we don't know where we are--just keep driving?
+    // double target=180.0/M_PI*atan2(currentLocation.y+200.0,currentLocation.x);
+    // double err=currentLocation.angle-target;
+    // robotPrintln("check_angle: cur %.1f deg, target %.1f deg",currentLocation.angle,target);
+
     if (locator.merged.confidence<0.2) return true; // we don't know where we are--just keep driving?
     double target=180.0/M_PI*atan2(locator.merged.y+200.0,locator.merged.x);
     double err=locator.merged.angle-target;
     robotPrintln("check_angle: cur %.1f deg, target %.1f deg",locator.merged.angle,target);
+    
     reduce_angle(err);
     if (fabs(err)<10.0) return true; // keep driving--straight enough
     else return autonomous_turn(target,false); // turn to face target
@@ -805,6 +855,14 @@ void robot_manager_t::autonomous_state()
     else if (locator.merged.confidence>=0.1) { // we know where we are!
       sim.loc=locator.merged; // reset simulator to real detected values
 
+    // if(exchange_plan_current.updated())
+    // {
+    //   currentLocation = exchange_plan_current.read();
+    // }
+    // else if (currentLocation.percent>=0.1) { // we know where we are!
+      // Need some interefacing with the simulation stuff
+
+      sim.loc=locator.merged; // reset simulator to real detected values
       enter_state(state_scan_obstacles);
     }
     else // don't know where we are yet--change pointing
@@ -851,6 +909,14 @@ void robot_manager_t::autonomous_state()
     if (drive_posture()) {
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-locator.merged.y;
+
+      // if(exchange_plan_current.updated())
+      // {
+      //   currentLocation = exchange_plan_current.read();
+      // }
+      // double target_Y=field_y_mine_start; // mining area distance (plus buffer)
+      // double distance=target_Y-currentLocation.y;
+
       if (autonomous_drive(mine_target_loc,mine_target_angle) ||
           distance<0.0)  // we're basically there now
       {
@@ -915,7 +981,16 @@ void robot_manager_t::autonomous_state()
   else if (robot.state==state_dump_align)
   {
     vec2 target=dump_align_loc;
-    target.y=locator.merged.y; // don't try to turn when this close
+    
+    // if(exchange_plan_current.updated())
+    //   {
+    //     currentLocation = exchange_plan_current.read();
+    //   }
+    // target.y=currentLocation.y; // don't try to turn when this close
+    // if (autonomous_drive(target,dump_target_angle)
+    //   || (fabs(currentLocation.y-target.y)<30 && fabs(currentLocation.x-field_x_trough_stop)<=10) )
+
+        target.y=locator.merged.y; // don't try to turn when this close
     if (autonomous_drive(target,dump_target_angle)
       || (fabs(locator.merged.y-target.y)<30 && fabs(locator.merged.x-field_x_trough_stop)<=10) )
     {
@@ -1045,6 +1120,7 @@ void robot_manager_t::update(void) {
   }
 
 // Show real and simulated robots
+//needs to be updated for new data exchange?
   robot_display(locator.merged);
 
 	robot_display_autonomy(telemetry.autonomy);
@@ -1195,11 +1271,14 @@ void robot_manager_t::update(void) {
   // Fake the bucket sensor from the sim (no hardware sensor for now)
   robot.sensor.bucket=sim.bucket*(950-179)+179;
 
+  // some values for the determining location. needed by the localization.
   float wheelbase=40; // cm between track centerlines
   float drivecount2cm=6*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
   float driveL = fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm;
   float driveR = fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm;
   
+  //asking the locator for an updated cords based on encoder change.
+  //
   locator.move_wheels(driveL,driveR,wheelbase);
   
   // Update drive encoders data exchange
