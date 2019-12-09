@@ -21,7 +21,7 @@ else
 endif
 
 OPTS=-g -O4
-CFLAGS=$(OPTS) -Wall -Wno-deprecated-declarations -Wno-char-subscripts
+CFLAGS=$(OPTS) -Wall -Wno-psabi -Wno-deprecated-declarations -Wno-char-subscripts
 
 all: backend
 
