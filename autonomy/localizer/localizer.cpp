@@ -41,6 +41,7 @@ int main() {
         // new2dcords.x = ?;
         // new2dcords.y = ?;
         // new2dcords.percent = ?;
+        
         // Extract position and orientation from absolute location
         //Interesting issue, the pos used in the new iteration is not 3d cords. the vec3 is a a 3d cord stuff?
         vec3 P=vec3(oldpos.x, oldpos.y,0.0); // position of robot (center of wheels)
@@ -54,6 +55,7 @@ int main() {
         wheel[0]=P-0.5*wheelbase*LR;
         wheel[1]=P+0.5*wheelbase*LR;
 
+    //How does wheels vs tracks work?
     // Move wheels forward by specified amounts
         wheel[0]+=FW*currentencode.left;
         wheel[1]+=FW*currentencode.right;
