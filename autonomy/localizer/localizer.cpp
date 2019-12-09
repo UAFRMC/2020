@@ -7,8 +7,15 @@
 #include <stdio.h>
 #include "aurora/data_exchange.h"
 #include "aurora/lunatic.h"
+// #include "osl/quadric.h"
+// New vive localization
+#include "osl/transform.h"
+#include "osl/file_ipc.h"
+
 
 int main() {
+    float wheelbase=40; // cm between track centerlines
+    float drivecount2cm=6*5.0/36; // cm of driving per wheel encoder tick == 8 pegs on drive sprockets, 5 cm between sprockets, 36 encoder counts per revolution
     typedef std::array<aurora::vision_marker_report, aurora::vision_marker_report::max_count> vision_marker_reports;
     //Data sources need to read from, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_drive_commands();
@@ -21,12 +28,12 @@ int main() {
     MAKE_exchange_obstacle_view();
 
     while (true) {
-        aurora::drive_commands currentdrive = exchange_drive_commands.read();
         aurora::drive_encoders currentencode = exchange_drive_encoders.read();
+        aurora::drive_commands currentdrive = exchange_drive_commands.read();
         aurora::stepper_pointing currentstepper = exchange_stepper_report.read();
         aurora::vision_marker_reports currentvision = exchange_marker_reports.read();
 
-
+        aurora::robot_loc2D oldpos = exchange_plan_current.read();
         //Some logic to determine what our next plan of movement is?
         //Currently just creates empty objects needs some data?
         aurora::robot_loc2D new2dcords;
@@ -34,7 +41,39 @@ int main() {
         // new2dcords.x = ?;
         // new2dcords.y = ?;
         // new2dcords.percent = ?;
+        // Extract position and orientation from absolute location
+        //Interesting issue, the pos used in the new iteration is not 3d cords. the vec3 is a a 3d cord stuff?
+        vec3 P=vec3(oldpos.x, oldpos.y,0.0); // position of robot (center of wheels)
+        double ang_rads=oldpos.angle*M_PI/180.0; // 2D rotation of robot
 
+    // Reconstruct coordinate system and wheel locations 
+        vec3 FW=vec3(cos(ang_rads),sin(ang_rads),0.0); // forward vector
+        vec3 UP=vec3(0,0,1); // up vector
+        vec3 LR=FW.cross(UP); // left-to-right vector
+        vec3 wheel[2];
+        wheel[0]=P-0.5*wheelbase*LR;
+        wheel[1]=P+0.5*wheelbase*LR;
+
+    // Move wheels forward by specified amounts
+        wheel[0]+=FW*currentencode.left;
+        wheel[1]+=FW*currentencode.right;
+
+    // Extract new robot position and orientation
+        P=(wheel[0]+wheel[1])*0.5;
+        LR=normalize(wheel[1]-wheel[0]);
+        FW=UP.cross(LR);
+        ang_rads=atan2(FW.y,FW.x);
+
+    // Put back into merged absolute location
+        new2dcords.angle=180.0/M_PI*ang_rads;
+        new2dcords.x=P.x; new2dcords.y=P.y;
+
+    //method to determin cofidence?
+    // float view_robot_angle=get_beacon_angle(locator.merged.x,locator.merged.y);
+    // float beacon_FOV=30; // field of view of beacon (markers)
+    // if (beacon_FOV>fabs(telemetry.autonomy.markers.beacon - view_robot_angle))
+    //   locator.merged.confidence+=0.1;
+    // locator.merged.confidence=std::min(1.0,locator.merged.confidence*(1.0-dt));
 
         aurora::robot_coord3D new3dcords;
         // new3dcords.X = ?;
