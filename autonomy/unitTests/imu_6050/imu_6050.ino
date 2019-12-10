@@ -218,6 +218,7 @@ void MPU_readings::setup(){
   // Clear the 'sleep' bit to start the sensor.
   MPU_writeSensor(MPU_PWR_MGMT_1, 0);
 
+/*
   MPU_I2C_TARGET = 0x0C;      //change Adress to Compass
 
   MPU_writeSensor(0x0A, 0x00); //PowerDownMode
@@ -243,6 +244,7 @@ void MPU_readings::setup(){
   MPU_writeSensor(0x64, 0x01); //override register
   MPU_writeSensor(0x6A, 0x20); //enable master i2c mode
   MPU_writeSensor(0x34, 0x13); //disable slv4
+*/
 
 //  MPU_writeSensor(MPU_GYRO_CONFIG, 0x18); //2000 deg/sec full scale
   MPU_writeSensor(MPU_GYRO_CONFIG, 0x0); //250 deg/sec best accuracy
@@ -281,9 +283,9 @@ void setup()
   Serial.println("I2C setup");
   Wire.begin();
 
-  Serial.println("MPU setup");
+  Serial.println("MPU setup starting");
   MPU_readings::setup();
-  Serial.println("MPU setup");
+  Serial.println("MPU setup done");
 
 }
 
@@ -293,7 +295,7 @@ void loop()
   // IMU
   MPU_readings imu=MPU_readings::read();
   Serial.print("t  ");
-  Serial.print(millis());
+  Serial.print(millis()%32768);
 
   Serial.print("   A ");
   for (int i=0;i<3;i++) { 
@@ -318,4 +320,3 @@ void loop()
   Serial.println();
   delay(10);
 }
-
