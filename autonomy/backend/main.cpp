@@ -44,7 +44,7 @@
 
 
 #include "aurora/lunatic.h"
-#include "../localizer/localize.h"
+//#include "../localizer/localize.h"
 // Crude global variables for lunatic data exchange
 MAKE_exchange_drive_encoders();
 MAKE_exchange_stepper_request();

@@ -15,17 +15,11 @@ The "Back End" runs on an on-robot PC, and it:
 
 Build instructions:
 	sudo apt-get install freeglut3-dev g++ make libzmq3-dev
-
-For the vive viewer:
-	sudo cp vive/91-vive.rules /etc/udev/rules.d/
-	cd vive
+	cd backend
 	make
+	./backend --sim
+(The backend without --sim tries to connect to the Arduino mega.)
 
-For the kinect classifier:
-	sudo cp kinect/66-kinect.rules /etc/udev/rules.d/
-	sudo apt-get install libfreenect-dev libusb-1.0-0-dev
-	cd kinect
-	make
 
 For the aruco marker viewer:
 	sudo apt-get install cmake libopencv-dev
@@ -43,6 +37,17 @@ For the realsense viewer:
   ./scripts/patch-realsense-ubuntu-lts.sh 
   cmake .
 
+
+For the vive viewer:
+	sudo cp vive/91-vive.rules /etc/udev/rules.d/
+	cd vive
+	make
+
+For the kinect classifier:
+	sudo cp kinect/66-kinect.rules /etc/udev/rules.d/
+	sudo apt-get install libfreenect-dev libusb-1.0-0-dev
+	cd kinect
+	make
 
 
 
