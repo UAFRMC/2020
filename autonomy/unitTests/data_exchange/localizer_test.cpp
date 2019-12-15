@@ -1,4 +1,4 @@
-/* Debug print the Localizers postional data */
+/* Debug print the Localizers positional data */
 #include "aurora/lunatic.h"
 #include <iostream>
 int main() {
