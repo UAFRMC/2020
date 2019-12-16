@@ -55,6 +55,8 @@ struct robot_coord3D {
     // Create a limited 2D version of this coordinate system.
     //  Returns the current measured angular tilt error, in degrees.
     float get2D(robot_loc2D &loc) const;
+    
+    // FIXME: add print function
 };
 
 
@@ -69,6 +71,13 @@ struct robot_loc2D {
     
     // Project out to a full 3D coordinate system
     robot_coord3D get3D(float height=0.0) const;
+    
+    void print(FILE *where=stdout, const char *terminator="\n") 
+    {
+        fprintf(where, "2Dpos: %6.1f  X, %6.1f  Y   %6.1f deg    %5.1f  %%sure%s",
+                x,y,angle, percent, 
+                terminator); 
+    }
 };
 
 

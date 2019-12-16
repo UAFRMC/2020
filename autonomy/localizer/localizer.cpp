@@ -26,6 +26,7 @@ int main() {
     //Data source needed to write too, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_plan_current();
     MAKE_exchange_obstacle_view();
+    aurora::drive_encoders lastencoder={0.0,0.0};
 
     while (true) {
         aurora::drive_encoders currentencode = exchange_drive_encoders.read();
@@ -57,8 +58,10 @@ int main() {
 
     //How does wheels vs tracks work?
     // Move wheels forward by specified amounts
-        wheel[0]+=FW*currentencode.left;
-        wheel[1]+=FW*currentencode.right;
+        aurora::drive_encoders encoderchange = currentencode - lastencoder;
+        lastencoder = currentencode;
+        wheel[0]+=FW*encoderchange.left;
+        wheel[1]+=FW*encoderchange.right;
 
     // Extract new robot position and orientation
         P=(wheel[0]+wheel[1])*0.5;
