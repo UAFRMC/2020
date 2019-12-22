@@ -64,7 +64,7 @@ int main() {
     //How does wheels vs tracks work?
     // Move wheels forward by specified amounts
         aurora::drive_encoders encoderchange = currentencode - lastencoder;
-        float maxjump=100.0f;
+        float maxjump=50.0f; // < avoids huge jumps due to startup
         if (fabs(encoderchange.left<maxjump) && fabs(encoderchange.right<maxjump)) 
         {
             wheel[0]+=FW*encoderchange.left;
