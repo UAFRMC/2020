@@ -33,6 +33,8 @@ backend talks to the robot, using two subsystems:
         manages the autonomy state machine and pilot comms (over UDP)
     KEND: Keep Electronics Not Dying 
         talks to the Arduino, and restarts it if needed.
+
+This is the project Interface Control Document (ICD).
 */
 #ifndef __AURORA_LUNATIC_H
 #define __AURORA_LUNATIC_H

@@ -52,12 +52,29 @@ struct robot_coord3D {
     vec3 X,Y,Z; // unit vector axes of coordinate system: X is along vehicle travel, Y is across (robot's left side), Z is up
     float percent; // Percent confidence.  <=0.0 for "I don't know".  100% for absolute certainty. 
     
+    // Project this 3D robot-relative point into 3D world coordinates
+    vec3 world_from_robot(const vec3 &robot) const {
+        return origin+X*robot.x+Y*robot.y+Z*robot.z;
+    }
+    // Project this world-coordinates point into robot coordinates
+    vec3 robot_from_world(const vec3 &world) const {
+        vec3 rel=world-origin;
+        return vec3(rel.dot(X),rel.dot(Y),rel.dot(Z));
+    }
+    
     // Create a limited 2D version of this coordinate system.
     //  Returns the current measured angular tilt error, in degrees.
     float get2D(robot_loc2D &loc) const;
     
     // FIXME: add print function
 };
+
+// Return a 3D unit vector representing this 2D heading angle, in degrees.
+vec3 vec3_from_angle(float angle_deg) {
+    float angle_rad=angle_deg*(3.141592f/180.0f); // to radians
+    return vec3(cos(angle_rad),sin(angle_rad),0.0f);
+}
+
 
 
 // Represents the 2D position and orientation of the robot on the field,
@@ -69,8 +86,16 @@ struct robot_loc2D {
     float angle; // robot heading: degrees counterclockwise from the +X axis
     float percent; // Percent confidence.   <=0.0 for "I don't know".  100% for absolute certainty.
     
-    // Project out to a full 3D coordinate system
-    robot_coord3D get3D(float height=0.0) const;
+    // Project us out to a full 3D coordinate system
+    robot_coord3D get3D(float height=0.0) const {
+        robot_coord3D loc;
+        loc.origin=vec3(x,y,height);
+        loc.X=vec3_from_angle(angle);
+        loc.Y=vec3_from_angle(angle+90.0f);
+        loc.Z=loc.X.cross(loc.Y);
+        loc.percent=percent;
+        return loc;
+    }
     
     void print(FILE *where=stdout, const char *terminator="\n") 
     {

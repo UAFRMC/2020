@@ -27,17 +27,22 @@ int main() {
     MAKE_exchange_plan_current();
     MAKE_exchange_obstacle_view();
     aurora::drive_encoders lastencoder={0.0,0.0};
+    
+    aurora::robot_loc2D pos;
+    pos.x = field_x_size/2;
+    pos.y = 100.0; // start location
+    pos.angle=0.0f;
+    pos.percent=0.0f;
 
     while (true) {
         aurora::drive_encoders currentencode = exchange_drive_encoders.read();
         aurora::drive_commands currentdrive = exchange_drive_commands.read();
         aurora::stepper_pointing currentstepper = exchange_stepper_report.read();
         aurora::vision_marker_reports currentvision = exchange_marker_reports.read();
-
-        aurora::robot_loc2D oldpos = exchange_plan_current.read();
+        
         //Some logic to determine what our next plan of movement is?
         //Currently just creates empty objects needs some data?
-        aurora::robot_loc2D new2dcords;
+        aurora::robot_loc2D new2dcords=pos;
         // new2dcords.angle = ?;
         // new2dcords.x = ?;
         // new2dcords.y = ?;
@@ -45,8 +50,8 @@ int main() {
         
         // Extract position and orientation from absolute location
         //Interesting issue, the pos used in the new iteration is not 3d cords. the vec3 is a a 3d cord stuff?
-        vec3 P=vec3(oldpos.x, oldpos.y,0.0); // position of robot (center of wheels)
-        double ang_rads=oldpos.angle*M_PI/180.0; // 2D rotation of robot
+        vec3 P=vec3(pos.x, pos.y,0.0); // position of robot (center of wheels)
+        double ang_rads=pos.angle*M_PI/180.0; // 2D rotation of robot
 
     // Reconstruct coordinate system and wheel locations 
         vec3 FW=vec3(cos(ang_rads),sin(ang_rads),0.0); // forward vector
@@ -59,9 +64,14 @@ int main() {
     //How does wheels vs tracks work?
     // Move wheels forward by specified amounts
         aurora::drive_encoders encoderchange = currentencode - lastencoder;
+        float maxjump=100.0f;
+        if (fabs(encoderchange.left<maxjump) && fabs(encoderchange.right<maxjump)) 
+        {
+            wheel[0]+=FW*encoderchange.left;
+            wheel[1]+=FW*encoderchange.right;
+        }
+        
         lastencoder = currentencode;
-        wheel[0]+=FW*encoderchange.left;
-        wheel[1]+=FW*encoderchange.right;
 
     // Extract new robot position and orientation
         P=(wheel[0]+wheel[1])*0.5;
@@ -80,7 +90,7 @@ int main() {
     //   locator.merged.confidence+=0.1;
     // locator.merged.confidence=std::min(1.0,locator.merged.confidence*(1.0-dt));
 
-        aurora::robot_coord3D new3dcords;
+        aurora::robot_coord3D new3dcords=new2dcords.get3D();
         // new3dcords.X = ?;
         // new3dcords.Y = ?;
         // new3dcords.Z = ?;
@@ -93,6 +103,8 @@ int main() {
 
         exchange_plan_target.write_begin() = new3dcords;
         exchange_plan_target.write_end();
+        
+        pos=new2dcords;
 
         //Sleep? Forced latency?
         aurora::data_exchange_sleep(10);
