@@ -58,8 +58,8 @@ public:
     cv::line(image,project(start),project(end),draw_color,line_thickness);
   }
   
-  void decay(void) {
-    image=image*0.8f; // slowly dim the image, CRT style
+  void decay(float decay_rate=0.15f) {
+    image=image*(1.0f-decay_rate); // slowly dim the image, CRT style
   }
     
   void show(const char *name) {
@@ -97,17 +97,18 @@ void draw_robot(const aurora::robot_coord3D &loc,
             loc.world_from_robot(vec3(track_x_max,leftright*track_y,0.0f)));
         
         // Grousers
-        float per_grouser=10.0;
+        float per_grouser=20.0; //<- more visual than actual
         img.set_color(1.0f*track_color);
         img.set_thickness(1.0f);
         float start=per_grouser-fmodpos((leftright>0?enc.left:enc.right),per_grouser);
-        for (float x=track_x_min-per_grouser/2+start;
-                   x<track_x_max+per_grouser/2;
+        for (float x=track_x_min-track_thick/2+start;
+                   x<track_x_max+track_thick/2;
                    x+=per_grouser) 
         {
+            float w=track_thick*0.6f; // visual width of grousers
             img.line(
-                loc.world_from_robot(vec3(x,leftright*track_y-track_thick/2,0.0f)),
-                loc.world_from_robot(vec3(x,leftright*track_y+track_thick/2,0.0f)));
+                loc.world_from_robot(vec3(x,leftright*track_y-w,0.0f)),
+                loc.world_from_robot(vec3(x,leftright*track_y+w,0.0f)));
         }
     }
     
@@ -130,7 +131,7 @@ void draw_robot(const aurora::robot_coord3D &loc,
     
     // camera mast
     vec3 cam(0,+robot_y,50.0f);
-    img.set_color(vec3(1,1,1));
+    img.set_color(0.3f*vec3(1,1,1));
     img.set_thickness(0.5f);
     float camera_facing=0.0f;
     for (int fov=-1;fov<=+1;fov+=2) {
