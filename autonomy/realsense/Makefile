@@ -1,4 +1,4 @@
-CFLAGS=-I../../autonomy/include
+CFLAGS=-I../include
 LIBS=-lzmq -lpthread -laruco -lrealsense2 `pkg-config opencv --cflags --libs`
 OPTS=-g -O4
 

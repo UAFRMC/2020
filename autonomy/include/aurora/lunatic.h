@@ -172,8 +172,7 @@ project depth camera obstacles into field coordinates:
     Read by the obstacle detection subsystem
 Coordinate system: absolute field coordinates
 */
-#define MAKE_exchange_obstacle_view()   aurora::data_exchange<aurora::robot_coord3D> exchange_plan_target("plan_target.loc3D")
-
+#define MAKE_exchange_obstacle_view()   aurora::data_exchange<aurora::robot_coord3D> exchange_obstacle_view("obstacle_view.loc3D")
 
 
 
@@ -182,7 +181,13 @@ Coordinate system: absolute field coordinates
 struct vision_marker_report {
     robot_coord3D coords; // camera-relative coordinates of marker
     int32_t markerID; // 0 if invalid, or an Aruco marker ID
+    
+    // Return true if we're a valid report
+    inline bool get_valid() const { return markerID!=0; }
+    
     enum {max_count=2};
+    
+    vision_marker_report() :markerID(0) {}
 };
 //******This must be defined in the file using the #define Make_exchange*****
 // This is an array of reports for all currently visible markers
@@ -194,21 +199,20 @@ report a computer vision derived marker position to the localizer:
     Read by the localizer
 Coordinate system: camera-relative coordinates
 */
-#define MAKE_exchange_marker_reports()   aurora::data_exchange<vision_marker_reports> exchange_marker_reports("vision_marker.reports")
+#define MAKE_exchange_marker_reports()   aurora::data_exchange<aurora::vision_marker_reports> exchange_marker_reports("vision_marker.reports")
 
 
 
 /* -------------- Robot Obstacle Detection for Navigation --------------
   Stores a rasterized top-down view of the robot field.
     grid_pixel: datatype at each pixel
-    GRIDSIZE: cm per pixel (ideally an integer multiple of navigation size)
 */
-template <typename grid_pixel, int GRIDSIZE_T>
+template <typename grid_pixel>
 class field_raster {
 public:
-  enum {GRIDSIZE=GRIDSIZE_T}; // cm per pixel
-  enum {GRIDX=(field_x_size+GRIDSIZE-1)/GRIDSIZE}; // xy pixel dimensions (rounded up)
-  enum {GRIDY=(field_y_size+GRIDSIZE-1)/GRIDSIZE};
+  enum {GRIDSIZE=obstacle_grid::GRIDSIZE}; // cm per pixel
+  enum {GRIDX=obstacle_grid::GRIDX}; // xy pixel dimensions
+  enum {GRIDY=obstacle_grid::GRIDY};
   enum {GRIDTOTAL=GRIDX*GRIDY}; // total pixel
   
   grid_pixel raster[GRIDTOTAL];
@@ -243,17 +247,19 @@ enum {
     field_driveable = 100, // below this: not driveable.  Above this: driveable
 
     field_flat=120, // seen and looks flat(enough)
+    
     field_driven=250 // we have driven here before (definitely safe)
+    
 };
 //*******This must be defined in the file using the #define Make_exchange******
-typedef field_raster<unsigned char,4> field_drivable;
+typedef field_raster<unsigned char> field_drivable;
 
 /* This macro declares the variable used to 
 store the field grid of obstacle / drivable locations:
     Written by the computer vision system
     Read by the path planner
 */
-#define MAKE_exchange_field_drivable()   aurora::data_exchange<field_drivable> exchange_field_drivable("field_drivable.grid")
+#define MAKE_exchange_field_drivable()   aurora::data_exchange<aurora::field_drivable> exchange_field_drivable("field_drivable.grid")
 
 
 

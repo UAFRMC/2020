@@ -1,4 +1,4 @@
-OPTS=-g
+OPTS=-O4
 CFLAGS=-I../include -std=c++11 $(OPTS)
 PROGS=pathplanner
 

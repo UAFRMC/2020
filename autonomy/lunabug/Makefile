@@ -1,4 +1,4 @@
-OPTS=-g -O4
+OPTS=-O4
 CFLAGS=-I../include  -Wall  -std=c++14  $(OPTS)
 LIBS=`pkg-config opencv --cflags --libs`
 PROGS=lunaview lunatic_print_drive lunatic_print_encoders lunatic_print_stepper lunatic_print_2Dpos
