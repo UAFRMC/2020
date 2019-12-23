@@ -105,6 +105,7 @@ void project_depth_to_2D(const realsense_camera_capture &cap,
     obstacle_grid &map2D)
 {
     printf("Camera view: "); view3D.print();
+    const float depth_calibration_scale_factor=1.1f; // fudge factor to match real distances
     const float sanity_distance_min = 60.0; // mostly parts of robot if they're too close
     const float sanity_distance_max = 250.0; // depth gets ratty if it's too far out
     const float sanity_Z_max = 200.0; // ignore ceiling (with wide error band for tilt)
@@ -116,6 +117,8 @@ void project_depth_to_2D(const realsense_camera_capture &cap,
         float depth=cap.get_depth(x,y);
         if (depth<=sanity_distance_min || depth>sanity_distance_max) 
             continue; // out of range value
+        
+        depth *= depth_calibration_scale_factor;
         
         vec3 cam = cap.project_3D(depth,x,y);
         vec3 world = view3D.world_from_local(cam);
@@ -164,11 +167,16 @@ void mark_obstacles(const obstacle_grid &map2D,aurora::field_drivable &field)
 
 int main(int argc,const char *argv[]) {
     int show_GUI=0;
-    int res=720; // camera's requested vertical resolution
+    
+    // res=720; fps=30; // <- 200% of gaming laptop CPU
+    // res=540; fps=60; // <- 220% of gaming laptop CPU
+    // res=540; fps=30; // <- 100% of gaming laptop CPU
+    
+    int res=540; // camera's requested vertical resolution
     int fps=30; // camera's frames per second 
     bool aruco=true; // look for computer vision markers in RGB data
     bool obstacle=true; // look for obstacles/driveable areas in depth data
-    int erode=0; // image erosion passes
+    int erode=3; // image erosion passes
     for (int argi=1;argi<argc;argi++) {
       std::string arg=argv[argi];
       if (arg=="--gui") show_GUI++;
@@ -201,7 +209,7 @@ int main(int argc,const char *argv[]) {
         // Grab data from realsense
         realsense_camera_capture cap(cam);
         
-        // Run aruco marker detection
+        // Run aruco marker detection on color image
         if (aruco)
         {
             vision_marker_watcher watcher;
@@ -212,7 +220,7 @@ int main(int argc,const char *argv[]) {
             }
         }
         
-        // Run obstacle detection
+        // Run obstacle detection on depth image
         if (obstacle) {
             if (erode) erode_depth(cap,erode);
             
