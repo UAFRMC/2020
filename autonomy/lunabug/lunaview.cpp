@@ -72,6 +72,31 @@ public:
   }
 };
 
+
+// Draw a set of horizontal and vertical lines
+void draw_grid(float step,field_debug_image &img) {
+    for (int d=0;d<field_y_size;d+=step) {
+        img.line(vec3(d,0,0),vec3(d,field_y_size,0));
+        img.line(vec3(0,d,0),vec3(field_x_size,d,0));
+    }
+}
+
+// Debug a 3D coordinate system, by drawing its coordinate axes
+void debug_coords(const aurora::robot_coord3D &coord,std::string what,field_debug_image &img) 
+{
+    float size=10.0f;
+    img.set_thickness(0.5f);
+    
+    // printf("  %s: ",what.c_str()); coord.print();
+    
+    for (int axis=0;axis<3;axis++) {
+        vec3 dir(0.0f); dir[axis]=1.0f;
+        img.set_color(dir); // X == R, Y==G, Z==B
+        img.line(coord.origin,coord.world_from_local(size*dir));
+    }
+}
+
+
 // Draw the areas of this field that are drivable
 void draw_drivable(const aurora::field_drivable &field,field_debug_image &img)
 {
@@ -176,28 +201,25 @@ void draw_cameraview(const aurora::robot_coord3D &camera3D,
     }
 }
 
-// Debug a 3D coordinate system, by drawing its coordinate axes
-void debug_coords(const aurora::robot_coord3D &coord,std::string what,field_debug_image &img) 
+// Draw all visible computer vision markers
+void draw_markers(const aurora::robot_coord3D &camera3D,const aurora::vision_marker_reports &reports,field_debug_image &img)
 {
-    float size=10.0f;
-    img.set_thickness(0.5f);
-    
-    // printf("  %s: ",what.c_str()); coord.print();
-    
-    for (int axis=0;axis<3;axis++) {
-        vec3 dir(0.0f); dir[axis]=1.0f;
-        img.set_color(dir); // X == R, Y==G, Z==B
-        img.line(coord.origin,coord.world_from_local(size*dir));
-    }
+        for (aurora::vision_marker_report report : reports) 
+            if (report.is_valid())
+            {
+                aurora::robot_coord3D marker_coords=camera3D.compose(report.coords);
+                img.set_color(vec3(0.9f));
+                img.set_thickness(2.0f);
+                float markersize=15.0;
+                img.line(
+                    marker_coords.world_from_local(vec3(-markersize,0,0)),
+                    marker_coords.world_from_local(vec3(+markersize,0,0)));
+                
+                debug_coords(marker_coords,
+                    "marker"+std::to_string(report.markerID),img);
+            }
 }
 
-// Draw a set of horizontal and vertical lines
-void draw_grid(float step,field_debug_image &img) {
-    for (int d=0;d<field_y_size;d+=step) {
-        img.line(vec3(d,0,0),vec3(d,field_y_size,0));
-        img.line(vec3(0,d,0),vec3(field_x_size,d,0));
-    }
-}
 
 int main(int argc,char *argv[]) {
     // Figure out which grid filename to read
@@ -233,15 +255,14 @@ int main(int argc,char *argv[]) {
         draw_robot(loc3D,exchange_drive_encoders.read(),img);
         debug_coords(loc3D,"robot",img);
         
+        // Draw the camera
         aurora::robot_coord3D camera3D=exchange_obstacle_view.read();
         draw_cameraview(camera3D,img);
         debug_coords(camera3D,"camera",img);
         
         // Draw all detected computer vision markers
-        for (aurora::vision_marker_report report : exchange_marker_reports.read()) 
-            if (report.get_valid())
-                debug_coords(camera3D.compose(report.coords),"marker"+std::to_string(report.markerID),img);
-        
+        if (exchange_marker_reports.updated())
+            draw_markers(camera3D,exchange_marker_reports.read(),img);
 
         img.show("LunaView");
         img.decay();

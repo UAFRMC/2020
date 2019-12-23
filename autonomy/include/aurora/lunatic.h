@@ -183,7 +183,7 @@ struct vision_marker_report {
     int32_t markerID; // 0 if invalid, or an Aruco marker ID
     
     // Return true if we're a valid report
-    inline bool get_valid() const { return markerID!=0; }
+    inline bool is_valid() const { return markerID!=0; }
     
     enum {max_count=2};
     
