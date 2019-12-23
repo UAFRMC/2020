@@ -5,7 +5,7 @@ OPTS=-g -O4
 
 all: realsense
 
-realsense: realsense.cpp ../include/*/*
+realsense: realsense.cpp 
 	g++ $(OPTS) -std=c++14 $(CFLAGS) $< -o $@ $(LIBS)
 
 clean:

@@ -5,11 +5,10 @@
 
   Orion Sky Lawlor, lawlor@alaska.edu, 2014-03-23 (Public Domain)
 */
-#ifndef __AURORA_ROBOTICS__ROBOT_H
-#define __AURORA_ROBOTICS__ROBOT_H
+#ifndef __AURORA_ROBOTICS__ROBOT_BASE_H
+#define __AURORA_ROBOTICS__ROBOT_BASE_H
 #include <stdint.h> /* for uint32_t */
 #include "field_geometry.h"
-
 
 /** This is the Arduino's AREF analog reference voltage.
   It's the scale factor that gives true voltage output,
@@ -186,103 +185,6 @@ public:
 	unsigned char semiauto:1; ///< semiauto mode is engaged
 };
 
-/** This class contains robot localization information. */
-class robot_localization {
-public:
-// Raw camera-derived robot location (cm)
-	float x,y,z;
-
-// Robot's orientation relative to lunabin (degrees from lunabin)
-//   angle==0 means facing directly away from lunabin (world +y = robot forward)
-//   angle==90 means facing due right (world +x = robot forward)
-	float angle;
-
-// Mining head's vertical pitch, in degrees.
-//    pitch==0 means the mining head is in rest configuration.
-//    positive pitch pushes the mining head back up away from the ground
-  float pitch;
-
-// Confidence in our position (1.0: recent detection; 0.0: no idea)
-	float confidence;
-
-	robot_localization() {
-	  x=y=z=0;
-	  angle=0;
-	  pitch=0;
-	  confidence=0;
-	}
-
-#ifdef __OSL_VEC2_H
-// 2D vector utility functions:
-#ifndef M_PI
-#define M_PI 3.14159265358979323
-#endif
-
-	/*
-	  Return a world coordinates unit 2D direction vector
-	  for this robot-relative angle.
-	  Angle==0 is facing along the robot's forward axis, in the direction of motion.
-	  Angle==90 is facing to the robot's right.
-	*/
-	vec2 dir_from_deg(float ang_deg=0.0) const {
-		float ang=(this->angle+ang_deg)*M_PI/180.0;
-		return vec2(cos(ang),sin(ang)); 
-	}
-	// Return a robot coordinates angle from this direction vector.
-	//  angles range from -180 to +180
-	float deg_from_dir(const vec2 &dir) const {
-		float world_deg=(180.0/M_PI)*atan2(dir.y,dir.x); 
-		float deg=world_deg-this->angle;
-		if (deg<-180.0) deg+=360.0;
-		if (deg>+180.0) deg-=360.0;
-		return deg;
-	}
-
-	vec2 center(void) const { return vec2(this->x,this->y); }
-	vec2 forward(void) const { return dir_from_deg(0.0); }
-	vec2 right(void) const { return dir_from_deg(90.0); }
-
-	/*
-	  Convert robot body coordinates (right, forward) to world coordinates.
-	*/
-	vec2 world_from_robot(const vec2 &r) const {
-		return center()+r.x*right()+r.y*forward();
-	}
-
-
-
-#endif
-};
-
-class robot_realsense_comms{
-public:
-	signed char requested_angle;
-	char command;
-	
-	robot_realsense_comms()
-	{
-		command = 0;
-		requested_angle = (unsigned char)-1;
-	}
-};
-
-// ********** //
-
-
-/**
- This class contains everything we currently know about the robot.
-*/
-class robot_base {
-public:
-robot_state_t state; ///< Current control state
-	robot_status_bits status; ///< Current software status bits
-	robot_sensors_arduino sensor;  ///< Current hardware sensor values
-	robot_localization loc; ///< Location
-	robot_power power; // Current drive commands
-	robot_realsense_comms realsense_comms;
-
-	bool autonomous;
-};
 
 #endif
 

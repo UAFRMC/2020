@@ -13,7 +13,6 @@
 
 #include "vision/grid.hpp"
 #include "vision/grid.cpp"
-#include "vision/terrain_map.cpp"
 #include "realsense_coordinates.hpp"
 
 #include "../firmware/field_geometry.h"

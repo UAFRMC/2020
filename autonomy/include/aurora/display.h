@@ -11,9 +11,8 @@
 #include <stdio.h>
 #include <stdarg.h>  /* for varargs stuff below */
 #include "osl/vec2.h"
-#include "osl/quadric.h"
 #include "aurora/network.h"
-#include "aurora/pose.h"
+#include "aurora/coords.h"
 #include <string>
 
 robot_state_t robotState_requested=state_last;
@@ -192,11 +191,6 @@ void robot_display_setup(const robot_base &robot) {
 	glVertex2fv(robot_draw+vec2(0,robot_draw_y));
 
 	double dump_angle=-30.0*((robot.sensor.bucket-180.0)/(950.0-180.0))+10.0;
-	
-	if (robot.loc.pitch!=0.0) {
-	  robotPrintln("Robot pitch: %.1f deg\n",robot.loc.pitch);
-	  dump_angle=-robot.loc.pitch;
-	}
 
 	vec2 dump_tip=dump_pivot + rotate(vec2(0,robot_draw_y-10),dump_angle);
 	vec2  box_tip=dump_pivot + rotate(vec2(0,15),dump_angle);
@@ -351,7 +345,7 @@ void robot_display_setup(const robot_base &robot) {
 		robotPrintln("Arduino not connected");
 	}
 
-	if (robot.loc.confidence>0.5) {
+	if (robot.loc.percent>50.0) {
 		robotPrintln("Location:  X %.0f   Y %.0f   angle %.0f",
 			robot.loc.x,robot.loc.y,
 			robot.loc.angle);
@@ -364,7 +358,7 @@ void robot_display(const robot_localization &loc,double alpha=1.0)
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 // Draw the robot
-	float conf=loc.confidence;
+	float conf=loc.percent*0.01;
 	glColor4f(0.8,0.8*conf,0.8*conf,alpha);
 	glBegin(GL_TRIANGLE_FAN);
 	//float ang=loc.angle*M_PI/180.0;
@@ -390,55 +384,9 @@ void robot_display(const robot_localization &loc,double alpha=1.0)
 	glColor4f(1.0,1.0,1.0,1.0);
 }
 
-void robot_display_pose(const robot_pose &pose) 
-{
-  if (pose.confidence<0.1) return;
-  vec3 start=pose.pos;
-  
-  glBegin(GL_TRIANGLE_FAN);
-  
-  glColor3f(0.5,0.5,0.5);
-  glVertex2fv(start);
-  
-  glColor3f(1.0,0.0,0.0);
-  glVertex2fv(start+20.0*pose.rgt);
-  
-  glColor3f(0.0,1.0,0.0);
-  glVertex2fv(start+20.0*pose.fwd);
-  
-  glEnd();
-}
-
-
-void robot_display_markers(const robot_markers_all &m) 
-{
-  robot_display_pose(m.pose);
-  printf("Robot pose: "); m.pose.print();
-  
-  for (int i=0;i<robot_markers_all::NMARKER;i++)
-  {
-    if (m.markers[i].confidence<0.1) continue;
-    printf("Marker %d: ",i); m.markers[i].print();
-    robot_display_pose(m.markers[i]);
-  }
-  
-  // Draw beacon field of view
-	glBegin(GL_LINES);
-	for (int angle=-30;angle<=+30;angle+=30) {
-		float color[4]={0.2,0.2,0.2,1.0};
-		glColor4fv(color);
-		float ang=(angle+m.beacon)*(M_PI/180.0);
-		float c=cos(ang), s=sin(ang);
-		vec2 start(field_x_beacon,field_y_beacon);
-		glVertex2fv(start);
-		glVertex2fv(start+200.0*vec2(c,s));
-	}
-	glEnd();
-}
-
 void robot_display_autonomy(const robot_autonomy_state &a)
 {
-  robot_display_markers(a.markers);
+  // robot_display_markers(a.markers);
   glBegin(GL_LINE_STRIP);
     glColor3f(0.0,1.0,0.0); // green path to target
     for (int i=0;i<(int)a.plan_len;i++)

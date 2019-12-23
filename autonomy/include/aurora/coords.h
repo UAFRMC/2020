@@ -26,7 +26,18 @@ Robot coordinates:
 #define __AURORA_COORDS_H
 
 #include <math.h> // for fmod
-#include "../aurora/vec3.h"
+#include "../aurora/vec3.h" // 3D vector
+#include "../osl/vec2.h" // 2D vector
+
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323
+#endif
+
+#ifndef DEG2RAD /* degrees to radians and back */
+#define DEG2RAD (M_PI/180.0)
+#define RAD2DEG (180.0/M_PI)
+#endif
 
 namespace aurora {
 
@@ -43,7 +54,7 @@ inline float normalize_angle(float angle) {
 
 // Return a 3D unit vector representing this 2D heading angle, in degrees.
 vec3 vec3_from_angle(float angle_deg) {
-    float angle_rad=angle_deg*(3.141592f/180.0f); // to radians
+    float angle_rad=angle_deg*DEG2RAD; // to radians
     return vec3(cos(angle_rad),sin(angle_rad),0.0f);
 }
 // Rotate this vector 90 degrees right-handed around the Z axis
@@ -126,13 +137,40 @@ struct robot_loc2D {
     float angle; // robot heading: degrees counterclockwise from the +X axis
     float percent; // Percent confidence.   <=0.0 for "I don't know".  100% for absolute certainty.
     
+
+// Utility functions
+	/*
+	  Return a world coordinates unit 2D direction vector
+	  for this robot-relative angle.
+	  Angle==0 is facing along the robot's forward axis, in the direction of motion.
+	  Angle==90 is facing to the robot's left (counterclockwise, normal math angles).
+	*/
+	vec2 dir_from_deg(float ang_deg=0.0) const {
+		float ang=(this->angle+ang_deg)*DEG2RAD;
+		return vec2(cos(ang),sin(ang)); 
+	}
+	// Return a robot coordinates angle from this direction vector.
+	//  angles range from -180 to +180
+	float deg_from_dir(const vec2 &dir) const {
+		float world_deg=RAD2DEG*atan2(dir.y,dir.x); 
+		float deg=world_deg-this->angle;
+		if (deg<-180.0) deg+=360.0;
+		if (deg>+180.0) deg-=360.0;
+		return deg;
+	}
+
+	vec2 center(void) const { return vec2(x,y); }
+	vec2 forward(void) const { return dir_from_deg(0.0); }
+	vec2 right(void) const { return dir_from_deg(-90.0); }
+    
+    
     // Project us out to a full 3D coordinate system
     robot_coord3D get3D(float height=0.0) const {
         robot_coord3D loc;
         loc.origin=vec3(x,y,height);
         loc.X=vec3_from_angle(angle);
-        loc.Y=vec3_from_angle(angle+90.0f);
-        loc.Z=loc.X.cross(loc.Y);
+        loc.Y=rotate_90_Z(loc.X);
+        loc.Z=vec3(0,0,1);
         loc.percent=percent;
         return loc;
     }
@@ -148,6 +186,9 @@ struct robot_loc2D {
 
 
 };
+
+// Old name for robot_loc2D: robot_localization
+typedef aurora::robot_loc2D robot_localization;
 
 
 #endif

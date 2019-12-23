@@ -8,8 +8,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "osl/quadric.h"
-#include "../firmware/robot_base.h"
+#include "aurora/robot.h"
 #include "aurora/robot.cpp"
 #include "aurora/display.h" /* for graphics */
 #include "aurora/network.h"

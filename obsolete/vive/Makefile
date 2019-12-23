@@ -4,7 +4,7 @@ OPTS=-g -O3 -flto
 CC:=gcc
 
 
-INCLUDES:=-I../include -Ilibsurvive/include/libsurvive -Ilibsurvive -Ilibsurvive/include -Ilibsurvive/redist 
+INCLUDES:=-I../../autonomy/include -Ilibsurvive/include/libsurvive -Ilibsurvive -Ilibsurvive/include -Ilibsurvive/redist 
 DEFINES:=-DUSE_DOUBLE
 
 CFLAGS:=$(INCLUDES) $(OPTS) -std=gnu99 $(DEFINES) 

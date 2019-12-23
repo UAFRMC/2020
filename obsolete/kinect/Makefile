@@ -1,5 +1,5 @@
 OPTS=-O3
-CFLAGS= -std=c++11 $(OPTS) -I. -I../include -I/usr/local/include/libfreenect
+CFLAGS= -std=c++11 $(OPTS) -I. -I../../autonomy/include -I/usr/local/include/libfreenect
 LDFLAGS=  -lfreenect -lpthread -lusb-1.0 -lGL -lglut 
 
 all: kinect

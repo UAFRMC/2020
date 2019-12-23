@@ -4,7 +4,7 @@
 #ifndef __AURORA_pose_H
 #define __AURORA_pose_H
 
-#include "vec3.h"
+#include "aurora/vec3.h"
 
 /**
   One sensed 3D robot position and orientation.

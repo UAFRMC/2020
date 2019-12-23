@@ -1,5 +1,5 @@
 OPTS=-g
-CFLAGS=-std=c++11  $(OPTS) -I../include
+CFLAGS=-std=c++11  $(OPTS) -I../../autonomy/include
 
 
 all: dump_tf dump_grid

@@ -10,7 +10,6 @@
 #include <opencv2/opencv.hpp>  
 #include "vision/grid.hpp"
 #include "vision/grid.cpp"
-#include "vision/terrain_map.cpp"
 #include "../firmware/field_geometry.h"
 
 #include "aurora/beacon_commands.h"

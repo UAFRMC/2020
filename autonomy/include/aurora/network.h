@@ -10,8 +10,7 @@
 
 
 #include "../gridnav/gridnav_RMC.h"
-#include "pose.h"
-#include "beacon_commands.h"
+#include "coords.h"
 
 /*
  Huge bloated autonomy (debugging) state. 
