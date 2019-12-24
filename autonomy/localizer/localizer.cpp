@@ -124,7 +124,7 @@ int main() {
         
         // Start with camera coordinates relative to robot coordinates
         aurora::robot_coord3D camera3D;
-        camera3D.origin=vec3(0,-23.0,60.0); // centimeters relative to robot turning center
+        camera3D.origin=vec3(0,23.0,87.0); // centimeters relative to robot turning center
         
         // We define camera_heading == 0 -> camera is facing forward on robot
         float camera_heading=exchange_stepper_report.read().angle; 

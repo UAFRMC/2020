@@ -44,6 +44,9 @@ public:
         if (ID==14) {  // small cat marker (debugging)
             size=14.5; 
         }
+        else if (ID==13) {  // large mullet
+            size=25; 
+        }
         else {
             printf("Ignoring--unknown number\n");
             return;
@@ -105,7 +108,7 @@ void project_depth_to_2D(const realsense_camera_capture &cap,
     obstacle_grid &map2D)
 {
     printf("Camera view: "); view3D.print();
-    const float depth_calibration_scale_factor=1.1f; // fudge factor to match real distances
+    const float depth_calibration_scale_factor=1.0f; // fudge factor to match real distances
     const float sanity_distance_min = 60.0; // mostly parts of robot if they're too close
     const float sanity_distance_max = 250.0; // depth gets ratty if it's too far out
     const float sanity_Z_max = 200.0; // ignore ceiling (with wide error band for tilt)
