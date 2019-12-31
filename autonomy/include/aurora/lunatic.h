@@ -59,8 +59,11 @@ struct drive_commands {
     float left;
     float right;
     
-    void print(FILE *f=stdout) const {
-        fprintf(f,"drive: %5.1f L, %5.1f R\n", left, right);
+    void print(FILE *f=stdout, const char *terminator="\n") const {
+        fprintf(f,
+            "drive: %5.1f L, %5.1f R%s", 
+            left, right,
+            terminator);
     }
 };
 
@@ -99,8 +102,11 @@ struct drive_encoders {
         return ret;
     }
     
-    void print(FILE *f=stdout) const {
-        fprintf(f,"encoders: %5.2f L, %5.2f R\n", (float)left, (float)right);
+    void print(FILE *f=stdout, const char *terminator="\n") const {
+        fprintf(f,
+            "encoders: %5.2f L, %5.2f R%s", 
+            (float)left, (float)right,
+            terminator);
     }
 };
 
@@ -121,8 +127,11 @@ struct stepper_pointing {
     float angle; // robot-relative camera pointing angle, in degrees.  0 == robot forward
     int32_t stable; // 0: on break, homing, etc.  1: should be steady.
     
-    void print(FILE *f=stdout) const {
-        fprintf(f,"stepper: %5.0f angle, %s\n", angle, stable?"stable":"unstable");
+    void print(FILE *f=stdout, const char *terminator="\n") const {
+        fprintf(f,
+            "stepper: %5.0f angle, %s%s", 
+            angle, stable?"stable":"unstable",
+            terminator);
     }
 };
 
@@ -188,6 +197,11 @@ struct vision_marker_report {
     enum {max_count=2};
     
     vision_marker_report() :markerID(0) {}
+    
+    void print(FILE *f=stdout, const char *terminator="\n") const {
+        fprintf(f,"marker%d: ",markerID);
+        coords.print(f,terminator);
+    }
 };
 //******This must be defined in the file using the #define Make_exchange*****
 // This is an array of reports for all currently visible markers

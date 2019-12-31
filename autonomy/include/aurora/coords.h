@@ -177,9 +177,10 @@ struct robot_loc2D {
     
     void print(FILE *where=stdout, const char *terminator="\n") const
     {
-        fprintf(where, "2Dpos: %6.1f  X, %6.1f  Y   %6.1f deg    %5.1f  %%sure%s",
-                x,y,angle, percent, 
-                terminator); 
+        fprintf(where, 
+            "2Dpos: %6.1f  X, %6.1f  Y   %6.1f deg    %5.1f  %%sure%s",
+            x,y,angle, percent, 
+            terminator); 
     }
 };
 
