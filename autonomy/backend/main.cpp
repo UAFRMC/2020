@@ -1022,14 +1022,16 @@ void robot_manager_t::update(void) {
   robot.sensor.bucket=sim.bucket*(950-179)+179;
 
   // some values for the determining location. needed by the localization.
-  float drivecount2cm=6*5.0/36; // cm of driving per wheel encoder tick == pegs on drive sprockets, space between sprockets, 36 encoder counts per revolution
+  // FIXME: tune these for real tracks!
+  float fudge=1.06; // fudge factor to make blue printed wheels work mo betta
+  float drivecount2cm=fudge*6*5.0/36; // cm of driving per wheel encoder tick == pegs on drive sprockets, space between sprockets, 36 encoder counts per revolution
   float driveL = fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm;
   float driveR = fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm;
   
   // Update drive encoders data exchange
   static aurora::drive_encoders::real_t totalL = 0.0; //<- hacky!  Need to total up distance
   static aurora::drive_encoders::real_t totalR = 0.0;
-  totalL += driveL;
+  totalL -= driveL;
   totalR += driveR;
   aurora::drive_encoders enc;
   enc.left =totalL;
