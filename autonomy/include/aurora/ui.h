@@ -148,7 +148,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	description="UI:\n";
 
 // Power limits:
-	float driveLimit=0.6;
+	float driveLimit=0.1;
 	float mineLimit=0.90;
 	float dumpLimit=1.0;
 	float rollLimit=0.5;
