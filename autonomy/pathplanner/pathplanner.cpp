@@ -7,8 +7,13 @@
 #include <stdio.h>
 #include "aurora/data_exchange.h"
 #include "aurora/lunatic.h"
+#include "pathplanner.h"
+
 
 int main() {
+    //Make the pathplanning object
+    robot_autodriver robotplanner;
+
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_drive_commands();
     
