@@ -50,11 +50,7 @@ int main() {
         if (target.percent>=1.0) { // we have a valid target
             aurora::robot_loc2D current = exchange_plan_current.read();
             const aurora::field_drivable &currField = exchange_field_drivable.read();
-            
-            
-
-
-
+        
 
             //Some logic to determine what are the dive values
             //Currently just creates empty object needs some data?
@@ -67,7 +63,7 @@ int main() {
             //writing new data to files:
             exchange_drive_commands.write_begin() = newDrive;
             exchange_drive_commands.write_end();
-        }
+        }   
 
         //Sleep? Forced latency?
         aurora::data_exchange_sleep(10);
@@ -77,7 +73,7 @@ int main() {
 
 
 
-//Helper Functions for Autonomy
+//Helper Functions for Autonomy previously utilized by Robot Manager.
 bool autonomous_drive(vec2 target,float target_angle) {
   if (!drive_posture()){
       return false; // don't drive yet
@@ -130,4 +126,25 @@ bool autonomous_turn(double angle_target_deg=0.0,bool do_posture=true)
     turn=limit(turn,maxturn);
     set_drive_powers(0.0,turn);
     return fabs(angle_err_deg)<5.0; // angle error tolerance
+  }
+
+  // Make sure we're still facing the collection bin.  If not, pivot to face it.
+  bool check_angle() {
+    // if(exchange_plan_current.updated())
+    // {
+    //   currentLocation = exchange_plan_current.read();
+    // } 
+    // if (currentLocation.percent<0.2) return true; // we don't know where we are--just keep driving?
+    // double target=180.0/M_PI*atan2(currentLocation.y+200.0,currentLocation.x);
+    // double err=currentLocation.angle-target;
+    // robotPrintln("check_angle: cur %.1f deg, target %.1f deg",currentLocation.angle,target);
+
+    if (locator.merged.percent<20.0) return true; // we don't know where we are--just keep driving?
+    double target=180.0/M_PI*atan2(locator.merged.y+200.0,locator.merged.x);
+    double err=locator.merged.angle-target;
+    robotPrintln("check_angle: cur %.1f deg, target %.1f deg",locator.merged.angle,target);
+    
+    reduce_angle(err);
+    if (fabs(err)<10.0) return true; // keep driving--straight enough
+    else return autonomous_turn(target,false); // turn to face target
   }
