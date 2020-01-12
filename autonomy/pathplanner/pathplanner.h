@@ -8,14 +8,7 @@
 #include <iostream>
 #include <fstream>
 
-
-bool show_GUI=true;
-bool simulate_only=false; // --sim flag
-bool should_plan_paths=true; // --noplan flag
-bool driver_test=false; // --driver_test, path planning testing
-
-bool nodrive=false; // --nodrive flag (for testing indoors)
-
+#include "aurora/display.h"
 
 /**
  This is the autonomous path planning object.
@@ -209,15 +202,18 @@ public:
   }
 // TODO find out what parts are needed for this to work
   // Draw a planned path onscreen
-//   void draw_path() {
-//     glBegin(GL_LINE_STRIP);
-//     for (const rmc_navigator::searchposition &p : planned_path) {
-//       glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
-//       glVertex2fv(p.pos.v);
-//     }
-//     glColor3f(1.0f,1.0f,1.0f);
-//     glEnd();
-//   }
+  void draw_path() {
+    glBegin(GL_LINE_STRIP);
+    for (const rmc_navigator::searchposition &p : planned_path) {
+      glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
+      glVertex2fv(p.pos.v);
+    }
+    glColor3f(1.0f,1.0f,1.0f);
+    glEnd();
+  }
 };
+
+
+
 
 #endif
