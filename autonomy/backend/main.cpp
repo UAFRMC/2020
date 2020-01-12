@@ -50,6 +50,9 @@ bool driver_test=false; // --driver_test, path planning testing
 
 bool nodrive=false; // --nodrive flag (for testing indoors)
 
+/* Bogus path planning target when we don't want any path planning to happen. */
+aurora::robot_loc2D no_idea_loc={0.0f,0.0f,0.0f,0.0f};
+
 /** X,Y field target location where we drive to, before finally backing up */
 vec2 dump_target_loc(field_x_size/2,field_y_trough_center); // rough area
 vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y); // final alignment
@@ -81,210 +84,6 @@ public:
 
 
 /**
- This is the autonomous path planning object.
-*/
-class robot_autodriver
-{
-public:
-  rmc_navigator navigator;
-  enum {navigator_res=rmc_navigator::GRIDSIZE};
-  typedef rmc_navigator::navigator_t::searchposition planned_path_t;
-
-  bool has_path;
-  std::deque<planned_path_t> planned_path;
-  rmc_navigator::navigator_t::drive_t last_drive;
-  int replan_counter;
-
-  robot_autodriver()
-  {
-    flush();
-
-    // Add obstacles around the scoring trough
-    for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
-    for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
-      mark_obstacle(x, y, 55);
-      
-    if (simulate_only && getenv("OBSTACLES")) {
-      // seed random number generator with obstacles var
-      srand(atoi(getenv("OBSTACLES")));
-      for (int obs=0;obs<5;obs++) {
-        int x=rand()%(field_x_size-2*30)+30;
-        int y=rand()%(field_y_mine_zone-field_y_start_zone)+field_y_start_zone;
-        int ht=obs>=3?5:50;  // last few are craters
-        mark_disk_obstacle(x,y,ht,25);
-      }
-    }
-
-    if (simulate_only && false) {
-      // Add a few hardcoded obstacles, to show off path planning
-      int x=130;
-      int y=290;
-
-      //Hard wall
-      if (true)
-       for (;x<=250;x+=navigator_res) mark_obstacle(x,y,15);
-
-      // Isolated tall obstacle in middle
-      navigator.mark_obstacle(130,y,40);
-    }
-
-    compute_proximity();
-  }
-
-  // Mark this field location as an obstacle of this height
-  //  (you MUST call compute_proximity after marking obstacles)
-  inline void mark_obstacle(int x,int y,int ht) { navigator.mark_obstacle(x,y,ht); }
-
-  // Recompute proximity costs (after marking obstacles)
-  void compute_proximity() {
-    // Recompute proximity costs after marking obstacles
-    const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
-    navigator.navigator.compute_proximity(obstacle_proximity);
-  }
-  
-  // Create a disk obstacle of this diameter at this position
-  //   (mostly useful for generating test obstacles)
-  inline void mark_disk_obstacle(int cx,int cy,int ht,int radius)
-  {
-    int d=radius+1;
-    for (int y=-d;y<=+d;y++)
-    for (int x=-d;x<=+d;x++)
-    if (x*x+y*y<=radius*radius)
-    {
-      mark_obstacle(x+cx,y+cy,ht);
-    }
-  }
-
-  // Dump proximity and debug data to plain text file
-  void debug_dump(const char *filename="debug_nav.txt") {
-    // Debug dump obstacles, field, etc.
-    std::ofstream navdebug(filename);
-    navdebug<<"Raw obstacles:\n";
-    navigator.navigator.obstacles.print(navdebug,10);
-
-    for (int angle=0;angle<=20;angle+=10) {
-      navdebug<<"\n\nAngle "<<angle<<" expanded obstacles:\n";
-      navigator.navigator.slice[angle].obstacle.print(navdebug,10);
-
-      navdebug<<"Proximity:\n";
-      navigator.navigator.slice[angle].proximity.print(navdebug,1);
-    }
-  }
-
-  // Flush autonomous drive state
-  void flush() {
-    has_path=false;
-    replan_counter=0;
-    planned_path=std::deque<planned_path_t>();
-  }
-
-  // Compute autonomous drive
-  //   cur and target are (x,y) cm field coords and deg x angles.
-  bool autodrive(vec2 cur,float cur_angle,
-    vec2 target,float target_angle,
-    double &forward,double &turn,
-    robot_autonomy_state &debug)
-  {
-    const int replan_interval=1; // 1==every frame.  10==every 10 frames.
-
-    const int plan_averaging=2; // steps in new plan to average together
-    const int replan_length=2*plan_averaging; // distance of new plan to keep
-    static rmc_navigator::navigator_t::drive_t last_drive;
-
-    if (planned_path.size()<plan_averaging || (--replan_counter)<=0)
-    { // refill planned path
-      replan_counter=replan_interval;
-      flush(); // flush old planned path
-      debug.plan_len=0;
-      
-      // Start position: robot's position
-      rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
-      // End position: at target
-      rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
-      debug.target=ftarget;
-
-      rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
-      int steps=0;
-      for (const rmc_navigator::searchposition &p : plan.path)
-      {
-        planned_path.push_back(p);
-        if (steps<replan_length)
-        {
-          p.print();
-        }
-        if (steps<robot_autonomy_state::max_path_len)
-        {
-          debug.plan_len=steps+1;
-          debug.path_plan[steps]=p.pos;
-        }
-
-        steps++;
-      }
-
-      printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
-          cur.x,cur.y,cur_angle,
-          target.x,target.y,target_angle, steps);
-      if (!plan.valid) {
-        printf("Path planning FAILED: searched %zd cells\n",plan.searched);
-        return false;
-      }
-    }
-    int pathslots=plan_averaging;
-    for (int slot=0;slot<plan_averaging;slot++) {
-      if (slot<(int)planned_path.size()) {
-        planned_path_t &p=planned_path[slot];
-        forward += p.drive.forward;
-        turn += p.drive.turn;
-      }
-      else { // short plan, use last known data
-        forward +=last_drive.forward;
-        turn +=last_drive.turn;
-      }
-    }
-    forward = forward/pathslots;
-    turn = turn/pathslots;
-
-    // Cycle detection
-    static int cycle_count=0;
-    cycle_count--;
-    if (cycle_count<0) cycle_count=0;
-    if (forward * last_drive.forward <0 || turn * last_drive.turn <0)
-    {
-      cycle_count+=2;
-      if (cycle_count>5) {
-        printf("Path planning CYCLE DETECTED, counter %d, keeping last drive\n",
-          cycle_count);
-        cycle_count=0;
-
-        // don't replan, just drive for a bit to clear the cycle
-        replan_counter=10;
-
-        //forward=last_drive.forward;
-        //turn=last_drive.turn;
-      }
-    }
-    printf("Path planning forward %.1f, turn %.1f\n",forward,turn);
-
-    // Update last_drive for next time
-    if (planned_path.size()>0) last_drive=planned_path[0].drive;
-
-    return true;
-  }
-
-  // Draw a planned path onscreen
-  void draw_path() {
-    glBegin(GL_LINE_STRIP);
-    for (const rmc_navigator::searchposition &p : planned_path) {
-      glColor3f(0.5f+0.5f*p.drive.forward,0.5f+0.5f*p.drive.turn,0.0f);
-      glVertex2fv(p.pos.v);
-    }
-    glColor3f(1.0f,1.0f,1.0f);
-    glEnd();
-  }
-};
-
-
-/**
  This class represents everything the back end knows about the robot.
 */
 class robot_manager_t
@@ -298,8 +97,6 @@ public:
   robot_comms comms; // network link to front end
   robot_ui ui; // keyboard interface
   robot_realsense_comms realsense_comms;
-
-  robot_autodriver autodriver;
 
   robot_serial arduino;
 
@@ -377,7 +174,8 @@ private:
   void enter_state(robot_state_t new_state)
   {
     // Flush old planned path on state change
-    autodriver.flush();
+    exchange_plan_target.write_begin()=no_idea_loc;
+    exchange_plan_target.write_end();
 
     if (new_state==state_setup_raise) { autonomy_start_time=cur_time; }
     // if(!(robot.autonomous)) { new_state=state_drive; }
@@ -492,33 +290,48 @@ private:
     // float cur_angle=currentLocation.angle;
 
      vec2 cur(locator.merged.x,locator.merged.y); // robot location
-    float cur_angle=locator.merged.angle;
 
-    gl_draw_grid(autodriver.navigator.navigator.obstacles);
+    // gl_draw_grid(autodriver.navigator.navigator.obstacles);
 
+/*
     if (!simulate_only && fmod(cur_time,3.0)<2.0) {
       return false; // periodic stop (for safety, and for re-localization)
     }
+*/
 
     bool path_planning_OK=false;
-    double forward=0.0; // forward-backward
-    double turn=0.0; // left-right
     if (should_plan_paths)
-    { //<- fixme: move path planning to dedicated thread, to avoid blocking
-      path_planning_OK=autodriver.autodrive(
-        cur,cur_angle,target,target_angle,
-        forward,turn, telemetry.autonomy);
-      if (path_planning_OK) autodriver.draw_path();
+    { 
+      // Send off request to the path planner
+      aurora::robot_loc2D loc;
+      loc.x=target.x;
+      loc.y=target.y;
+      loc.angle=target_angle;
+      loc.percent=90.0;
+      exchange_plan_target.write_begin()=loc;
+      exchange_plan_target.write_end();
+      
+      // Check for a response from the path planner
+      static aurora::drive_commands last_drive={0.0f,0.0f};
+      static double last_drive_update=0.0;
+      const double max_drive_seconds=1.0; // drive this many long on an old plan
+      
+      if (exchange_drive_commands.updated()) {
+        last_drive=exchange_drive_commands.read();
+        last_drive_update=cur_time;
+      }
+      if (cur_time - last_drive_update<max_drive_seconds) 
+      {
+        robot.power.left =64+63*last_drive.left /100.0;
+        robot.power.right=64+63*last_drive.right/100.0;
+      }
+      
+      path_planning_OK=true; // FIXME: sanity check the path planner
     }
     if (!path_planning_OK)
-    {
-      //Check for updates
-      // if(exchange_plan_current.updated())
-      // {
-      //   currentLocation = exchange_plan_current.read();
-      // }
-      // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
-      // double angle=currentLocation.angle; // degrees (!?)
+    { // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
+      double forward=0.0; // forward-backward
+      double turn=0.0; // left-right
 
       double angle=locator.merged.angle; // degrees (!?)
       double arad=angle*M_PI/180.0; // radians
@@ -528,8 +341,8 @@ private:
       turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
       forward=-dot(orient,should); // dot product (like distance)
       printf("Path planning FAILURE: manual greedy mode %.0f,%.0f\n", forward,turn);
+      set_drive_powers(forward,turn);
     }
-    set_drive_powers(forward,turn);
 
     return length(cur-target)<=2*rmc_navigator::GRIDSIZE; // we're basically there
   }
@@ -762,7 +575,8 @@ void robot_manager_t::autonomous_state()
   // Drive back to trough
   else if (robot.state==state_drive_to_dump)
   {
-    if (autonomous_drive(dump_target_loc,dump_target_angle) )
+    if (autonomous_drive(dump_target_loc,dump_target_angle) 
+     || locator.merged.y<dump_target_loc.y+20.0)
     {
       enter_state(state_dump_align);
     }

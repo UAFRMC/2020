@@ -221,6 +221,18 @@ void draw_markers(const aurora::robot_coord3D &camera3D,const aurora::vision_mar
 }
 
 
+
+// Draw the planned path
+void draw_path_plan(aurora::path_plan &path,field_debug_image &img)
+{
+    for (int pos=1;pos<path.plan_len;pos++) {
+        img.line(
+          vec3(path.path_plan[pos-1].x,path.path_plan[pos-1].y,0.0f),
+          vec3(path.path_plan[pos  ].x,path.path_plan[pos  ].y,0.0f)
+        );
+    }
+}
+
 int main(int argc,char *argv[]) {
     // Figure out which grid filename to read
     std::string name="obstacles_debug.bin";
@@ -240,6 +252,10 @@ int main(int argc,char *argv[]) {
     MAKE_exchange_obstacle_view();
     MAKE_exchange_field_drivable();
     MAKE_exchange_marker_reports();
+    
+    MAKE_exchange_plan_target();
+    //MAKE_exchange_drive_commands();
+    MAKE_exchange_path_plan();
 
     field_debug_image img(ht);
 
@@ -260,9 +276,19 @@ int main(int argc,char *argv[]) {
         draw_cameraview(camera3D,img);
         debug_coords(camera3D,"camera",img);
         
-        // Draw all detected computer vision markers
+        // Draw all detected computer vision markers (only when seen though)
         if (exchange_marker_reports.updated())
             draw_markers(camera3D,exchange_marker_reports.read(),img);
+            
+        // Draw the path planning target position
+        aurora::robot_coord3D target3D=exchange_plan_target.read().get3D();
+        debug_coords(target3D,"target",img);
+        
+        // Draw the path plan
+        aurora::path_plan path_debug = exchange_path_plan.read();
+        img.set_color(vec3(1,0.0,0.7));
+        img.set_thickness(5.0f);
+        draw_path_plan(path_debug,img);
 
         img.show("LunaView");
         img.decay();

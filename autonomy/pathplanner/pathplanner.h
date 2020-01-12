@@ -1,21 +1,10 @@
 #ifndef PATHPLANNER_H
 #define PATHPLANNER_H
 
-
-
 #include "gridnav/gridnav_RMC.h"
-#include "aurora/network.h"
+#include "aurora/lunatic.h"
 #include <iostream>
 #include <fstream>
-
-
-bool show_GUI=true;
-bool simulate_only=false; // --sim flag
-bool should_plan_paths=true; // --noplan flag
-bool driver_test=false; // --driver_test, path planning testing
-
-bool nodrive=false; // --nodrive flag (for testing indoors)
-
 
 /**
  This is the autonomous path planning object.
@@ -31,40 +20,45 @@ public:
   std::deque<planned_path_t> planned_path;
   rmc_navigator::navigator_t::drive_t last_drive;
   int replan_counter;
+  
+  aurora::field_drivable last_field;
 
   robot_autodriver()
   {
-    flush();
+    flush_field();
+    flush_path();
 
-    // Add obstacles around the scoring trough
-    for (int x=field_x_trough_start;x<=field_x_trough_end;x+=navigator_res)
-    for (int y=field_y_trough_start;y<=field_y_trough_end;y+=navigator_res)
-      mark_obstacle(x, y, 55);
-      
-    if (simulate_only && getenv("OBSTACLES")) {
-      // seed random number generator with obstacles var
-      srand(atoi(getenv("OBSTACLES")));
-      for (int obs=0;obs<5;obs++) {
-        int x=rand()%(field_x_size-2*30)+30;
-        int y=rand()%(field_y_mine_zone-field_y_start_zone)+field_y_start_zone;
-        int ht=obs>=3?5:50;  // last few are craters
-        mark_disk_obstacle(x,y,ht,25);
-      }
+    compute_proximity();
+  }
+  
+  // Clear all stored obstacles, so we start from zero
+  void flush_field() {
+    last_field.clear(0);
+    
+    navigator=rmc_navigator(); // reinitialize the navigator
+  }
+  
+  void update_field(const aurora::field_drivable &f) {
+    flush_field(); //<- otherwise it will never forget any obstacle
+    
+    for (int y=0;y<aurora::field_drivable::GRIDY;y++)
+    for (int x=0;x<aurora::field_drivable::GRIDX;x++)
+    {
+        int fp = f.at(x,y); // field pixel
+        int lp = last_field.at(x,y); // last-seen pixel
+        if (fp != lp) 
+        {
+            last_field.at(x,y)=fp; // update last_field
+            if (fp>aurora::field_unknown && fp<aurora::field_driveable)
+            { // mark the obstacle
+                navigator.mark_obstacle(
+                    x*aurora::field_drivable::GRIDSIZE,
+                    y*aurora::field_drivable::GRIDSIZE,
+                    30);
+            }
+        }
     }
-
-    if (simulate_only && false) {
-      // Add a few hardcoded obstacles, to show off path planning
-      int x=130;
-      int y=290;
-
-      //Hard wall
-      if (true)
-       for (;x<=250;x+=navigator_res) mark_obstacle(x,y,15);
-
-      // Isolated tall obstacle in middle
-      navigator.mark_obstacle(130,y,40);
-    }
-
+    
     compute_proximity();
   }
 
@@ -108,19 +102,16 @@ public:
     }
   }
 
-  // Flush autonomous drive state
-  void flush() {
+  // Flush autonomous drive stored path
+  void flush_path() {
     has_path=false;
     replan_counter=0;
     planned_path=std::deque<planned_path_t>();
   }
 
-  // Compute autonomous drive
-  //   cur and target are (x,y) cm field coords and deg x angles.
-  bool autodrive(vec2 cur,float cur_angle,
-    vec2 target,float target_angle,
-    double &forward,double &turn,
-    robot_autonomy_state &debug)
+  // Compute autonomous drive from cur to target
+  bool autodrive(const aurora::robot_loc2D &cur, const aurora::robot_loc2D &target,
+    aurora::drive_commands &drive, aurora::path_plan &debug)
   {
     const int replan_interval=1; // 1==every frame.  10==every 10 frames.
 
@@ -128,64 +119,68 @@ public:
     const int replan_length=2*plan_averaging; // distance of new plan to keep
     static rmc_navigator::navigator_t::drive_t last_drive;
 
-    if (planned_path.size()<plan_averaging || (--replan_counter)<=0)
-    { // refill planned path
-      replan_counter=replan_interval;
-      flush(); // flush old planned path
-      debug.plan_len=0;
-      
-      // Start position: robot's position
-      rmc_navigator::fposition fstart(cur.x,cur.y,cur_angle);
-      // End position: at target
-      rmc_navigator::fposition ftarget(target.x,target.y,target_angle);
-      debug.target=ftarget;
+    // refill planned path
+    replan_counter=replan_interval;
+    flush_path(); // flush old planned path
+    debug.plan_len=0;
 
-      rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
-      int steps=0;
-      for (const rmc_navigator::searchposition &p : plan.path)
-      {
+    // Start position: robot's position
+    rmc_navigator::fposition fstart(cur.x,cur.y,cur.angle);
+    // End position: at target
+    rmc_navigator::fposition ftarget(target.x,target.y,target.angle);
+    debug.target=target;
+
+    rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
+    int steps=0;
+    for (const rmc_navigator::searchposition &p : plan.path)
+    {
         planned_path.push_back(p);
         if (steps<replan_length)
         {
           p.print();
         }
-        if (steps<robot_autonomy_state::max_path_len)
+        if (steps<aurora::path_plan::max_path_len)
         {
           debug.plan_len=steps+1;
-          debug.path_plan[steps]=p.pos;
+          
+          aurora::robot_loc2D loc;
+          loc.x=p.pos.v.x;
+          loc.y=p.pos.v.y;
+          loc.angle=p.pos.get_degrees();
+          loc.percent=80.0-steps;
+          debug.path_plan[steps]=loc;
         }
 
         steps++;
-      }
+    }
 
-      printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
-          cur.x,cur.y,cur_angle,
-          target.x,target.y,target_angle, steps);
-      if (!plan.valid) {
+    printf("Planned path from %.0f,%.0f@%.0f to target %.0f,%.0f@%.0f: %d steps\n",
+      cur.x,cur.y,cur.angle,
+      target.x,target.y,target.angle, steps);
+    if (!plan.valid) {
         printf("Path planning FAILED: searched %zd cells\n",plan.searched);
         return false;
-      }
     }
+      
     int pathslots=plan_averaging;
+    rmc_navigator::navigator_t::drive_t next_drive(0.0f,0.0f);
     for (int slot=0;slot<plan_averaging;slot++) {
       if (slot<(int)planned_path.size()) {
         planned_path_t &p=planned_path[slot];
-        forward += p.drive.forward;
-        turn += p.drive.turn;
+        next_drive += p.drive;
       }
       else { // short plan, use last known data
-        forward +=last_drive.forward;
-        turn +=last_drive.turn;
+        next_drive +=last_drive;
       }
     }
-    forward = forward/pathslots;
-    turn = turn/pathslots;
+    next_drive.forward = next_drive.forward/pathslots;
+    next_drive.turn = next_drive.turn/pathslots;
 
     // Cycle detection
     static int cycle_count=0;
     cycle_count--;
     if (cycle_count<0) cycle_count=0;
-    if (forward * last_drive.forward <0 || turn * last_drive.turn <0)
+    if (next_drive.forward * last_drive.forward <0 || next_drive.turn * last_drive.turn <0)
     {
       cycle_count+=2;
       if (cycle_count>5) {
@@ -200,10 +195,15 @@ public:
         //turn=last_drive.turn;
       }
     }
-    printf("Path planning forward %.1f, turn %.1f\n",forward,turn);
+    printf("Path planning forward %.1f, turn %.1f\n",next_drive.forward,next_drive.turn);
 
     // Update last_drive for next time
-    if (planned_path.size()>0) last_drive=planned_path[0].drive;
+    // if (planned_path.size()>0) last_drive=planned_path[0].drive;
+    last_drive=next_drive; 
+    
+    const float autonomous_speed=10.0f; // drive speed, as percent power
+    drive.left =autonomous_speed*(next_drive.forward-next_drive.turn);
+    drive.right=autonomous_speed*(next_drive.forward+next_drive.turn);
 
     return true;
   }

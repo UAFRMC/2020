@@ -265,7 +265,6 @@ enum {
     field_driven=250 // we have driven here before (definitely safe)
     
 };
-//*******This must be defined in the file using the #define Make_exchange******
 typedef field_raster<unsigned char> field_drivable;
 
 /* This macro declares the variable used to 
@@ -276,8 +275,20 @@ store the field grid of obstacle / drivable locations:
 #define MAKE_exchange_field_drivable()   aurora::data_exchange<aurora::field_drivable> exchange_field_drivable("field_drivable.grid")
 
 
+/* ----------- Path Planning debugging ---------- */
+class path_plan {
+public:
+    // Target of the last planned path, or (0,0) if none.
+    robot_loc2D target;
 
+    // Positions along the currently planned path
+    unsigned short plan_len;
+    enum {max_path_len=30}; 
+    typedef robot_loc2D path_t;
+    path_t path_plan[max_path_len];
+};
 
+#define MAKE_exchange_path_plan()   aurora::data_exchange<aurora::path_plan> exchange_path_plan("path_plan.path")
 
 
 

@@ -103,7 +103,7 @@ public:
 				side[s]+=distance*forward();
 			}
 		}
-		DLcount+=sideticks[0];
+		DLcount-=sideticks[0]; // <- match flip in wood test platform
 		DRcount+=sideticks[1];
 		
 	// Set robot position and orientation from wheel positions
