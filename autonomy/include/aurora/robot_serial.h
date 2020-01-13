@@ -124,7 +124,7 @@ void robot_serial::update(robot_base &robot){
 	{
 		_timeout=0;
 	}
-	else if(_timeout>5)
+	else if(_timeout>30)
 	{
 		robot.status.arduino=0;
 		robotPrintln("Connection Lost");
