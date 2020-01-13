@@ -109,7 +109,7 @@ void project_depth_to_2D(const realsense_camera_capture &cap,
 {
     printf("Camera view: "); view3D.print();
     const float depth_calibration_scale_factor=1.0f; // fudge factor to match real distances
-    const float sanity_distance_min = 60.0; // mostly parts of robot if they're too close
+    const float sanity_distance_min = 100.0; // mostly parts of robot if they're too close
     const float sanity_distance_max = 550.0; // depth gets ratty if it's too far out
     const float sanity_Z_max = 200.0; // ignore ceiling (with wide error band for tilt)
     const float sanity_Z_min = -100.0; // ignore invalid too-low
