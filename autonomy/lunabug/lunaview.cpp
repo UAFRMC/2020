@@ -236,7 +236,7 @@ void draw_path_plan(aurora::path_plan &path,field_debug_image &img)
 int main(int argc,char *argv[]) {
     // Figure out which grid filename to read
     std::string name="obstacles_debug.bin";
-    int ht=1000;
+    int ht=900;
     for (int argi=1;argi<argc;argi++) {
       std::string arg=argv[argi];
       if (arg=="--ht") ht=atoi(argv[++argi]); // set size of window

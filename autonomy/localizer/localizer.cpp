@@ -92,6 +92,10 @@ int main() {
     MAKE_exchange_field_drivable();
     reinitialize_field(exchange_field_drivable.write_begin());
     exchange_field_drivable.write_end();
+    //zero put encoder
+    aurora::drive_encoders blank = {0,0};
+    exchange_drive_encoders.write_begin()=blank;
+    exchange_drive_encoders.write_end();  
     
     // Define our start configuration
     aurora::robot_loc2D pos;
