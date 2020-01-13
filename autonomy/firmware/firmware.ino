@@ -84,7 +84,7 @@ int sum_stalled=0, sum_stall_count=0;
 
 
 // Robot's current state:
-robot_base robot;
+robot_arduino robot;
 
 // Read all robot sensors into robot.sensor
 void read_sensors(void) {
@@ -144,15 +144,7 @@ void send_motors(void)
 
   nano_commands[0].speed[1]=-scale_from_64(robot.power.left);
   nano_commands[0].speed[3]=-scale_from_64(robot.power.left);
-  
-  if (robot.power.mine!=64) { // crab mode?
-    nano_commands[0].speed[0]=-scale_from_64(robot.power.mine)/2;
-    nano_commands[0].speed[2]=-scale_from_64(robot.power.mine)/2;
-
-    nano_commands[0].speed[1]=-scale_from_64(robot.power.mine)/2;
-    nano_commands[0].speed[3]=+scale_from_64(robot.power.mine)/2;
-  }
-  
+    
 //  nano_commands[1].speed[1]=-scale_from_64(robot.power.roll);
 //  nano_commands[1].speed[2]=0;
 //  nano_commands[1].speed[3]=-scale_from_64(robot.power.dump);

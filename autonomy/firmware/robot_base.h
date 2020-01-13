@@ -185,6 +185,12 @@ public:
 	unsigned char semiauto:1; ///< semiauto mode is engaged
 };
 
+class robot_arduino {
+  public:
+	robot_power power;
+	robot_sensors_arduino sensor;
+};
+
 
 #endif
 
