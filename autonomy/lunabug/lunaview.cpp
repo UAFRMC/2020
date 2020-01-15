@@ -225,6 +225,7 @@ void draw_markers(const aurora::robot_coord3D &camera3D,const aurora::vision_mar
 // Draw the planned path
 void draw_path_plan(aurora::path_plan &path,field_debug_image &img)
 {
+    if (path.plan_len>0 && path.plan_len<aurora::path_plan::max_path_len)
     for (int pos=1;pos<path.plan_len;pos++) {
         img.line(
           vec3(path.path_plan[pos-1].x,path.path_plan[pos-1].y,0.0f),
@@ -281,8 +282,8 @@ int main(int argc,char *argv[]) {
             draw_markers(camera3D,exchange_marker_reports.read(),img);
             
         // Draw the path planning target position
-        aurora::robot_coord3D target3D=exchange_plan_target.read().get3D();
-        debug_coords(target3D,"target",img);
+        aurora::robot_navtarget navtarget=exchange_plan_target.read();
+        debug_coords(aurora::robot_loc2D(navtarget.x,navtarget.y,navtarget.angle,80.0).get3D(),"target",img);
         
         // Draw the path plan
         aurora::path_plan path_debug = exchange_path_plan.read();

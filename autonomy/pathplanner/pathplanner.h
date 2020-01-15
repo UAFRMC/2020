@@ -110,7 +110,7 @@ public:
   }
 
   // Compute autonomous drive from cur to target
-  bool autodrive(const aurora::robot_loc2D &cur, const aurora::robot_loc2D &target,
+  bool autodrive(const aurora::robot_center2D &cur, const aurora::robot_navtarget &target,
     aurora::drive_commands &drive, aurora::path_plan &debug)
   {
     const int replan_interval=1; // 1==every frame.  10==every 10 frames.
@@ -127,11 +127,10 @@ public:
     // Start position: robot's position
     rmc_navigator::fposition fstart(cur.x,cur.y,cur.angle);
     // End position: at target
-    rmc_navigator::fposition ftarget(target.x,target.y,target.angle);
     debug.target=target;
 
-    
-    rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
+    rmc_navigator::planner_navtarget navtarget(target);
+    rmc_navigator::planner plan(navigator.navigator,fstart,navtarget,last_drive,false);
     int steps=0;
     for (const rmc_navigator::searchposition &p : plan.path)
     {

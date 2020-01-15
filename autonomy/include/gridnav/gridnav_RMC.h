@@ -7,6 +7,7 @@
 #define AURURA_GRIDNAV_RMC_H
 
 #include "gridnav.h"
+#include "../aurora/coords.h"
 #include "../../firmware/field_geometry.h"
 
 
@@ -34,17 +35,13 @@ public:
   typedef navigator_t::searchposition searchposition;
   
   
-
-  
-  // Planner target is a simple 2D target point
+  // Target is a simple 2D target point
   class planner_target_2D {
     // This is our search target configuration
-    //fposition target;
     gridposition gtarget;
   public:
     planner_target_2D(const fposition &target_)
-      ://target(target_), 
-       gtarget(gridposition(target_)) {}
+      :gtarget(gridposition(target_)) {}
     
     
     /* Utility function: return the angular distance */
@@ -57,7 +54,7 @@ public:
     double get_cost_from(const gridposition &from_pos) const
     {
       double drive_dist=length(vec2(from_pos.x,from_pos.y)-vec2(gtarget.x,gtarget.y)); // in grid cells
-      double turn_ang=this->angle_dist(from_pos.a-gtarget.a); // in discrete angle units
+      double turn_ang=angle_dist(from_pos.a-gtarget.a); // in discrete angle units
       double TURN_AMPLIFY=5.0;
       double estimate = drive_dist + TURN_AMPLIFY*turn_ang*navigator_t::TURN_COST_TO_GRID_COST;
       return estimate;
@@ -77,11 +74,59 @@ public:
           std::abs(grid.a-gtarget.a)<=0;
       }
     }
-    
-    ~planner_target_2D() {}
   };
   
-  typedef navigator_t::planner<planner_target_2D> planner;
+  // Target is a robot_navtarget, with error bars
+  class planner_navtarget {
+    // This is our search target configuration
+    gridposition gtarget;
+    gridposition gerror;
+    
+    bool carex,carey,carea; // true if we care about this axis
+  public:
+    planner_navtarget(const aurora::robot_navtarget &t)
+        :gtarget(gridposition(fposition(t.x,t.y,t.angle))),
+         gerror(gridposition(fposition(t.error.x,t.error.y,t.error.angle)))
+    {
+        carex=(t.error.x!=aurora::robot_navtarget::DONTCARE);
+        carey=(t.error.y!=aurora::robot_navtarget::DONTCARE);
+        carea=(t.error.angle!=aurora::robot_navtarget::DONTCARE);
+    }
+    
+    /* Utility function: return the angular distance */
+    float angle_dist(float delta) const {
+       delta=navigator_t::fmodplus(delta,GRIDA);
+       if (delta>GRIDA/2) delta=GRIDA-delta; // turn the other way
+       return delta;
+    }
+    
+    double get_cost_from(const gridposition &from_pos) const
+    {
+      double turn_ang=angle_dist(from_pos.a-gtarget.a); // in discrete angle units
+      double TURN_AMPLIFY=5.0; // cost of one angular cell per grid drive cell
+
+    // FIXME: these compare cost to the center of the target, maybe edge of allowed region would be better?
+      double estimate = 0.0; // in grid cells
+      if (carex && carey) estimate += length(vec2(from_pos.x,from_pos.y)-vec2(gtarget.x,gtarget.y)); 
+      else if (carex) estimate += std::abs(from_pos.x-gtarget.x);
+      else if (carey) estimate += std::abs(from_pos.y-gtarget.y);
+      
+      if (carea)  estimate += TURN_AMPLIFY*turn_ang*navigator_t::TURN_COST_TO_GRID_COST;
+      
+      return estimate;
+    }
+    
+    bool reached_target(const gridposition &grid) const 
+    {
+      // Check our positional error
+      return 
+          ((!carex) || std::abs(grid.x-gtarget.x)<=gerror.x) &&
+          ((!carey) || std::abs(grid.y-gtarget.y)<=gerror.y) &&
+          ((!carea) || angle_dist(grid.a-gtarget.a)<=gerror.a);
+    }
+  };
+  
+  typedef navigator_t::planner<planner_navtarget> planner;
   
   // Discretized version of our geometry
   navigator_t::robot_grid_geometry robot;

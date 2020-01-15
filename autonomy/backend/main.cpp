@@ -51,17 +51,17 @@ bool driver_test=false; // --driver_test, path planning testing
 bool nodrive=false; // --nodrive flag (for testing indoors)
 
 /* Bogus path planning target when we don't want any path planning to happen. */
-aurora::robot_loc2D no_idea_loc(0.0f,0.0f,0.0f,0.0f);
+aurora::robot_navtarget no_idea_loc(0.0f,0.0f,0.0f);
 
 /** X,Y field target location where we drive to, before finally backing up */
-vec2 dump_target_loc(field_x_size/2,field_y_trough_center); // rough area
-vec2 dump_align_loc(field_x_trough_edge,dump_target_loc.y); // final alignment
-float dump_target_angle=field_angle_trough;
+aurora::robot_navtarget dump_target_loc(field_x_size/2,field_y_trough_center,0,
+    aurora::robot_navtarget::DONTCARE,10.0,90.0); // get back to starting area area
+aurora::robot_navtarget dump_align_loc(field_x_trough_edge,dump_target_loc.y,field_angle_trough,
+    10.0,30.0,5.0); // final alignment
 
 /** X,Y field target location that we target for mining */
-vec2 mine_target_loc(field_x_size/2,field_y_size-60);
-float mine_target_angle=90; // along +y
-
+aurora::robot_navtarget mine_target_loc(field_x_size/2,field_y_size-45,90,
+    aurora::robot_navtarget::DONTCARE, 30.0,80.0);
 
 /* Convert this unsigned char difference into a float difference */
 float fix_wrap256(unsigned char diff) {
@@ -277,7 +277,7 @@ private:
   }
 
   //  Returns true once we're basically at the target location.
-  bool autonomous_drive(vec2 target,float target_angle) {
+  bool autonomous_drive(const aurora::robot_navtarget &target) {
     if (!drive_posture()) return false; // don't drive yet
     
 
@@ -303,12 +303,7 @@ private:
     if (should_plan_paths)
     { 
       // Send off request to the path planner
-      aurora::robot_loc2D loc;
-      loc.x=target.x;
-      loc.y=target.y;
-      loc.angle=target_angle;
-      loc.percent=90.0;
-      exchange_plan_target.write_begin()=loc;
+      exchange_plan_target.write_begin()=target;
       exchange_plan_target.write_end();
       
       // Check for a response from the path planner
@@ -336,7 +331,7 @@ private:
       double angle=locator.merged.angle; // degrees (!?)
       double arad=angle*M_PI/180.0; // radians
       vec2 orient(cos(arad),sin(arad)); // orientation vector (forward vector of robot)
-      vec2 should=normalize(cur-target); // we should be facing this way
+      vec2 should=normalize(cur-vec2(target.x,target.y)); // we should be facing this way
 
       turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
       forward=-dot(orient,should); // dot product (like distance)
@@ -344,7 +339,7 @@ private:
       set_drive_powers(forward,turn);
     }
 
-    return length(cur-target)<=2*rmc_navigator::GRIDSIZE; // we're basically there
+    return target.matches(locator.merged); // we're basically there
   }
 
   // Force this angle (or angle difference) to be between -180 and +180,
@@ -519,7 +514,7 @@ void robot_manager_t::autonomous_state()
       // double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       // double distance=target_Y-currentLocation.y;
 
-      if (autonomous_drive(mine_target_loc,mine_target_angle) ||
+      if (autonomous_drive(mine_target_loc) ||
           distance<0.0)  // we're basically there now
       {
         if (driver_test) enter_state(state_drive_to_dump);
@@ -575,30 +570,23 @@ void robot_manager_t::autonomous_state()
   // Drive back to trough
   else if (robot.state==state_drive_to_dump)
   {
-    if (autonomous_drive(dump_target_loc,dump_target_angle) 
+    if (autonomous_drive(dump_target_loc) 
      || locator.merged.y<dump_target_loc.y+20.0)
     {
       enter_state(state_dump_align);
     }
   }
   else if (robot.state==state_dump_align)
-  {
-    vec2 target=dump_align_loc;
-    
-    // if(exchange_plan_current.updated())
-    //   {
-    //     currentLocation = exchange_plan_current.read();
-    //   }
+  { 
     // target.y=currentLocation.y; // don't try to turn when this close
     // if (autonomous_drive(target,dump_target_angle)
     //   || (fabs(currentLocation.y-target.y)<30 && fabs(currentLocation.x-field_x_trough_stop)<=10) )
 
-        target.y=locator.merged.y; // don't try to turn when this close
-    if (autonomous_drive(target,dump_target_angle)
-      || (fabs(locator.merged.y-target.y)<30 && fabs(locator.merged.x-field_x_trough_stop)<=10) )
+    if (autonomous_drive(dump_align_loc)
+      || (fabs(locator.merged.x-field_x_trough_stop)<=10) )
     {
       if (driver_test) {
-        mine_target_loc.x=50+(rand()%250); // retarget in mining area every run
+        // mine_target_loc.x=50+(rand()%250); // retarget in mining area every run
         enter_state(state_drive_to_mine);
       }
       else enter_state(state_dump_contact);

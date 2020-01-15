@@ -212,11 +212,25 @@ struct robot_loc2D : public robot_center2D {
     }
 };
 
+/* Heuristic based A* navigation target: 
+   a center position, and error bars. 
+*/
 struct robot_navtarget : public robot_center2D {
-    // tolerance to match the center position
+    // Tolerance to match the center position:
+    //   small error -> tight tolerances, perfect parking required
+    //   large error -> loose tolerances, anywhere is OK
     robot_center2D error;
     
-    // Return true if this center matches our target
+    // If error equals this value, that means we don't care about that coordinate axis
+    enum {DONTCARE=9999};
+    
+    // Create a new navigation target to this position
+    robot_navtarget(float x_=0.0,float y_=0.0, float angle_=0.0,
+                    float errorx=DONTCARE,float errory=DONTCARE,float errorangle=DONTCARE)
+        :robot_center2D(x_,y_,angle_),
+         error(errorx,errory,errorangle) {}
+    
+    // Return true if this other location is inside our error tolerance
     bool matches(const robot_center2D &other) const
     {
         return 
@@ -225,6 +239,10 @@ struct robot_navtarget : public robot_center2D {
           angle_diff(angle,other.angle)<=error.angle;
     }
     
+    // Return true if we have some actual requirements
+    bool valid() const {
+        return (error.x!=DONTCARE) || (error.y!=DONTCARE) || (error.angle!=DONTCARE);
+    }
 };
 
 

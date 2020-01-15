@@ -171,7 +171,7 @@ target a new drive position for path planning:
     Read by the path planner
 Coordinate system: absolute field coordinates
 */
-#define MAKE_exchange_plan_target()   aurora::data_exchange<aurora::robot_loc2D> exchange_plan_target("plan_target.loc2D")
+#define MAKE_exchange_plan_target()   aurora::data_exchange<aurora::robot_navtarget> exchange_plan_target("plan_target.loc2D")
 
 
 
@@ -279,7 +279,7 @@ store the field grid of obstacle / drivable locations:
 class path_plan {
 public:
     // Target of the last planned path, or (0,0) if none.
-    robot_loc2D target;
+    robot_navtarget target;
 
     // Positions along the currently planned path
     unsigned short plan_len;

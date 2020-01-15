@@ -427,12 +427,11 @@ public:
       // Check for obstacles in the way:
       const unsigned char &obs=s.obstacle.at(g.x,g.y);
       //if (obs!=0) return false; // has obstacle
-      if (obs!=0) cost += 10000.0; // hitting obstacle counts as a 10 meter cost
+      if (obs!=0) cost += 1000.0; // hitting obstacle counts as a 1 meter cost
       
       // Seems legal, so use heuristic to estimate cost to target
-      
       if (!(lastdrive == drive)) 
-        cost+=20.0; // penalty for swapping drive directions
+        cost+=400.0; // penalty for swapping drive directions
       
       double estimate=target.get_cost_from(g);
       pool.emplace_back(cost, estimate, drive,pos,last);
@@ -516,7 +515,7 @@ public:
         
         // Check all nearby cells
         vec2 drivedir=nav.slice[gcur.a].drive;
-        for (float drive=-1.0;drive<=+1.0;drive+=2.0) {
+        for (float drive=+1.0;drive>=-1.0;drive-=2.0) {
           // Drive at least into the next grid cell:
           double distance=1.01*GRIDSIZE/std::max(fabs(drivedir.x),fabs(drivedir.y)); 
           

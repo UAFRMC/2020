@@ -22,9 +22,9 @@ int main() {
     MAKE_exchange_field_drivable();
 
     while (true) {
-        aurora::robot_loc2D target = exchange_plan_target.read();
+        aurora::robot_navtarget target = exchange_plan_target.read();
         
-        if (target.percent>=1.0) { // we have a valid target
+        if (target.valid()) { // we have a valid target
             bool try_plan=exchange_plan_current.updated() || exchange_plan_target.updated();
             aurora::robot_loc2D current = exchange_plan_current.read();
             
