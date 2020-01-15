@@ -382,10 +382,10 @@ public:
   
   /* A planner_target template needs these fields:
 
-    // Returns A* heuristic value
-    double get_cost_from(const fposition &from_pos) const 
+    // Returns A* heuristic value at this grid cell
+    double get_cost_from(const gridposition &from_pos) const 
 
-    // Returns true if we've reached the goal state
+    // Returns true if we've reached the goal state at this grid cell
     bool reached_target(const gridposition &grid) const
   */
   
@@ -394,7 +394,7 @@ public:
   public:
     /* Return the estimated cost to reach the target from this position.
        If you're at the target, return 0. */
-    virtual double get_cost_from(const fposition &from_pos) const =0;
+    virtual double get_cost_from(const gridposition &from_pos) const =0;
     
     /* Return true if we've reached the target. */
     virtual bool reached_target(const gridposition &grid) const =0;
@@ -421,9 +421,8 @@ public:
       ://target(target_), 
        gtarget(gridposition(target_)) {}
     
-    virtual double get_cost_from(const fposition &from_pos_f) const
+    virtual double get_cost_from(const gridposition &from_pos) const
     {
-      gridposition from_pos(from_pos_f); // grid
       double drive_dist=length(vec2(from_pos.x,from_pos.y)-vec2(gtarget.x,gtarget.y)); // in grid cells
       double turn_ang=this->angle_dist(from_pos.a-gtarget.a); // in discrete angle units
       double TURN_AMPLIFY=5.0;
@@ -489,7 +488,7 @@ public:
       if (!(lastdrive == drive)) 
         cost+=20.0; // penalty for swapping drive directions
       
-      double estimate=target.get_cost_from(pos);
+      double estimate=target.get_cost_from(g);
       pool.emplace_back(cost, estimate, drive,pos,last);
       search.push(pool.back());
 
