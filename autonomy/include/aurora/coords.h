@@ -128,41 +128,68 @@ struct robot_coord3D {
 };
 
 
-// Represents the 2D position and orientation of the robot on the field,
-//   or the position and orientation of a sensor on a robot.
-// Assumes roll and pitch are zero.
-struct robot_loc2D {
+// Represents a robot center point
+struct robot_center2D {
     float x; // along short axis of the field
     float y; // along long axis of the field
     float angle; // robot heading: degrees counterclockwise from the +X axis
+    
+    robot_center2D(float x_=0.0,float y_=0.0, float angle_=0.0)
+        :x(x_), y(y_), angle(angle_) {}
+    
+// Utility functions
+    /*
+      Return a world coordinates unit 2D direction vector
+      for this robot-relative angle.
+      Angle==0 is facing along the robot's forward axis, in the direction of motion.
+      Angle==90 is facing to the robot's left (counterclockwise, normal math angles).
+    */
+    vec2 dir_from_deg(float ang_deg=0.0) const {
+        float ang=(this->angle+ang_deg)*DEG2RAD;
+        return vec2(cos(ang),sin(ang)); 
+    }
+    // Return a robot coordinates angle from this direction vector.
+    //  angles range from -180 to +180
+    float deg_from_dir(const vec2 &dir) const {
+        float world_deg=RAD2DEG*atan2(dir.y,dir.x); 
+        float deg=world_deg-this->angle;
+        if (deg<-180.0) deg+=360.0;
+        if (deg>+180.0) deg-=360.0;
+        return deg;
+    }
+
+    // Difference between two degree angles, wrapped to 0-359
+    float angle_diff(float a1,float a2) const {
+        float diff=a2-a1;
+        if (diff<0) diff=-diff; // all positive
+        //while (diff>360.0) diff-=360.0; // subtract off copies of 360
+        diff=fmod(diff,360.0); //<- faster worst case
+        if (diff>180.0) return 360.0-diff;
+        else return diff;
+    }
+
+    vec2 center(void) const { return vec2(x,y); }
+    vec2 forward(void) const { return dir_from_deg(0.0); }
+    vec2 right(void) const { return dir_from_deg(-90.0); }
+    
+    void print(FILE *where=stdout, const char *terminator="\n") const
+    {
+        fprintf(where, 
+            "2Dpos: %6.1f  X, %6.1f  Y   %6.1f deg    %s",
+            x,y,angle, 
+            terminator); 
+    }
+};
+
+
+// Represents the 2D position and orientation of the robot on the field,
+//   or the position and orientation of a sensor on a robot.
+// Assumes roll and pitch are zero.
+struct robot_loc2D : public robot_center2D {
     float percent; // Percent confidence.   <=0.0 for "I don't know".  100% for absolute certainty.
     
-
-// Utility functions
-	/*
-	  Return a world coordinates unit 2D direction vector
-	  for this robot-relative angle.
-	  Angle==0 is facing along the robot's forward axis, in the direction of motion.
-	  Angle==90 is facing to the robot's left (counterclockwise, normal math angles).
-	*/
-	vec2 dir_from_deg(float ang_deg=0.0) const {
-		float ang=(this->angle+ang_deg)*DEG2RAD;
-		return vec2(cos(ang),sin(ang)); 
-	}
-	// Return a robot coordinates angle from this direction vector.
-	//  angles range from -180 to +180
-	float deg_from_dir(const vec2 &dir) const {
-		float world_deg=RAD2DEG*atan2(dir.y,dir.x); 
-		float deg=world_deg-this->angle;
-		if (deg<-180.0) deg+=360.0;
-		if (deg>+180.0) deg-=360.0;
-		return deg;
-	}
-
-	vec2 center(void) const { return vec2(x,y); }
-	vec2 forward(void) const { return dir_from_deg(0.0); }
-	vec2 right(void) const { return dir_from_deg(-90.0); }
-    
+    robot_loc2D(float x_=0.0,float y_=0.0, float angle_=0.0,float percent_=0.0)
+        :robot_center2D(x_,y_,angle_), percent(percent_) {}
     
     // Project us out to a full 3D coordinate system
     robot_coord3D get3D(float height=0.0) const {
@@ -177,13 +204,28 @@ struct robot_loc2D {
     
     void print(FILE *where=stdout, const char *terminator="\n") const
     {
+        robot_center2D::print(stdout,"");
         fprintf(where, 
-            "2Dpos: %6.1f  X, %6.1f  Y   %6.1f deg    %5.1f  %%sure%s",
-            x,y,angle, percent, 
+            "%5.1f  %%sure%s",
+            percent, 
             terminator); 
     }
 };
 
+struct robot_navtarget : public robot_center2D {
+    // tolerance to match the center position
+    robot_center2D error;
+    
+    // Return true if this center matches our target
+    bool matches(const robot_center2D &other) const
+    {
+        return 
+          std::abs(x-other.x)<=error.x &&
+          std::abs(y-other.y)<=error.y &&
+          angle_diff(angle,other.angle)<=error.angle;
+    }
+    
+};
 
 
 };

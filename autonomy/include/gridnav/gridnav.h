@@ -380,6 +380,15 @@ public:
     }
   };
   
+  /* A planner_target template needs these fields:
+
+    // Returns A* heuristic value
+    double get_cost_from(const fposition &from_pos) const 
+
+    // Returns true if we've reached the goal state
+    bool reached_target(const gridposition &grid) const
+  */
+  
   // A planner_target is basically just a cost function.
   class planner_target {
   public:
@@ -405,16 +414,18 @@ public:
   // Planner target is a simple 2D target point
   class planner_target_2D : public planner_target {
     // This is our search target configuration
-    fposition target;
+    //fposition target;
     gridposition gtarget;
   public:
     planner_target_2D(const fposition &target_)
-      :target(target_), gtarget(gridposition(target)) {}
+      ://target(target_), 
+       gtarget(gridposition(target_)) {}
     
-    virtual double get_cost_from(const fposition &from_pos) const
+    virtual double get_cost_from(const fposition &from_pos_f) const
     {
-      double drive_dist=length(from_pos.v-target.v); // in grid cells
-      double turn_ang=this->angle_dist(from_pos.a-target.a); // in discrete angle units
+      gridposition from_pos(from_pos_f); // grid
+      double drive_dist=length(vec2(from_pos.x,from_pos.y)-vec2(gtarget.x,gtarget.y)); // in grid cells
+      double turn_ang=this->angle_dist(from_pos.a-gtarget.a); // in discrete angle units
       double TURN_AMPLIFY=5.0;
       double estimate = drive_dist + TURN_AMPLIFY*turn_ang*TURN_COST_TO_GRID_COST;
       return estimate;

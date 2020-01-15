@@ -51,7 +51,7 @@ bool driver_test=false; // --driver_test, path planning testing
 bool nodrive=false; // --nodrive flag (for testing indoors)
 
 /* Bogus path planning target when we don't want any path planning to happen. */
-aurora::robot_loc2D no_idea_loc={0.0f,0.0f,0.0f,0.0f};
+aurora::robot_loc2D no_idea_loc(0.0f,0.0f,0.0f,0.0f);
 
 /** X,Y field target location where we drive to, before finally backing up */
 vec2 dump_target_loc(field_x_size/2,field_y_trough_center); // rough area

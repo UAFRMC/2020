@@ -46,9 +46,15 @@ public:
         }
         else if (ID==13) {  // large mullet
             size=25; 
+        } 
+        else if (ID==6) {  // goblin
+            size=18; 
+        }
+        else if (ID==7) {  // mask
+            size=5; 
         }
         else {
-            printf("Ignoring--unknown number\n");
+            printf("Ignoring--unknown number %d\n",ID);
             return;
         }
         
