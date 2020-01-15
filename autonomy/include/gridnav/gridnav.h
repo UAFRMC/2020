@@ -380,76 +380,22 @@ public:
     }
   };
   
-  /* A planner_target template needs these fields:
-
+  
+  
+  /* 
+  Build the sequence of steps needed to move the robot from origin to target.
+  
+  A planner_target template needs these methods:
+  {
     // Returns A* heuristic value at this grid cell
     double get_cost_from(const gridposition &from_pos) const 
 
     // Returns true if we've reached the goal state at this grid cell
     bool reached_target(const gridposition &grid) const
+  }
+  
   */
-  
-  // A planner_target is basically just a cost function.
-  class planner_target {
-  public:
-    /* Return the estimated cost to reach the target from this position.
-       If you're at the target, return 0. */
-    virtual double get_cost_from(const gridposition &from_pos) const =0;
-    
-    /* Return true if we've reached the target. */
-    virtual bool reached_target(const gridposition &grid) const =0;
-    
-    
-    /* Utility function: return the angular distance */
-    float angle_dist(float delta) const {
-       delta=fmodplus(delta,GRIDA);
-       if (delta>GRIDA/2) delta=GRIDA-delta; // turn the other way
-       return delta;
-    }
-
-  protected:
-    ~planner_target() {} // only subclasses will get deleted, not these parent classes.
-  };
-  
-  // Planner target is a simple 2D target point
-  class planner_target_2D : public planner_target {
-    // This is our search target configuration
-    //fposition target;
-    gridposition gtarget;
-  public:
-    planner_target_2D(const fposition &target_)
-      ://target(target_), 
-       gtarget(gridposition(target_)) {}
-    
-    virtual double get_cost_from(const gridposition &from_pos) const
-    {
-      double drive_dist=length(vec2(from_pos.x,from_pos.y)-vec2(gtarget.x,gtarget.y)); // in grid cells
-      double turn_ang=this->angle_dist(from_pos.a-gtarget.a); // in discrete angle units
-      double TURN_AMPLIFY=5.0;
-      double estimate = drive_dist + TURN_AMPLIFY*turn_ang*TURN_COST_TO_GRID_COST;
-      return estimate;
-    }
-    
-    virtual bool reached_target(const gridposition &grid) const 
-    {
-      if (true) 
-      { // require exact
-        return grid==gtarget;
-      }
-      else 
-      { // allow a little position error
-        return 
-          std::abs(grid.x-gtarget.x)<=1 &&
-          std::abs(grid.y-gtarget.y)<=1 &&
-          std::abs(grid.a-gtarget.a)<=0;
-      }
-    }
-    
-    ~planner_target_2D() {}
-  };
-  
-  
-  // Build the sequence of steps needed to move the robot from origin to target.
+  template <class planner_target>
   class planner {
     navigator_t &nav;
     
@@ -512,14 +458,6 @@ public:
     {
       valid = plan_path(origin,target,last_drive,verbose);
     } 
-    
-    planner(navigator_t &nav_,const fposition &origin,const fposition &ftarget, drive_t last_drive=drive_t(), bool verbose=false) 
-      :nav(nav_)
-    {
-      planner_target_2D target(ftarget);
-      valid = plan_path(origin,target,last_drive,verbose);
-    }
-    
     
     bool plan_path(const fposition &origin,const planner_target &target,drive_t last_drive=drive_t(), bool verbose=false)
     {

@@ -9,6 +9,7 @@
 #include "gridnav.h"
 #include "../../firmware/field_geometry.h"
 
+
 /**
   Build a gridnav navigator to plan paths for our 
   Robot Mining Competition sized robot.
@@ -28,9 +29,59 @@ public:
   typedef gridnav::gridnavigator<GRIDX, GRIDY, GRIDA, GRIDSIZE, ROBOTSIZE> navigator_t;
   navigator_t navigator;
   
-  typedef navigator_t::planner planner;
   typedef navigator_t::fposition fposition;
+  typedef navigator_t::gridposition gridposition;
   typedef navigator_t::searchposition searchposition;
+  
+  
+
+  
+  // Planner target is a simple 2D target point
+  class planner_target_2D {
+    // This is our search target configuration
+    //fposition target;
+    gridposition gtarget;
+  public:
+    planner_target_2D(const fposition &target_)
+      ://target(target_), 
+       gtarget(gridposition(target_)) {}
+    
+    
+    /* Utility function: return the angular distance */
+    float angle_dist(float delta) const {
+       delta=navigator_t::fmodplus(delta,GRIDA);
+       if (delta>GRIDA/2) delta=GRIDA-delta; // turn the other way
+       return delta;
+    }
+    
+    double get_cost_from(const gridposition &from_pos) const
+    {
+      double drive_dist=length(vec2(from_pos.x,from_pos.y)-vec2(gtarget.x,gtarget.y)); // in grid cells
+      double turn_ang=this->angle_dist(from_pos.a-gtarget.a); // in discrete angle units
+      double TURN_AMPLIFY=5.0;
+      double estimate = drive_dist + TURN_AMPLIFY*turn_ang*navigator_t::TURN_COST_TO_GRID_COST;
+      return estimate;
+    }
+    
+    bool reached_target(const gridposition &grid) const 
+    {
+      if (true) 
+      { // require exact
+        return grid==gtarget;
+      }
+      else 
+      { // allow a little position error
+        return 
+          std::abs(grid.x-gtarget.x)<=1 &&
+          std::abs(grid.y-gtarget.y)<=1 &&
+          std::abs(grid.a-gtarget.a)<=0;
+      }
+    }
+    
+    ~planner_target_2D() {}
+  };
+  
+  typedef navigator_t::planner<planner_target_2D> planner;
   
   // Discretized version of our geometry
   navigator_t::robot_grid_geometry robot;

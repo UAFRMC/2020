@@ -130,6 +130,7 @@ public:
     rmc_navigator::fposition ftarget(target.x,target.y,target.angle);
     debug.target=target;
 
+    
     rmc_navigator::planner plan(navigator.navigator,fstart,ftarget,last_drive,false);
     int steps=0;
     for (const rmc_navigator::searchposition &p : plan.path)

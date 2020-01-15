@@ -4,7 +4,7 @@ PROGS=pathplanner
 
 all: $(PROGS)
 
-pathplanner: pathplanner.cpp
+pathplanner: pathplanner.cpp pathplanner.h ../include/gridnav/* ../include/aurora/*
 	g++ $(CFLAGS) $< -o $@
 
 clean:
