@@ -217,6 +217,11 @@ int main(int argc,const char *argv[]) {
     while (true) {
         // Grab data from realsense
         realsense_camera_capture cap(cam);
+        // If the two captures dont have the same data do not draw the obsticles.
+        // Maybe solution is to iterate over the two realsense scene.
+        // Helper script maybe define an way to compare in realsense.h
+        // ex: cap.blend(last);
+
         
         // Run aruco marker detection on color image
         if (aruco)
@@ -261,6 +266,8 @@ int main(int argc,const char *argv[]) {
             if (key == 27 || key=='q')  
                 break;  
         }
+        // Store The previous copy of the data before grabbing new
+        realsense_camera_capture last(cap);
     }
     return 0;
 }
