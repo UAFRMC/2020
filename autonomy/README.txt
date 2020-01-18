@@ -1,13 +1,51 @@
+UPDATE 2020:
+
 The "Autonomy" system is separated into two halves:
 
 The "Front End" runs on a control booth PC, and it:
 	- Accepts keyboard presses, joystick events, etc in manual mode.  
 	- Connects to the back end over the network (probably TCP to start with; should also try UDP subnet broadcast).
+	
+The "Backend" runs on an on-robot PC,
+The System is divided into 5 parts, these parts include the Bac-Kend, Pathplanner, Vision, Stepper, and Localizer.
+These systems are designed to have comms via MMap. With dedicated files to communicate between systems. The files defined are located in the lunatic.h. This style of system is replacing the monolithic backend from previous iterations. 
 
-The "Back End" runs on an on-robot PC, and it:
+Logically UNcoupled Architecture Technology for Intra-robot Communication
+
+Lunatic manages data exchange between all on-robot 
+software components, including these programs:
+
+Vision manages the realsense camera
+    -Reads color and depth frames from the camera
+    -Passes color to aruco to look for computer vision markers
+        -Any detected markers create position estimates for the localizer
+    -Passes depth to obstacle detector subsystem to look for rocks
+        -Any detected obstacles get written to the obstacle grid
+
+Localizer integrates the robot position
+    -Reads drive encoder counts from the backend
+    -Reads aruco data from the vision subsystem
+    -Reads camera pointing from the stepper motor
+    -Publishes coordinates used by all other components
+
+Stepper talks to the camera pointing stepper motor
+    -Reads requested view angle from backend
+    -Publishes current view angle to the localizat
+
+Path planner computes an obstacle-free drive path
+    -Reads the robot location from the localizer
+    -Reads the target location from the backend
+    -Reads obstacle grid from the obstacle detector
+    -Publishes drive commands to the backend
+    -Uses an A* to plan paths. 
+    	-A* is a goal area rather than a point.
+
+backend talks to the robot, using two subsystems:
+    BAC: Basic Autonomy Control 
+        -manages the autonomy state machine and pilot comms (over UDP)
+	
+    KEND: Keep Electronics Not Dying 
 	- Talks to the front end via a network socket
-	- Logs telemetry for future analysis
-	- Performs autonomous responses, like raising the mining head when it stalls
 	- Interfaces with sensors, like Kinect or webcam
 	- Talks to the Arduino via a USB serial connection
 		- Resets the connection if it is ever lost
