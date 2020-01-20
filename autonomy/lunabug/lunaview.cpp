@@ -225,7 +225,7 @@ void draw_markers(const aurora::robot_coord3D &camera3D,const aurora::vision_mar
 // Draw the planned path
 void draw_path_plan(aurora::path_plan &path,field_debug_image &img)
 {
-    if (path.plan_len>0 && path.plan_len<aurora::path_plan::max_path_len)
+    if (path.plan_len>0 && path.plan_len<=aurora::path_plan::max_path_len)
     for (int pos=1;pos<path.plan_len;pos++) {
         img.line(
           vec3(path.path_plan[pos-1].x,path.path_plan[pos-1].y,0.0f),
