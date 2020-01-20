@@ -15,7 +15,7 @@ int main()
     MAKE_exchange_drive_commands();
     MAKE_exchange_plan_current();
     MAKE_exchange_path_plan();
-
+    aurora::drive_commands newDrive;
     while (true) {
         aurora::path_plan currentPlan;
         aurora::robot_loc2D current = exchange_plan_current.read();
@@ -23,12 +23,14 @@ int main()
             currentPlan = exchange_path_plan.read();
         }
         while(!exchange_path_plan.updated()){
-            for(int i = 0;i < 30; i++)
+            for(unsigned short i = 0; i < currentPlan.plan_len; i++)
             {
                 aurora::robot_loc2D nextpos = currentPlan.path_plan[i];
+                newDrive.left = newDrive.right = 0.0;
+                
             }
         }
-        aurora::drive_commands newDrive();
+        
         //Logic here for this stuff to make a new drive command and 
         exchange_drive_commands.write_begin() = newDrive;
         exchange_drive_commands.write_end();
