@@ -106,6 +106,7 @@ int main() {
     
     aurora::drive_encoders lastencoder={0.0,0.0};
     int printcount=0; // <- moderate printing pace, for easier debugging
+    bool loc_changed=true;
     while (true) {
         bool print=false;
         if ((printcount++%50)==0) print=true;
@@ -114,10 +115,17 @@ int main() {
      
     // Update position based on new encoder values
         aurora::drive_encoders currentencoder = exchange_drive_encoders.read();
-        aurora::robot_loc2D new2D=move_robot_encoder(pos,currentencoder - lastencoder);
+        aurora::drive_encoders encoder_change = currentencoder - lastencoder;
+        if (encoder_change.left!=0 || encoder_change.right!=0) {
+            loc_changed=true;
+        }
+        aurora::robot_loc2D new2D=move_robot_encoder(pos,encoder_change);
         lastencoder = currentencoder;
-        exchange_plan_current.write_begin() = new2D;
-        exchange_plan_current.write_end();
+        if (loc_changed) {
+            exchange_plan_current.write_begin() = new2D;
+            exchange_plan_current.write_end();
+            loc_changed=false;
+        }
         pos=new2D;
         if (print) { printf("Robot: "); pos.print(); }
         
@@ -160,6 +168,7 @@ int main() {
                     aurora::robot_coord3D marker_coords=camera_total.compose(report.coords);
                     // fixme: estimate robot position from marker position
                     if (print) { printf("Marker%d: ",report.markerID); marker_coords.print(); }
+                    loc_changed=true;
                 }
         }
         

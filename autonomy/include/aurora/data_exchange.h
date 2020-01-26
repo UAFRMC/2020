@@ -217,8 +217,8 @@ uint64_t data_exchange<T>::check(const char *when)
 void data_exchange_sleep(int millisec=1) {
     // Don't hog the CPU, give up our timeslice
     struct timespec sleeptime;
-    sleeptime.tv_sec=0;
-    sleeptime.tv_nsec=millisec*NANO_TO_MILLI;
+    sleeptime.tv_sec=millisec/1000;
+    sleeptime.tv_nsec=(millisec%1000)*NANO_TO_MILLI;
     nanosleep(&sleeptime,NULL);
 }
 

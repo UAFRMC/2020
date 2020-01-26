@@ -2,16 +2,18 @@
 #include "aurora/lunatic.h"
 
 int main(int argc,char *argv[]) {
-    if (argc!=5) { 
-        printf("Usage: set_target  x_cm  y_cm  angle_deg  percent\n");
+    if (argc!=7) { 
+        printf("Usage: set_target  x_cm  y_cm  angle_deg  error_x error_y error_target\n");
         exit(1);
     }
     
-    aurora::robot_loc2D target;
+    aurora::robot_navtarget target;
     target.x=atof(argv[1]);
     target.y=atof(argv[2]);
     target.angle=atof(argv[3]);
-    target.percent=atof(argv[4]);
+    target.error.x=atof(argv[4]);
+    target.error.y=atof(argv[5]);
+    target.error.angle=atof(argv[6]);
     target.print();
     
     MAKE_exchange_plan_target();

@@ -7,7 +7,7 @@ int main() {
     
     while (true) {
         if (exchange_plan_target.updated()) {
-            aurora::robot_loc2D loc2D= exchange_plan_target.read();
+            auto loc2D= exchange_plan_target.read();
             loc2D.print();
         }
         

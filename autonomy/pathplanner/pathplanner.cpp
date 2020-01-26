@@ -8,7 +8,17 @@
 #include "aurora/lunatic.h"
 
 
-int main() {
+int main(int argc,char *argv[]) {
+    int delaytime=500; // <- delay, in ms, between planning runs.  Higher: less CPU, less jittery
+    for (int argi=1;argi<argc;argi++) {
+      std::string arg=argv[argi];
+      if (arg=="--lag") delaytime=atoi(argv[++argi]); 
+      else {
+        std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
+        return 1;
+      }
+    }
+
     //Make the pathplanning object
     robot_autodriver autodriver;
 
@@ -22,10 +32,9 @@ int main() {
     MAKE_exchange_field_drivable();
 
     while (true) {
+        bool try_plan=exchange_plan_current.updated() || exchange_plan_target.updated();
         aurora::robot_navtarget target = exchange_plan_target.read();
-        
         if (target.valid()) { // we have a valid target
-            bool try_plan=exchange_plan_current.updated() || exchange_plan_target.updated();
             aurora::robot_loc2D current = exchange_plan_current.read();
             
             if (exchange_field_drivable.updated()) 
@@ -55,7 +64,7 @@ int main() {
         }
 
         //Sleep? Forced latency?
-        aurora::data_exchange_sleep(10);
+        aurora::data_exchange_sleep(delaytime);
     }
     return 0;
 }
