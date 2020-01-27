@@ -4,10 +4,7 @@
 // Publishes current view angle to the localizer
 
 #include <iostream>
-#include <unistd.h>
-#include <stdio.h>
 #include <string>
-#include <vector>
 #include "../include/serial.h"
 #include "../include/serial.cpp"
 #include "../include/aurora/data_exchange.h"
@@ -15,28 +12,20 @@
 
 //SerialPort Serial;
 
-int main() {
-    //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
-    MAKE_exchange_stepper_report();
-    //Data source needed to read from, these are defined by lunatic.h for what files we will be communicating through
-    MAKE_exchange_stepper_request();
-
-    Serial.begin(115200);
-
+int nanoComm()
+{
     static int MIL = 1000000; // to convert microseconds to seconds
 
+    int count = 0, ret = 0;
     bool leave = false, once = false;
     std::string received;
     std::string received_str = "";
     char str[] = "Hello world";
 
-    Serial.Output_flush();
-
     while(Serial.Is_open())
     {
         if(!once)
         {
-            std::cout << "<Serial  Port Ready>" << std::endl;
             usleep(1 * MIL); // must wait for nano
             Serial.write(str);
             once = true;
@@ -67,14 +56,39 @@ int main() {
             }
         }
 
+        ++count;
+
         if(leave)
+        {
+            ret = 1;
+            break;
+        }
+        else if(count == 10 * MIL)
         {
             break;
         }
     }
     std::cout << std::endl;
 
-    /*while (true) {
+    return ret;
+}
+
+int main() {
+    //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
+    MAKE_exchange_stepper_report();
+    //Data source needed to read from, these are defined by lunatic.h for what files we will be communicating through
+    MAKE_exchange_stepper_request();
+
+    int res;
+
+    Serial.begin(115200);
+    if(Serial.Is_open())
+    {
+        std::cout << "<Serial  Port Ready>" << std::endl;
+    }
+
+    while (true)
+    {
         aurora::stepper_pointing oldDir = exchange_stepper_request.read();
 
         aurora::stepper_pointing newDir;
@@ -87,8 +101,19 @@ int main() {
 
         //Sleep? Forced latency?
         aurora::data_exchange_sleep(10);
-    }*/
+
+
+        res = nanoComm();
+
+        if(res)
+        {
+            std::cout << "SUCCESS\n\n" << std::endl;
+        }
+        else
+        {
+            std::cout << "FAILED\n\n" << std::endl;
+        }
+    }
 
     return 0;
 }
-
