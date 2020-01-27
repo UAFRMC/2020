@@ -279,7 +279,7 @@ store the field grid of obstacle / drivable locations:
     Written by the computer vision system
     Read by the cartographer
 */
-#define MAKE_exchange_field_raw()   aurora::data_exchange<aurora::field_drivable> exchange_field_drivable("field_raw.grid")
+#define MAKE_exchange_field_raw()   aurora::data_exchange<aurora::field_drivable> exchange_field_raw("field_raw.grid")
 
 /* ----------- Path Planning debugging ---------- */
 class path_plan {
