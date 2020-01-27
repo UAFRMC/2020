@@ -269,11 +269,17 @@ typedef field_raster<unsigned char> field_drivable;
 
 /* This macro declares the variable used to 
 store the field grid of obstacle / drivable locations:
-    Written by the computer vision system
-    Read by the path planner
+    Written by the cartographer
+    Read by the pathplanner
 */
 #define MAKE_exchange_field_drivable()   aurora::data_exchange<aurora::field_drivable> exchange_field_drivable("field_drivable.grid")
 
+/* This macro declares the variable used to 
+store the field grid of obstacle / drivable locations:
+    Written by the computer vision system
+    Read by the cartographer
+*/
+#define MAKE_exchange_field_raw()   aurora::data_exchange<aurora::field_drivable> exchange_field_drivable("field_drivable.grid")
 
 /* ----------- Path Planning debugging ---------- */
 class path_plan {
