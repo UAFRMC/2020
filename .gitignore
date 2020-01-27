@@ -88,3 +88,5 @@ autonomy/vision/vision
 autonomy/unitTests/lat_check/.vscode/settings.json
 autonomy/aruco/aruco-3.0.11/src/Makefile
 autonomy/aruco/aruco-3.0.11/Makefile
+autonomy/include/readme.md
+autonomy/include/CMakeLists.txt
