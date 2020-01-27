@@ -8,11 +8,12 @@
 #include "../include/serial.h"
 #include "../include/serial.cpp"
 #include "../include/aurora/data_exchange.h"
+#include "../include/aurora/stepper.h"
 #include "../include/aurora/lunatic.h"
 
 //SerialPort Serial;
 
-int nanoComm()
+int nanoComm(float loc)
 {
     static int MIL = 1000000; // to convert microseconds to seconds
 
@@ -73,12 +74,14 @@ int nanoComm()
     return ret;
 }
 
-int main() {
+int main()
+{
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_stepper_report();
     //Data source needed to read from, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_stepper_request();
 
+    Stepper spyglass;
     int res;
 
     Serial.begin(115200);
@@ -103,7 +106,7 @@ int main() {
         aurora::data_exchange_sleep(10);
 
 
-        res = nanoComm();
+        res = nanoComm(spyglass.loc);
 
         if(res)
         {
