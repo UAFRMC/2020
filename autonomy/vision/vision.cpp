@@ -202,7 +202,7 @@ int main(int argc,const char *argv[]) {
 
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_marker_reports();
-    MAKE_exchange_field_drivable();
+    MAKE_exchange_field_raw();
     MAKE_exchange_obstacle_view();
     
     printf("Connecting to realsense camera...\n");
@@ -244,9 +244,9 @@ int main(int argc,const char *argv[]) {
             project_depth_to_2D(cap,view3D,map2D);
             
             // Mark out the obstacles on the map
-            aurora::field_drivable &newField = exchange_field_drivable.write_begin();
+            aurora::field_drivable &newField = exchange_field_raw.write_begin();
             mark_obstacles(map2D,newField);
-            exchange_field_drivable.write_end();
+            exchange_field_raw.write_end();
             
             if (show_GUI) {
                 cv::Mat debug=map2D.get_debug_2D(6);
