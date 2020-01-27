@@ -35,7 +35,7 @@ aurora::drive_commands path_to_drive(const aurora::path_plan &path,
         aurora::robot_loc2D step = path.path_plan[i];
         double distance = 
            length(step.center()-cur.center())
-           + angle_to_cm*step.angle_diff(step.angle,cur.angle);
+           + angle_to_cm*step.angle_abs_diff(step.angle,cur.angle);
         if (distance < best_distance) {
             best_distance = distance;
             best_index = i;
@@ -51,7 +51,7 @@ aurora::drive_commands path_to_drive(const aurora::path_plan &path,
         vec2 move=next.center()-step.center(); //<- fixme: should this be next - cur?
         if (length(move)>0.01) move=normalize(move); // we just want the drive direction
         float forward = dot(step.forward(),move);
-        float turn = next.angle-cur.angle; if (turn>180.0) turn-=360.0;
+        float turn = next.angle_signed_diff(next.angle,cur.angle); 
         const double turnscale = 0.1; // degrees to 0-1 drive power (steering agressiveness)
         
         const float   autonomous_speed=15.0f; //<- fixme: put this scale factor into backend

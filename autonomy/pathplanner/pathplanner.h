@@ -69,7 +69,7 @@ public:
   // Recompute proximity costs (after marking obstacles)
   void compute_proximity() {
     // Recompute proximity costs after marking obstacles
-    const int obstacle_proximity=30/navigator_res; // distance in grid cells to start penalizing paths
+    const int obstacle_proximity=15/navigator_res; // distance in grid cells to start penalizing paths
     navigator.navigator.compute_proximity(obstacle_proximity);
   }
   

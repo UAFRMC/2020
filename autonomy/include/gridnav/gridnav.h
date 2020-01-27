@@ -431,7 +431,7 @@ public:
       
       // Seems legal, so use heuristic to estimate cost to target
       if (!(lastdrive == drive)) 
-        cost+=400.0; // penalty for swapping drive directions
+        cost+=40.0; // penalty for swapping drive directions
       
       double estimate=target.get_cost_from(g);
       pool.emplace_back(cost, estimate, drive,pos,last);
