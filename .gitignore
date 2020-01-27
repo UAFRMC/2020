@@ -5,3 +5,15 @@ autonomy/frontend/frontend
 autonomy/frontend/log.txt
 autonomy/realsense/beacon_command/beacon
 autonomy/backend/timing.log
+.vscode/settings.json
+autonomy/.vscode/settings.json
+autonomy/andretti/andretti
+autonomy/aruco/aruco-3.0.11/aruco-uninstalled.pc
+autonomy/aruco/aruco-3.0.11/aruco.pc
+autonomy/aruco/aruco-3.0.11/arucoConfig.cmake
+autonomy/aruco/aruco-3.0.11/cmake_install.cmake
+autonomy/aruco/aruco-3.0.11/cmake_uninstall.cmake
+autonomy/aruco/aruco-3.0.11/CMakeCache.txt
+autonomy/aruco/aruco-3.0.11/install_manifest.txt
+autonomy/include/librealsense2/
+autonomy/include/librealsense2-gl/
