@@ -158,14 +158,24 @@ struct robot_center2D {
         return deg;
     }
 
-    // Difference between two degree angles, wrapped to 0-359
-    float angle_diff(float a1,float a2) const {
-        float diff=a2-a1;
+    // Absolute value of angle difference, wrapped to 0 .. 180
+    //  between two degree angles
+    float angle_abs_diff(float a1,float a2) const {
+        float diff=a1-a2;
         if (diff<0) diff=-diff; // all positive
         //while (diff>360.0) diff-=360.0; // subtract off copies of 360
         diff=fmod(diff,360.0); //<- faster worst case
         if (diff>180.0) return 360.0-diff;
         else return diff;
+    }
+    
+    // Signed angle difference, wrapped to -180 .. +180
+    //  between two degree angles
+    float angle_signed_diff(float a1,float a2) const {
+        float diff=a1-a2;
+        while (diff>+180.0) diff-=360.0; // wrap
+        while (diff<-180.0) diff+=360.0; // wrap
+        return diff;
     }
 
     vec2 center(void) const { return vec2(x,y); }
@@ -236,7 +246,7 @@ struct robot_navtarget : public robot_center2D {
         return 
           std::abs(x-other.x)<=error.x &&
           std::abs(y-other.y)<=error.y &&
-          angle_diff(angle,other.angle)<=error.angle;
+          angle_abs_diff(angle,other.angle)<=error.angle;
     }
     
     // Return true if we have some actual requirements
