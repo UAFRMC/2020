@@ -17,3 +17,50 @@ autonomy/aruco/aruco-3.0.11/CMakeCache.txt
 autonomy/aruco/aruco-3.0.11/install_manifest.txt
 autonomy/include/librealsense2/
 autonomy/include/librealsense2-gl/
+autonomy/aruco/aruco-3.0.11/CMakeFiles/cmake.check_cache
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+autonomy/aruco/aruco-3.0.11/src/libaruco.so.3.0
