@@ -14,8 +14,9 @@ class Stepper
         void setMin(bool);
         void setMax(bool);
 
-    private:
         float loc;
+
+    private:
         bool min, max;
 };
 
