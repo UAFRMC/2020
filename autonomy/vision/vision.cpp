@@ -172,7 +172,24 @@ void mark_obstacles(const obstacle_grid &map2D,aurora::field_drivable &field)
     field.at(x,y) = mark;
   }
 }
-
+// looks at north east south and west neighbors, if they jump off a bridge so should you.
+// Think of some mathy way to describe how the obsticles should look. 
+void basicFilter(aurora::field_drivable & currField){
+    for(auto x = 0; x < currField.GRIDX; x++){
+        for(auto y = 0; y < currField.GRIDY; y++){
+            auto home = currField.at(x,y);
+            
+            auto east = currField.at(x+1,y);
+            auto west = currField.at(x-1,y);
+            auto north = currField.at(x,y+1);
+            auto south = currField.at(x,y-1);
+           
+            if(east == west && east == south && east == north && home != east){
+                currField.at(x,y) = east;
+            }
+        }
+    }
+}
 
 int main(int argc,const char *argv[]) {
     int show_GUI=0;
@@ -255,6 +272,7 @@ int main(int argc,const char *argv[]) {
             // Mark out the obstacles on the map
             aurora::field_drivable &newField = exchange_field_raw.write_begin();
             mark_obstacles(map2D,newField);
+            basicFilter(newField);
             exchange_field_raw.write_end();
             
             if (show_GUI) {
