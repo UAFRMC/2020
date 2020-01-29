@@ -8,13 +8,16 @@ int main(){
     MAKE_exchange_field_drivable();
     MAKE_exchange_field_raw();
 
-    aurora::field_drivable newField = exchange_field_raw.read();
-
+    unsigned char mark=aurora::field_unknown;
+    aurora::field_drivable newField;
+    newField.clear(mark);
+    exchange_field_drivable.write_begin() = newField;
+    exchange_field_drivable.write_end();
     while(true){
         if(exchange_field_raw.updated()){
             newField = exchange_field_raw.read();
         }
-        
+
         exchange_field_drivable.write_begin() = newField;
         exchange_field_drivable.write_end();
     }
