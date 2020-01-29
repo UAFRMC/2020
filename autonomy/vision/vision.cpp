@@ -176,7 +176,11 @@ void mark_obstacles(const obstacle_grid &map2D,aurora::field_drivable &field)
 
 int main(int argc,const char *argv[]) {
     int show_GUI=0;
-    
+    //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
+    MAKE_exchange_marker_reports();
+    MAKE_exchange_field_raw();
+    MAKE_exchange_obstacle_view();
+
     // res=720; fps=30; // <- 200% of gaming laptop CPU
     // res=540; fps=60; // <- 220% of gaming laptop CPU
     // res=540; fps=30; // <- 100% of gaming laptop CPU
@@ -194,6 +198,14 @@ int main(int argc,const char *argv[]) {
       else if (arg=="--no-aruco") aruco=false; 
       else if (arg=="--no-obstacle") obstacle=false; 
       else if (arg=="--erode") erode=atoi(argv[++argi]);
+      else if (arg=="--clear") 
+      {
+        unsigned char mark=aurora::field_unknown;
+        aurora::field_drivable clearField;
+        clearField.clear(mark);
+        exchange_field_raw.write_begin() = clearField;
+        exchange_field_raw.write_end();
+      }
       else {
         std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
         return 1;
@@ -201,9 +213,6 @@ int main(int argc,const char *argv[]) {
     }
 
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
-    MAKE_exchange_marker_reports();
-    MAKE_exchange_field_raw();
-    MAKE_exchange_obstacle_view();
     
     printf("Connecting to realsense camera...\n");
     realsense_camera cam(res,fps);
