@@ -18,9 +18,9 @@ From the depth images, we extract drivable / non-drivable areas.
 #include "vision/aruco_detector.hpp"
 #include "vision/aruco_detector.cpp"
 
-// // Obstacle detection
-// #include "vision/grid.hpp"
-// #include "vision/grid.cpp"
+// Obstacle detection
+#include "vision/grid.hpp"
+#include "vision/grid.cpp"
 
 
 /* Fill out computer vision marker reports, based on observations from aruco */
@@ -277,6 +277,7 @@ int main(int argc,const char *argv[]) {
             obstacle_grid map2D;
             aurora::robot_coord3D view3D = exchange_obstacle_view.read();
             project_depth_to_2D(cap,view3D,map2D);
+
             
             // Mark out the obstacles on the map
             aurora::field_drivable &newField = exchange_field_raw.write_begin();
