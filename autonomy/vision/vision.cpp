@@ -18,9 +18,9 @@ From the depth images, we extract drivable / non-drivable areas.
 #include "vision/aruco_detector.hpp"
 #include "vision/aruco_detector.cpp"
 
-// Obstacle detection
-#include "vision/grid.hpp"
-#include "vision/grid.cpp"
+// // Obstacle detection
+// #include "vision/grid.hpp"
+// #include "vision/grid.cpp"
 
 
 /* Fill out computer vision marker reports, based on observations from aruco */
@@ -172,8 +172,8 @@ void mark_obstacles(const obstacle_grid &map2D,aurora::field_drivable &field)
     field.at(x,y) = mark;
   }
 }
-// looks at north east south and west neighbors, if they jump off a bridge so should you.
-// Think of some mathy way to describe how the obsticles should look. 
+// // looks at north east south and west neighbors, if they jump off a bridge so should you.
+// // Think of some mathy way to describe how the obsticles should look. 
 void basicFilter(aurora::field_drivable & currField){
     for(auto x = 0; x < currField.GRIDX; x++){
         for(auto y = 0; y < currField.GRIDY; y++){
@@ -183,9 +183,18 @@ void basicFilter(aurora::field_drivable & currField){
             auto west = currField.at(x-1,y);
             auto north = currField.at(x,y+1);
             auto south = currField.at(x,y-1);
-           
-            if(east == west && east == south && east == north && home != east){
-                currField.at(x,y) = east;
+           //checking if three or more of your neighbors match then you are messed up. 
+            if(home != east && east == north && east == south){
+                home = east;
+            }
+            else if(home != east && east == west && east == north){
+                home = east;
+            }
+            else if(home != east && east == west && east == south){
+                home = east;
+            }
+            else if(home != west && west == north && west == south){
+                home = west;
             }
         }
     }
@@ -270,10 +279,10 @@ int main(int argc,const char *argv[]) {
             project_depth_to_2D(cap,view3D,map2D);
             
             // Mark out the obstacles on the map
-            aurora::field_drivable &newField = exchange_field_raw.write_begin();
-            mark_obstacles(map2D,newField);
-            basicFilter(newField);
-            exchange_field_raw.write_end();
+            // aurora::field_drivable &newField = exchange_field_raw.write_begin();
+            // mark_obstacles(map2D,newField);
+            // basicFilter(newField);
+            // exchange_field_raw.write_end();
             
             if (show_GUI) {
                 cv::Mat debug=map2D.get_debug_2D(6);
