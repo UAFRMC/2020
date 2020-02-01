@@ -1,0 +1,15 @@
+[Unit]
+Description=Cartographer service that runs the Cartographer module for making the map
+StartLimitIntervalSec=0
+PartOf=robot.Service
+After=robot.Service
+
+[Service]
+Type=idle
+Restart=always
+RestartSec=2
+WorkingDirectory=/home/pi/2020/autonomy/cartographer
+ExecStart=./cartographer.sh
+
+[Install]
+WantedBy=multi-user.
