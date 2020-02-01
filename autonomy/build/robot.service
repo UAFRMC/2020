@@ -1,6 +1,5 @@
 [Unit]
 Description=A service to manage all the robots autonomy parts
-
 StartLimitIntervalSec=0
 
 [Service]

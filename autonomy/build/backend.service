@@ -8,8 +8,8 @@ After=robot.service
 Type=idle
 Restart=always
 RestartSec=2
-WorkingDirectory=/home/pi/2020/autonomy/backend
-ExecStart=./backend.sh
+WorkingDirectory=/home/mperry37/2020/autonomy/backend
+ExecStart=/home/mperry37/2020/autonomy/backend/backend.sh
 
 [Install]
-WantedBy=multi-user.
+WantedBy=robot.service
