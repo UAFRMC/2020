@@ -14,4 +14,4 @@ elif [ ! -x "$file" ];
     exit 1
 fi
 
-$file
+$file >$file.log >2&1

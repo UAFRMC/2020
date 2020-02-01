@@ -14,4 +14,4 @@ elif [ ! -x "$file" ];
     exit 1
 fi
 
-$file --gui --fps 15
+$file --gui --fps 15 >$file.log 2>&1

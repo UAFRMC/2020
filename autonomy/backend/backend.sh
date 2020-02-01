@@ -16,4 +16,4 @@ elif [ ! -x "$file" ];
 fi
 
 # $file
-$file --sim
+$file --sim >$file.log 2>&1

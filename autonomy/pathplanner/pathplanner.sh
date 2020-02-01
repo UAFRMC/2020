@@ -15,4 +15,4 @@ elif [ ! -x "$file" ];
 fi
 
 # Set parameters here!
-$file --lag 3000
+$file --lag 3000 >$file.log 2>&1
