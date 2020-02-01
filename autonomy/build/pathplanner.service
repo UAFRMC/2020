@@ -1,8 +1,8 @@
 [Unit]
 Description=Pathplanning service for managing the module of path planning
 StartLimitIntervalSec=0
-PartOf=robot.Service
-After=robot.Service
+PartOf=robot.service
+After=robot.service
 
 [Service]
 Type=idle

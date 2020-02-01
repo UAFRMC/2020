@@ -1,8 +1,8 @@
 [Unit]
 Description=Andretti Service for driving the pathplanner path
 StartLimitIntervalSec=0
-PartOf=robot.Service
-After=robot.Service
+PartOf=robot.service
+After=robot.service
 
 [Service]
 Type=idle
