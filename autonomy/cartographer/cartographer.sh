@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # make clean all
-
+make
 
 file=./cartographer
 if [ ! -f "$file" ]; 
