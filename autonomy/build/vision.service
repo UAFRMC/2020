@@ -1,0 +1,15 @@
+[Unit]
+Description=Vision service for managing the vision module for robot.
+StartLimitIntervalSec=0
+PartOf=robot.Service
+After=robot.Service
+
+[Service]
+Type=idle
+Restart=always
+RestartSec=2
+WorkingDirectory=/home/pi/2020/autonomy/vision
+ExecStart=./vision.sh
+
+[Install]
+WantedBy=multi-user.
