@@ -1,0 +1,15 @@
+[Unit]
+Description=A service to manage all the robots autonomy parts
+
+StartLimitIntervalSec=0
+
+[Service]
+#Fires off once, then exits
+Type=oneshot
+#dumy program to fire off
+ExecStart=/bin/true
+#Sticks around to manage the rest of the robot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
