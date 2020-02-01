@@ -1,0 +1,15 @@
+[Unit]
+Description=Andretti Service for driving the pathplanner path
+StartLimitIntervalSec=0
+PartOf=robot.Service
+After=robot.Service
+
+[Service]
+Type=idle
+Restart=always
+RestartSec=2
+WorkingDirectory=/home/pi/2020/autonomy/andretti
+ExecStart=./andretti.sh
+
+[Install]
+WantedBy=multi-user.
