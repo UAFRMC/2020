@@ -8,8 +8,8 @@ After=robot.service
 Type=idle
 Restart=always
 RestartSec=2
-WorkingDirectory=/home/mperry37/2020/autonomy/cartographer
-ExecStart=/home/mperry37/2020/autonomy/cartographer/cartographer.sh
+WorkingDirectory=/home/pi/2020/autonomy/cartographer
+ExecStart=/home/pi/2020/autonomy/cartographer/cartographer.sh
 
 [Install]
 WantedBy=robot.service
