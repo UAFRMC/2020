@@ -8,8 +8,8 @@ After=robot.service
 Type=idle
 Restart=always
 RestartSec=2
-WorkingDirectory=/home/pi/2020/autonomy/pathplanner
-ExecStart=/home/pi/2020/autonomy/pathplanner/pathplanner.sh
+WorkingDirectory=/home/robopi/2020/autonomy/pathplanner
+ExecStart=/home/robopi/2020/autonomy/pathplanner/pathplanner.sh
 
 [Install]
 WantedBy=robot.service

@@ -8,8 +8,8 @@ After=robot.service
 Type=idle
 Restart=always
 RestartSec=2
-WorkingDirectory=/home/pi/2020/autonomy/vision
-ExecStart=/home/pi/2020/autonomy/vision/vision.sh
+WorkingDirectory=/home/robopi/2020/autonomy/vision
+ExecStart=/home/robopi/2020/autonomy/vision/vision.sh
 
 [Install]
 WantedBy=robot.service

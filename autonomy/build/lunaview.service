@@ -7,8 +7,8 @@ After=robot.service
 Type=idle
 Restart=always
 RestartSec=2
-WorkingDirectory=/home/pi/2020/autonomy/lunabug
-ExecStart=/home/pi/2020/autonomy/lunabug/lunaview.sh
+WorkingDirectory=/home/robopi/2020/autonomy/lunabug
+ExecStart=/home/robopi/2020/autonomy/lunabug/lunaview.sh
 
 [Install]
 WantedBy=robot.service
