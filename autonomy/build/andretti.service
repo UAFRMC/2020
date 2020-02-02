@@ -8,8 +8,8 @@ After=robot.service
 Type=idle
 Restart=always
 RestartSec=2
-WorkingDirectory=/home/robopi/2020/autonomy/andretti
-ExecStart=/home/robopi/2020/autonomy/andretti/andretti.sh
+WorkingDirectory=/home/robot/2020/autonomy/andretti
+ExecStart=/home/robot/2020/autonomy/andretti/andretti.sh
 
 [Install]
 WantedBy=robot.service
