@@ -4,7 +4,9 @@
 // Publishes current view angle to the localizer
 
 #include <iostream>
+#include <iomanip>
 #include <string>
+#include <sstream>
 #include "../include/serial.h"
 #include "../include/serial.cpp"
 #include "../include/aurora/data_exchange.h"
@@ -13,22 +15,27 @@
 
 //SerialPort Serial;
 
-int nanoComm(float loc)
+bool nanoComm(float loc)
 {
     static int MIL = 1000000; // to convert microseconds to seconds
 
-    int count = 0, ret = 0;
-    bool leave = false, once = false;
+    int count = 0;
+    bool leave = false, once = false, ret = false;
     std::string received;
     std::string received_str = "";
-    char str[] = "Hello world";
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << loc;
+    std::string tmp = ss.str(); // float to string, precision 2
+    char cstr[tmp.length() + 1];
+    strcpy(cstr, tmp.c_str()); // string to char array
 
     while(Serial.Is_open())
     {
         if(!once)
         {
             usleep(1 * MIL); // must wait for nano
-            Serial.write(str);
+            Serial.write(cstr);
             once = true;
         }
 
@@ -61,7 +68,7 @@ int nanoComm(float loc)
 
         if(leave)
         {
-            ret = 1;
+            ret = true;
             break;
         }
         else if(count == 10 * MIL)
@@ -82,7 +89,7 @@ int main()
     MAKE_exchange_stepper_request();
 
     Stepper spyglass;
-    int res;
+    bool res;
 
     Serial.begin(115200);
     if(Serial.Is_open())
