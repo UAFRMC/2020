@@ -8,6 +8,14 @@ Addeline Mitchell 2019-12-01
 class Stepper
 {
     public:
+        Stepper()
+        {
+            loc = 0.0;
+        }
+
+        ~Stepper()
+        {}
+
         void look(float);
         bool limit();
 

@@ -14,7 +14,7 @@ void loop()
     str = Serial.readString();
     Serial.print(str + "#");
     
-    if(str.equals("Hello world"))
+    if(str.equals("0.00"))
     {
       Serial.print("Welcome home#");
       str = "";
