@@ -1,5 +1,3 @@
-String str;
-
 void setup()
 {
   Serial.begin(115200);
@@ -7,16 +5,36 @@ void setup()
   delay(500);
 }
 
+float stepperComm(float ang)
+{
+  // send ang to stepper
+  // wait for stepper to finish
+  // receive current angle from stepper
+  float current = 1.155;
+  delay(500);
+  
+  return current;
+}
+
 void loop()
 {
+  String str, res;
+  float newAng, curAng;
+  
   while(Serial.available() > 0)
   {
     str = Serial.readString();
     Serial.print(str + "#");
-    
-    if(str.equals("0.00"))
+
+    if(str.length() > 0)
     {
-      Serial.print("Welcome home#");
+      Serial.print("RECEIVED: New Angle (" + str + ")#");
+
+      newAng = str.toFloat();
+      curAng = stepperComm(newAng);
+      
+      Serial.print("CONFIRM: Current Angle ("); Serial.print(curAng, 2); Serial.print(")#");
+      
       str = "";
     }
   }

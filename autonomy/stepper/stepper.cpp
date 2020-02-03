@@ -51,8 +51,14 @@ bool nanoComm(float loc)
                 {
                     std::cout << std::endl;
                 }
-                else if(received_str == "Welcome home")
+                else if(received_str == "RECEIVED: New Angle (" + tmp + ")")
                 {
+                    leave = true;
+                }
+                else if(received_str.substr(0,24) == "CONFIRM: Current Angle (")
+                {
+                    std::cout << "CONFIRMED UPDATE" << std::endl;
+                    // grab float from string
                     leave = true;
                 }
 
