@@ -92,9 +92,7 @@ int main(int argc,const char *argv[]){
 
     aurora::field_drivable newField;
     while(true){
-        if(exchange_field_raw.updated()){
-            newField = exchange_field_raw.read();
-        }
+        newField = exchange_field_raw.read();
         // mark_obstacles(map2D,newField);
         // basicFilter(newField);
         exchange_field_drivable.write_begin() = newField;
