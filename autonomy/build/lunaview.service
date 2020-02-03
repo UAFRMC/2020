@@ -9,6 +9,7 @@ Restart=always
 RestartSec=2
 WorkingDirectory=/home/robot/2020/autonomy/lunabug
 ExecStart=/home/robot/2020/autonomy/lunabug/lunaview.sh
+User=robot
 
 [Install]
 WantedBy=robot.service

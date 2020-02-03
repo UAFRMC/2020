@@ -10,6 +10,7 @@ Restart=always
 RestartSec=2
 WorkingDirectory=/home/robot/2020/autonomy/vision
 ExecStart=/home/robot/2020/autonomy/vision/vision.sh
+User=robot
 
 [Install]
 WantedBy=robot.service
