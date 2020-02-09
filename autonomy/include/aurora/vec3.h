@@ -4,7 +4,7 @@
 #ifndef __AURORA_VEC3_H
 #define __AURORA_VEC3_H
 
-#include "osl/vec4.h"
+#include "../osl/vec4.h"
 
 #endif
 
