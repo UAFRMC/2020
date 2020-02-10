@@ -208,7 +208,6 @@ struct vision_marker_report {
         coords.Z.x = 0.0;
         coords.Z.y = 0.0;
         coords.Z.z = 0.0;
-
     }
 
     void print(FILE *f=stdout, const char *terminator="\n") const {
