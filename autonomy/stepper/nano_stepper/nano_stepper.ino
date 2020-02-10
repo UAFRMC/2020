@@ -1,6 +1,9 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
+#define STEPS_PER_MREV 32 // what are the specs?
+#define STEPS_PER_OREV 32 * 64 // 2048; what are the specs?
+
 // defaults to AccelStepper::FULL4WIRE
 // (4 pins) on 2, 3, 4, 5
 AccelStepper myStep;
@@ -17,12 +20,14 @@ void setup()
 
 int deg2step(float deg)
 {
-  return 0.0;
+  int steps = STEPS_PER_OREV * 360 / deg;
+  return steps;
 }
 
 float step2deg(int steps)
 {
-  return 0;
+  float degs = STEPS_PER_OREV * 360 / steps;
+  return degs;
 }
 
 float stepperComm(float ang)
@@ -49,7 +54,7 @@ void loop()
 
     if(str.length() > 0)
     {
-      Serial.print("RECEIVED: New Angle (" + str + ")#");
+      Serial.print("RECEIVED: New Angle (" + str + "°)#");
 
       newAng = str.toFloat();
 
@@ -58,7 +63,7 @@ void loop()
         curAng = stepperComm(newAng);
       
         Serial.print("CONFIRM: Current Angle (");
-        Serial.print(curAng, 2); Serial.print(")#");
+        Serial.print(curAng, 2); Serial.print("°)#");
       }
       
       str = "";
