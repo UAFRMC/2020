@@ -8,6 +8,19 @@
 #include "aurora/data_exchange.h"
 #include "aurora/lunatic.h"
 
+const aurora::vision_marker_reports knownMarkers{aurora::vision_marker_report(10.0,100.0,0.0,13),aurora::vision_marker_report(10.0,64.0,0.0,14)};
+
+void marker_update_robot_pos(aurora::robot_loc2D & currentPos, const aurora::robot_coord3D & currentReportCoord,const int32_t markerID){
+    for(aurora::vision_marker_report report : knownMarkers){
+         if ( markerID == report.markerID){
+            vec3 diff = report.coords.origin - currentReportCoord.origin;
+            currentPos.x += diff.x;
+            currentPos.y+= diff.y;
+        }
+    }
+   
+}
+
 
 // Move the robot based on wheel encoder ticks
 aurora::robot_loc2D move_robot_encoder(const aurora::robot_loc2D &pos,const aurora::drive_encoders &encoderchange)
@@ -167,6 +180,7 @@ int main() {
                     // Put the marker in world coordinates
                     aurora::robot_coord3D marker_coords=camera_total.compose(report.coords);
                     // fixme: estimate robot position from marker position
+                    marker_update_robot_pos(pos,marker_coords,report.markerID);
                     if (print) { printf("Marker%d: ",report.markerID); marker_coords.print(); }
                     loc_changed=true;
                 }
