@@ -62,6 +62,32 @@ vec3 rotate_90_Z(const vec3 &v) {
     return vec3(-v.y,v.x,v.z);
 }
 
+// Absolute value of angle difference, wrapped to 0 .. 180
+//  between two degree angles
+float angle_abs_diff(float a1,float a2) {
+    float diff=a1-a2;
+    if (diff<0) diff=-diff; // all positive
+    //while (diff>360.0) diff-=360.0; // subtract off copies of 360
+    diff=fmod(diff,360.0); //<- faster worst case
+    if (diff>180.0) return 360.0-diff;
+    else return diff;
+}
+
+float angle_from_dir(const vec2 & dir){
+    float world_deg=RAD2DEG*atan2(dir.y,dir.x); 
+    return world_deg;
+}
+
+
+// Signed angle difference, wrapped to -180 .. +180
+//  between two degree angles
+float angle_signed_diff(float a1,float a2) {
+    float diff=a1-a2;
+    while (diff>+180.0) diff-=360.0; // wrap
+    while (diff<-180.0) diff+=360.0; // wrap
+    return diff;
+}
+
 struct robot_loc2D;
 
 // Represents the full 3D coordinate system, which includes roll and pitch, 
@@ -87,7 +113,11 @@ struct robot_coord3D {
         vec3 rel=world-origin;
         return vec3(rel.dot(X),rel.dot(Y),rel.dot(Z));
     }
-    
+
+    float extract_angle()const{
+        return angle_from_dir(vec2(X.x,X.y));
+    }    
+
     robot_coord3D() { reset(); }
     
     // Reset to origin at (0,0,0), no rotations on XYZ
@@ -158,26 +188,8 @@ struct robot_center2D {
         return deg;
     }
 
-    // Absolute value of angle difference, wrapped to 0 .. 180
-    //  between two degree angles
-    float angle_abs_diff(float a1,float a2) const {
-        float diff=a1-a2;
-        if (diff<0) diff=-diff; // all positive
-        //while (diff>360.0) diff-=360.0; // subtract off copies of 360
-        diff=fmod(diff,360.0); //<- faster worst case
-        if (diff>180.0) return 360.0-diff;
-        else return diff;
-    }
     
-    // Signed angle difference, wrapped to -180 .. +180
-    //  between two degree angles
-    float angle_signed_diff(float a1,float a2) const {
-        float diff=a1-a2;
-        while (diff>+180.0) diff-=360.0; // wrap
-        while (diff<-180.0) diff+=360.0; // wrap
-        return diff;
-    }
-
+    
     vec2 center(void) const { return vec2(x,y); }
     vec2 forward(void) const { return dir_from_deg(0.0); }
     vec2 right(void) const { return dir_from_deg(-90.0); }

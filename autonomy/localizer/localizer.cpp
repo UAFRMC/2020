@@ -8,15 +8,26 @@
 #include "aurora/data_exchange.h"
 #include "aurora/lunatic.h"
 
-const aurora::vision_marker_reports knownMarkers{aurora::vision_marker_report(10.0,100.0,0.0,13),aurora::vision_marker_report(10.0,64.0,0.0,14)};
+const aurora::vision_marker_reports knownMarkers {
+    aurora::vision_marker_report(10.0, 100.0, 90.0, 13), //mullet thing
+    aurora::vision_marker_report(10.0, 64.0, 90.0, 14), //cat
+    };
 
 void marker_update_robot_pos(aurora::robot_loc2D & currentPos, const aurora::robot_coord3D & currentReportCoord,const int32_t markerID){
-    for(aurora::vision_marker_report report : knownMarkers){
-         if ( markerID == report.markerID){
-            vec3 diff = report.coords.origin - currentReportCoord.origin;
+    for(aurora::vision_marker_report known : knownMarkers){
+         if ( markerID == known.markerID){
+            vec3 diff = known.coords.origin - currentReportCoord.origin;
             float diffwt = 0.1;
             currentPos.x += diff.x*diffwt;
             currentPos.y+= diff.y*diffwt;
+
+            
+            float anglediff = aurora::angle_signed_diff(known.coords.extract_angle(), currentReportCoord.extract_angle());
+            float anglediffwt = 0.1;
+            currentPos.angle += anglediff*anglediffwt;
+            std::cout << anglediff << "= angle diff \n";
+            std::cout << known.coords.extract_angle() << " = known angle, " <<  currentReportCoord.extract_angle() << " = reported angle \n";
+        
         }
     }
    
@@ -190,7 +201,7 @@ int main() {
 
         if (print) { printf("\n"); }
         // Limit our cycle rate to 100Hz maximum (to save CPU)
-        aurora::data_exchange_sleep(1000);
+        aurora::data_exchange_sleep(10);
     }
     return 0;
 }
