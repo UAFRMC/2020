@@ -24,7 +24,7 @@ int deg2step(float deg)
   return steps;
 }
 
-float step2deg(int steps)
+float step2deg(int steps) // rounds down to whole degree
 {
   float degs = STEPS_PER_OREV * 360 / steps;
   return degs;
@@ -62,7 +62,7 @@ void loop()
       {
         curAng = stepperComm(newAng);
       
-        Serial.print("CONFIRM: Current Angle (");
+        Serial.print("CONFIRM: Curr Angle (");
         Serial.print(curAng, 2); Serial.print("°)#");
       }
       
