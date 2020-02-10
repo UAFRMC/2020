@@ -15,7 +15,7 @@
 
 //SerialPort Serial;
 
-bool nanoComm(float loc)
+bool nanoComm(float loc, float & curLoc)
 {
     static int MIL = 1000000; // to convert microseconds to seconds
 
@@ -50,19 +50,22 @@ bool nanoComm(float loc)
                 if(received_str == "<Arduino Nano Ready>")
                 {
                     std::cout << std::endl;
+                    received_str = "";
                 }
-                else if(received_str == "RECEIVED: New Angle (" + tmp + ")")
+                else if(received_str.substr(0,21) == "RECEIVED: New Angle (")
                 {
-                    leave = true;
+                    received_str = "";
+                    continue;//leave = true;
                 }
-                else if(received_str.substr(0,24) == "CONFIRM: Current Angle (")
+                else if(received_str.substr(0,21) == "CONFIRM: Curr Angle (")
                 {
-                    std::cout << "CONFIRMED UPDATE" << std::endl;
-                    // grab float from string
-                    leave = true;
-                }
+                    std::string newDeg = received_str.substr(21, received_str.length());
+                    newDeg = newDeg.substr(0, newDeg.length() - 2);
 
-                received_str = "";
+                    curLoc = std::stof(newDeg);
+                    received_str = "";
+                    leave = true;
+                }
             }
             else // end of packet
             {
@@ -96,6 +99,7 @@ int main()
 
     Stepper spyglass;
     bool res;
+    float curLoc = 0.0;
 
     Serial.begin(115200);
     if(Serial.Is_open())
@@ -105,21 +109,9 @@ int main()
 
     while (true)
     {
-        aurora::stepper_pointing oldDir = exchange_stepper_request.read();
-
-        aurora::stepper_pointing newDir;
-        //writing new data to files:
-        // newDir.angle = ?
-        // newDir.stable = ?
-
-        exchange_stepper_report.write_begin() = newDir;
-        exchange_stepper_report.write_end();
-
-        //Sleep? Forced latency?
-        aurora::data_exchange_sleep(10);
-
-        spyglass.loc += 10.5;
-        res = nanoComm(spyglass.loc);
+        spyglass.loc += 10.5; // where and how should we be setting this?
+        res = nanoComm(spyglass.loc, curLoc);
+        // curLoc -- where is it needed?
 
         if(res)
         {
@@ -129,6 +121,19 @@ int main()
         {
             std::cout << "FAILED\n\n" << std::endl;
         }
+
+        aurora::stepper_pointing oldDir = exchange_stepper_request.read();
+
+        aurora::stepper_pointing newDir;
+        //writing new data to files:
+        //newDir.angle = curLoc; // is this where the stepper's current location is supposed to go?
+        //newDir.stable = ? // what's this?
+
+        exchange_stepper_report.write_begin() = newDir;
+        exchange_stepper_report.write_end();
+
+        //Sleep? Forced latency?
+        aurora::data_exchange_sleep(10);
     }
 
     return 0;
