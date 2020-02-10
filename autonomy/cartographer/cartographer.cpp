@@ -91,12 +91,20 @@ int main(int argc,const char *argv[]){
     }
 
     aurora::field_drivable newField;
+    bool first_time=true;
     while(true){
-        newField = exchange_field_raw.read();
-        // mark_obstacles(map2D,newField);
-        // basicFilter(newField);
-        exchange_field_drivable.write_begin() = newField;
-        exchange_field_drivable.write_end();
+        if (first_time || exchange_field_raw.updated()) 
+        {
+            first_time=false;
+            newField = exchange_field_raw.read();
+            // mark_obstacles(map2D,newField);
+            // basicFilter(newField);
+            exchange_field_drivable.write_begin() = newField;
+            exchange_field_drivable.write_end();
+       }
+       aurora::data_exchange_sleep(10);
+
+        
     }
     return 0;
 }
