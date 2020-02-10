@@ -14,8 +14,9 @@ void marker_update_robot_pos(aurora::robot_loc2D & currentPos, const aurora::rob
     for(aurora::vision_marker_report report : knownMarkers){
          if ( markerID == report.markerID){
             vec3 diff = report.coords.origin - currentReportCoord.origin;
-            currentPos.x += diff.x;
-            currentPos.y+= diff.y;
+            float diffwt = 0.1;
+            currentPos.x += diff.x*diffwt;
+            currentPos.y+= diff.y*diffwt;
         }
     }
    
@@ -114,14 +115,14 @@ int main() {
     aurora::robot_loc2D pos;
     pos.x = field_x_size/2;
     pos.y = 100.0; // start location
-    pos.angle=0.0f;
+    pos.angle=179.0f;
     pos.percent=5.0f; //<- placeholder, so we can see it change
     
     aurora::drive_encoders lastencoder={0.0,0.0};
     int printcount=0; // <- moderate printing pace, for easier debugging
     bool loc_changed=true;
     while (true) {
-        bool print=false;
+        bool print=true;
         if ((printcount++%50)==0) print=true;
         
         aurora::drive_commands currentdrive = exchange_drive_commands.read();
@@ -189,7 +190,7 @@ int main() {
 
         if (print) { printf("\n"); }
         // Limit our cycle rate to 100Hz maximum (to save CPU)
-        aurora::data_exchange_sleep(10);
+        aurora::data_exchange_sleep(1000);
     }
     return 0;
 }
