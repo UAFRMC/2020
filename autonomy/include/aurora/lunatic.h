@@ -198,6 +198,19 @@ struct vision_marker_report {
     
     vision_marker_report() :markerID(0) {}
     
+    vision_marker_report(float x, float y, float angle, int32_t id){
+        markerID = id;
+        coords.origin.x=x;
+        coords.origin.y=y;
+        coords.origin.z=0.0;
+        coords.X = aurora::vec3_from_angle(angle);
+        coords.Y = aurora::vec3_from_angle(angle+90.0);
+        coords.Z.x = 0.0;
+        coords.Z.y = 0.0;
+        coords.Z.z = 0.0;
+
+    }
+
     void print(FILE *f=stdout, const char *terminator="\n") const {
         fprintf(f,"marker%d: ",markerID);
         coords.print(f,terminator);
