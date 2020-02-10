@@ -11,15 +11,28 @@ void setup()
   Serial.print("<Arduino Nano Ready>#");
   myStep.setMaxSpeed(300.0);
   myStep.setAcceleration(100.0);
-  myStep.moveTo(0);
+  myStep.runToNewPosition(500);
   delay(500);
+}
+
+int deg2step(float deg)
+{
+  return 0.0;
+}
+
+float step2deg(int steps)
+{
+  return 0;
 }
 
 float stepperComm(float ang)
 {
-  myStep.runToNewPosition(ang);
-  delay(1000);
-  float current = myStep.currentPosition();
+  int loc = deg2step(ang);
+  
+  myStep.runToNewPosition(loc); // blocking
+  delay(1000); // needed?
+  
+  float current = step2deg(myStep.currentPosition());
   delay(500);
   
   return current;
@@ -39,10 +52,14 @@ void loop()
       Serial.print("RECEIVED: New Angle (" + str + ")#");
 
       newAng = str.toFloat();
-      curAng = stepperComm(newAng);
+
+      if(newAng != step2deg(myStep.currentPosition()))
+      {
+        curAng = stepperComm(newAng);
       
-      Serial.print("CONFIRM: Current Angle (");
-      Serial.print(curAng, 2); Serial.print(")#");
+        Serial.print("CONFIRM: Current Angle (");
+        Serial.print(curAng, 2); Serial.print(")#");
+      }
       
       str = "";
     }
