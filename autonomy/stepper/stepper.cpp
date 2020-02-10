@@ -77,7 +77,7 @@ bool nanoComm(float loc)
             ret = true;
             break;
         }
-        else if(count == 10 * MIL)
+        else if(count == 15 * MIL)
         {
             break;
         }
