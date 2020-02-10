@@ -77,7 +77,7 @@ bool nanoComm(float loc)
             ret = true;
             break;
         }
-        else if(count == 10 * MIL)
+        else if(count == 15 * MIL)
         {
             break;
         }
@@ -118,7 +118,7 @@ int main()
         //Sleep? Forced latency?
         aurora::data_exchange_sleep(10);
 
-
+        spyglass.loc += 10.5;
         res = nanoComm(spyglass.loc);
 
         if(res)
