@@ -4,9 +4,7 @@
 #define STEPS_PER_MREV 32 // what are the specs?
 #define STEPS_PER_OREV 32 * 64 // 2048; what are the specs?
 
-// defaults to AccelStepper::FULL4WIRE
-// (4 pins) on 2, 3, 4, 5
-AccelStepper myStep;
+AccelStepper myStep(AccelStepper::FULL2WIRE, 2, 3);
 
 void setup()
 {
