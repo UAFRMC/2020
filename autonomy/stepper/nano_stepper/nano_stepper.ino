@@ -1,8 +1,7 @@
 #include <AccelStepper.h>
-#include <MultiStepper.h>
+// #include <MultiStepper.h> //<- not used
 
-#define STEPS_PER_MREV 200 // motor revolution; what are the specs?
-#define STEPS_PER_OREV 600 // output revolution; what are the specs?
+#define STEPS_PER_OREV 600 // output revolution: 200 steps/rev * 3x gear-down
 
 AccelStepper myStep(AccelStepper::DRIVER, 2, 3);
 
@@ -10,17 +9,16 @@ void setup()
 {
   Serial.begin(115200);
   Serial.print("<Arduino Nano Ready>#");
-  myStep.setMaxSpeed(150.0);
-  myStep.setAcceleration(10.0);
+  myStep.setMaxSpeed(1000.0); // 2000 doesn't lose steps
+  myStep.setAcceleration(10000.0); // 40000 doesn't lose steps
   myStep.moveTo(0);
   while(true)
   {
-    myStep.runToNewPosition(150);
-    delay(1000);
+    myStep.runToNewPosition(600/4); // turn 1/4 rev
+    delay(500);
     myStep.runToNewPosition(0);
-    delay(1000);
+    delay(500);
   }
-  delay(500);
 }
 
 long deg2step(long degs)
