@@ -106,10 +106,13 @@ int main()
     {
         std::cout << "<Serial  Port Ready>" << std::endl;
     }
-
+    aurora::stepper_pointing reqDir;
     while (true)
     {
-        spyglass.loc += 10.5; // where and how should we be setting this?
+        if(exchange_stepper_request.updated()){
+            reqDir = exchange_stepper_request.read();
+        }
+        spyglass.loc = reqDir.angle; // where and how should we be setting this?
         res = nanoComm(spyglass.loc, curLoc);
         // curLoc -- where is it needed?
 
@@ -126,13 +129,13 @@ int main()
 
         aurora::stepper_pointing newDir;
         //writing new data to files:
-        //newDir.angle = curLoc; // is this where the stepper's current location is supposed to go?
+        newDir.angle = curLoc; // is this where the stepper's current location is supposed to go?
         //newDir.stable = ? // what's this?
 
         exchange_stepper_report.write_begin() = newDir;
         exchange_stepper_report.write_end();
 
-        //Sleep? Forced latency?
+        
         aurora::data_exchange_sleep(10);
     }
 
