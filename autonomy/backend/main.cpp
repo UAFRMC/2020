@@ -123,7 +123,7 @@ public:
   void update(void);
   
   
-  void point_beacon(int target) {
+  void point_camera(int target) {
     if (simulate_only) {
       telemetry.autonomy.markers.beacon=target;
     }
@@ -351,6 +351,7 @@ private:
 
   // Autonomous turning: rotate robot so it's facing this direction.
   //  Returns true once we're basically at the target angle.
+  // ToDo: Point camera to an appropriate angle as you turn
   bool autonomous_turn(double angle_target_deg=0.0,bool do_posture=true)
   {
     if (do_posture) { if (!drive_posture()) return false; } // don't drive yet
@@ -487,17 +488,17 @@ void robot_manager_t::autonomous_state()
     }
     else // don't know where we are yet--change pointing
     {
-      if (time_in_state<5.0) point_beacon(0);
-      else if (time_in_state<10.0) point_beacon(-10);
-      else if (time_in_state<15.0) point_beacon(-30);
+      if (time_in_state<5.0) point_camera(0);
+      else if (time_in_state<10.0) point_camera(-10);
+      else if (time_in_state<15.0) point_camera(-30);
     }
   }
   //state_scan_obstacles: Scan for obstacles
   else if (robot.state==state_scan_obstacles)
   {
-    int scan_angle=45;
+    int scan_angle=0; //Look straight ahead
     if (time_in_state<10.0) { // line up the beacon correctly
-      point_beacon(scan_angle);
+      point_camera(scan_angle);
     }
   }
   //state_drive_to_mine: Drive to mining area
@@ -506,6 +507,7 @@ void robot_manager_t::autonomous_state()
     if (drive_posture()) {
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-locator.merged.y;
+      point_camera(0);
 
       // if(exchange_plan_current.updated())
       // {
@@ -529,6 +531,8 @@ void robot_manager_t::autonomous_state()
   //state_mine_lower: enter mining state
   else if (robot.state==state_mine_lower) {
     tryMineMode();
+    //ToDo: point camera until it finds the Aruco markers
+    point_camera(-180); //Look back 
     mine_start_time=cur_time; // update mine start time
     enter_state(state_mine);
   }
@@ -570,6 +574,7 @@ void robot_manager_t::autonomous_state()
   // Drive back to trough
   else if (robot.state==state_drive_to_dump)
   {
+    point_camera(-180);
     if (autonomous_drive(dump_target_loc) 
      || locator.merged.y<dump_target_loc.y+20.0)
     {
@@ -732,7 +737,7 @@ void robot_manager_t::update(void) {
       }
       if (command.realsense_comms.command=='P')
       {
-        point_beacon(command.realsense_comms.requested_angle);
+        point_camera(command.realsense_comms.requested_angle);
       }
     } else {
       robotPrintln("ERROR: COMMAND VERSION MISMATCH!  Expected %d, got %d",
