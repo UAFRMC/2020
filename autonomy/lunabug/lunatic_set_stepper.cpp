@@ -8,11 +8,12 @@ int main(int argc,char *argv[]) {
         exit(1);
     }
     MAKE_exchange_stepper_report();
+    MAKE_exchange_stepper_request();
     aurora::stepper_pointing pointdir;
     pointdir.angle = atof(argv[1]);
     std::cout << "setting stepper angle to: " << pointdir.angle << "\n";
-    exchange_stepper_report.write_begin() = pointdir;
-    exchange_stepper_report.write_end();
+    exchange_stepper_request.write_begin() = pointdir;
+    exchange_stepper_request.write_end();
 
     return 0;
 }

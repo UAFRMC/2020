@@ -90,7 +90,7 @@ bool nanoComm(float loc, float & curLoc)
     return ret;
 }
 
-int main()
+int main(int argc, char * argv[])
 {
     //Data sources need to write to, these are defined by lunatic.h for what files we will be communicating through
     MAKE_exchange_stepper_report();
@@ -100,11 +100,24 @@ int main()
     Stepper spyglass;
     bool res;
     float curLoc = 0.0;
+    bool do_serial_comms = true;
 
-    Serial.begin(115200);
-    if(Serial.Is_open())
+    if (argc > 1)
     {
-        std::cout << "<Serial  Port Ready>" << std::endl;
+        if(0==strcmp(argv[1],"--sim"))
+        {   std::cout<<"SIM" <<std::endl;
+            do_serial_comms = false;
+        }
+            
+    }
+
+    if(do_serial_comms)
+    {
+        Serial.begin(115200);
+        if(Serial.Is_open())
+        {
+            std::cout << "<Serial  Port Ready>" << std::endl;
+        }
     }
     aurora::stepper_pointing reqDir;
     while (true)
@@ -113,7 +126,15 @@ int main()
             reqDir = exchange_stepper_request.read();
         }
         spyglass.loc = reqDir.angle; // where and how should we be setting this?
-        res = nanoComm(spyglass.loc, curLoc);
+        if(do_serial_comms)
+        {
+            res = nanoComm(spyglass.loc, curLoc);
+        }
+        else
+        {
+            res = true;
+        }
+        
         // curLoc -- where is it needed?
 
         if(res)
