@@ -140,6 +140,13 @@ int main(int argc, char * argv[])
         if(res)
         {
             std::cout << "SUCCESS\n\n" << std::endl;
+            aurora::stepper_pointing newDir;
+            //writing new data to files:
+            newDir.angle = curLoc; // is this where the stepper's current location is supposed to go?
+            //newDir.stable = ? // what's this?
+
+            exchange_stepper_report.write_begin() = newDir;
+            exchange_stepper_report.write_end();
         }
         else
         {
@@ -148,15 +155,6 @@ int main(int argc, char * argv[])
 
         aurora::stepper_pointing oldDir = exchange_stepper_request.read();
 
-        aurora::stepper_pointing newDir;
-        //writing new data to files:
-        newDir.angle = curLoc; // is this where the stepper's current location is supposed to go?
-        //newDir.stable = ? // what's this?
-
-        exchange_stepper_report.write_begin() = newDir;
-        exchange_stepper_report.write_end();
-
-        
         aurora::data_exchange_sleep(10);
     }
 
