@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # make clean all
-make
+make clean all
 
 file=./vision
+
 if [ ! -f "$file" ]; 
 then
     echo "$file does not exist"
@@ -14,4 +15,4 @@ elif [ ! -x "$file" ];
     exit 1
 fi
 
-$file --gui --fps 15 >$file.log 2>&1
+$file  --fps 6 >$file.log 2>&1

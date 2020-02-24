@@ -17,7 +17,7 @@
 
 bool nanoComm(float loc, float & curLoc)
 {
-    static int MIL = 1000000; // to convert microseconds to seconds
+    static int MIL = 50000; // to convert microseconds to seconds
 
     int count = 0;
     bool leave = false, once = false, ret = false;
@@ -55,7 +55,7 @@ bool nanoComm(float loc, float & curLoc)
                 else if(received_str.substr(0,21) == "RECEIVED: New Angle (")
                 {
                     received_str = "";
-                    continue;//leave = true;
+                    continue ;//leave = true;
                 }
                 else if(received_str.substr(0,21) == "CONFIRM: Curr Angle (")
                 {
@@ -70,6 +70,11 @@ bool nanoComm(float loc, float & curLoc)
             else // end of packet
             {
                 received_str += received;
+                if (received == "\n" || received == "\r")
+                {
+                    std::cout << "Serial debug :" << received_str << "\n";
+                    received_str = "";
+                }
             }
         }
 
@@ -101,30 +106,36 @@ int main(int argc, char * argv[])
     bool res;
     float curLoc = 0.0;
     bool do_serial_comms = true;
-
-    if (argc > 1)
+    std::string serial_port = "/dev/ttyUSB0";
+    for (int i=1;i<argc;i++)
     {
-        if(0==strcmp(argv[1],"--sim"))
+        if(0==strcmp(argv[i],"--sim"))
         {   std::cout<<"SIM" <<std::endl;
             do_serial_comms = false;
+        }
+        else if(0==strcmp(argv[i],"--dev"))
+        {  
+            serial_port = argv[++i];
         }
             
     }
 
     if(do_serial_comms)
     {
-        Serial.begin(115200);
+        Serial.Open(serial_port);
+        Serial.Set_baud(115200);        
+        //Serial.begin(115200);
         if(Serial.Is_open())
         {
             std::cout << "<Serial  Port Ready>" << std::endl;
+            usleep(1 * 2000000); 
         }
     }
     aurora::stepper_pointing reqDir;
     while (true)
     {
-        if(exchange_stepper_request.updated()){
-            reqDir = exchange_stepper_request.read();
-        }
+        reqDir = exchange_stepper_request.read();
+        std::cout << "Request dir recieved angle: " << reqDir.angle << "\n";
         spyglass.loc = reqDir.angle; // where and how should we be setting this?
         if(do_serial_comms)
         {
