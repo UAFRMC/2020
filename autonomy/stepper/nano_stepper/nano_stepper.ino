@@ -12,13 +12,13 @@ void setup()
   myStep.setMaxSpeed(1000.0); // 2000 doesn't lose steps
   myStep.setAcceleration(10000.0); // 40000 doesn't lose steps
   myStep.moveTo(0);
-  while(true)
-  {
-    myStep.runToNewPosition(600/4); // turn 1/4 rev
-    delay(500);
-    myStep.runToNewPosition(0);
-    delay(500);
-  }
+//  while(true)
+//  {
+//    myStep.runToNewPositio  n(600/4); // turn 1/4 rev
+//    delay(500);
+//    myStep.runToNewPosition(0);
+//    delay(500);
+//  }
 }
 
 long deg2step(long degs)
@@ -40,10 +40,10 @@ long stepperComm(long ang)
   myStep.runToNewPosition(loc); // blocking
   //delay(1000); // needed?
 
-  Serial.print("\nCurrent Position: ");
+  //Serial.print("\nCurrent Position: ");
   Serial.println(myStep.currentPosition());
   long current = step2deg(myStep.currentPosition());
-  delay(500);
+  //delay(500);
   
   return current;
 }
@@ -52,34 +52,34 @@ long newAng = 0.0, curAng;
 
 void loop()
 {
-  //String str, res;
-  //long newAng, curAng;
+  String str, res;
+  long newAng, curAng;
 
   newAng += 10.0;
   
-  //while(Serial.available() > 0)
-  //{
-  //  str = Serial.readString();
+  while(Serial.available() > 0)
+  {
+    str = Serial.readString();
 
-  //  if(str.length() > 0)
-  //  {
-  //    Serial.print("RECEIVED: New Angle (" + str + "°)#");
+    if(str.length() > 0)
+    {
+      Serial.print("RECEIVED: New Angle (" + str + "°)#");
 
-  //    newAng = str.toLong();
+      newAng = str.toInt(); // this returns a long
 
-  //    if(newAng != step2deg(myStep.currentPosition()))
-  //    {
-        Serial.print("\nTold stepper to move: ");
+      if(newAng != step2deg(myStep.currentPosition()))
+      {
+        //Serial.print("\nTold stepper to move: ");
         Serial.println(newAng);
         curAng = stepperComm(newAng);
       
-  //      Serial.print("CONFIRM: Curr Angle (");
-  //      Serial.print(curAng, 2); Serial.print("°)#");
-        Serial.print("\nShould have moved: ");
+        Serial.print("CONFIRM: Curr Angle (");
+        Serial.print(curAng); Serial.print("°)#");
+        //Serial.print("\nShould have moved: ");
         Serial.println(curAng);
-  //    }
-  //    
-  //    str = "";
-  //  }
-  //}
+      }
+      
+      str = "";
+    }
+  }
 }
