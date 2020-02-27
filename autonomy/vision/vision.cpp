@@ -274,9 +274,9 @@ int main(int argc,const char *argv[]) {
             
             // Mark out the obstacles on the map
             
-            map2D = exchange_field_raw.write_begin();
-            // mark_obstacles(map2D,newField);
-            // basicFilter(newField);
+            aurora::field_drivable &newField = exchange_field_raw.write_begin();
+            mark_obstacles(map2D,newField);
+            basicFilter(newField);
             exchange_field_raw.write_end();
             
             if (show_GUI) {
