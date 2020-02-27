@@ -83,9 +83,9 @@ int main(){
         if (first_time || exchange_field_raw.updated()) 
         {
             first_time=false; 
-            obstacle_grid map2D = exchange_field_raw.read();
-            mark_obstacles(map2D,newField);
-            basicFilter(newField);
+            newField= exchange_field_raw.read();
+            // mark_obstacles(map2D,newField);
+            // basicFilter(newField);
             exchange_field_drivable.write_begin() = newField;
             exchange_field_drivable.write_end();
        }
