@@ -24,6 +24,7 @@ void mark_obstacles(const obstacle_grid &map2D,aurora::field_drivable &field)
   for (int y = 0; y < obstacle_grid::GRIDY; y++)
   for (int x = 0; x < obstacle_grid::GRIDX; x++)
   {
+    std::cout << "current x,y = " << x << "," << y << "\n";
     const grid_square &me=map2D.at(x,y);
     if (me.getCount()<3) continue; // skip cells where we don't have data (common case)
     
