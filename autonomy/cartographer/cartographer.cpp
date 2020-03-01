@@ -77,15 +77,16 @@ int main(){
     MAKE_exchange_field_raw();
     MAKE_exchange_obstacle_view();
     aurora::robot_coord3D view3D = exchange_obstacle_view.read();
-    aurora::field_drivable newField;
+    // aurora::field_drivable newField;
+    obstacle_grid map2D = exchange_field_raw.read();
     bool first_time=true;
     while(true){
         if (first_time || exchange_field_raw.updated()) 
         {
             first_time=false; 
-            newField= exchange_field_raw.read();
-            // mark_obstacles(map2D,newField);
-            // basicFilter(newField);
+            map2D = exchange_field_raw.read();
+            mark_obstacles(map2D,newField);
+            basicFilter(newField);
             exchange_field_drivable.write_begin() = newField;
             exchange_field_drivable.write_end();
        }
