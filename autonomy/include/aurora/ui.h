@@ -194,6 +194,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 
 	/* Oerate the mining head*/
 	 float dumpJoy=-js_axis(3,"Operate Dump Buckets");
+	 //ToDo: Change this back to mining
 	 float conveyor_joy=js_axis(4,"Run Conveyor belt");
 
 	if(forward!=0.0 || turn!=0.0 || dumpJoy!=0 || conveyor_joy!=0)
