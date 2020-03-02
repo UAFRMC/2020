@@ -26,7 +26,7 @@ public:
 	#endif
 
 	// Current floating-point power values:
-	float left, right, front, mine, dump, roll, head_extend;
+	float left, right, front, mine, dump, roll, head_extend, conveyor_raise;
 
 	//UI stall states
 	bool Mstall;
@@ -149,10 +149,11 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 
 // Power limits:
 	float driveLimit=0.1;
-	float mineLimit=0.90;
+	float mineLimit=0.5;
 	float dumpLimit=1.0;
 	float rollLimit=0.5;
 	float head_extend_limit = 1.0;
+	float converyor_raise_limit=0.5;
 
 // Prepare a command:
 	if (keys[' ']) { // spacebar--full stop
@@ -175,6 +176,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	mine*=0.5;
 	dump*=0.5;
 	roll*=0.5;
+	conveyor_raise*=0.5;
 
 	head_extend=0.0;
 
@@ -369,7 +371,16 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 		head_extend = -1;
 		description += " head_extend-\n";
 	}
-
+	if(keys['h'])
+	{
+		conveyor_raise = +1;
+		description += " conveyor_extend+\n";
+	}
+	if(keys['n'])
+	{
+		conveyor_raise = -1;
+		description += " conveyor_extend-\n";
+	}
 	if(robot.sensor.Mstall && mine!=0)
 		Mstall=true;
 	else if(mine==0)
@@ -386,6 +397,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	power.dump=toMotor(dump,dumpLimit);
 	power.roll=toMotor(roll,rollLimit);
 	power.head_extend=toMotor(head_extend, head_extend_limit);
+	power.conveyor_raise=toMotor(conveyor_raise, converyor_raise_limit);
 
 	robotPrintln("Arduino Heartbeat: %d",robot.sensor.heartbeat);
 	robotPrintln("%s",description.c_str());

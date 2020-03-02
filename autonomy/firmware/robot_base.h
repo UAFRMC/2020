@@ -86,9 +86,10 @@ public:
 	unsigned char mineHooks:1; //Line up with hooks
 	unsigned char mineDump:1; // Run backwards and dump
 	unsigned char mineEncoderReset:1; //Get ready to go out and mine again
+	unsigned char padding:5; //Spare bits
 	unsigned char motorControllerReset:1; //Reset BTS motor controller enable pin
-	unsigned char padding:4; //Spare bits
-
+	unsigned char conveyor_raise:7;
+	
 	unsigned char mine:7; // mining head dig
 	unsigned char mineMode:1; // if true, autonomously run mining head
 
@@ -103,7 +104,7 @@ public:
 
 	robot_power() { stop(); }
 	void stop(void) {
-		left=right=mine=dump=roll=head_extend=drive_stop; // all-stop
+		left=right=mine=dump=roll=head_extend=conveyor_raise=drive_stop; // all-stop
 		high=dumpMode=mineMode=mineHooks=mineDump=mineEncoderReset=0;
 	}
 };

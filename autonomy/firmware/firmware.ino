@@ -36,17 +36,17 @@ CommunicationChannel<HardwareSerial> nanos[nano_net::n_nanos]={
 // FIXME: match up these with actual hardware.
 //   And send commands / read sensors from the right spots.
 nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = {
-  /* Nano 0: on Serial1, right side of robot by e-stop */ {
+  /* Nano 0: on Serial1, on the back of the robot */ {
     /* Motors: */ {
     /* motor[0] */ '0', // drive right 
     /* motor[1] */ '1', // drive left
-    /* motor[2] */ 'T', // ?
-    /* motor[3] */ 'T', // ?
+    /* motor[2] */ '2', // conveyor belt
+    /* motor[3] */ '3', // conveyor raise
     },
     /* Sensors: */ {
     /* sensor[0] */ '0', // drive right
     /* sensor[1] */ '1', // drive left
-    /* sensor[2] */ 'B', // unused from here
+    /* sensor[2] */ '2', // conveyor
     /* sensor[3] */ 'B',
     /* sensor[4] */ 'B', 
     /* sensor[5] */ 'C',
@@ -108,7 +108,7 @@ void read_sensors(void) {
   robot.sensor.DL1count = nano_sensors[0].counts[1];
   robot.sensor.DLstall = nano_sensors[0].stall&(1<<1);
 
-  robot.sensor.Rcount = 255-nano_sensors[1].counts[1];
+  robot.sensor.Rcount = 255-nano_sensors[0].counts[2];
 
   robot.sensor.limit_bottom = nano_sensors[1].counts[4];
   robot.sensor.limit_top = nano_sensors[1].counts[2];
@@ -137,15 +137,11 @@ void send_motors(void)
 
 
   nano_commands[0].speed[0]=+scale_from_64(robot.power.right);
-  nano_commands[0].speed[2]=-scale_from_64(robot.power.right);
-//  nano_commands[0].speed[1]=scale_from_64(robot.power.mine);
-//  nano_commands[0].speed[2]=scale_from_64(robot.power.mine);
-//  nano_commands[0].speed[3]=-scale_from_64(robot.power.head_extend);
-
   nano_commands[0].speed[1]=-scale_from_64(robot.power.left);
-  nano_commands[0].speed[3]=-scale_from_64(robot.power.left);
+  nano_commands[0].speed[2]=scale_from_64(robot.power.roll);
+  nano_commands[0].speed[3]=scale_from_64(robot.power.conveyor_raise);
     
-//  nano_commands[1].speed[1]=-scale_from_64(robot.power.roll);
+  //nano_commands[0].speed[2]=-scale_from_64(robot.power.roll);
 //  nano_commands[1].speed[2]=0;
 //  nano_commands[1].speed[3]=-scale_from_64(robot.power.dump);
 
