@@ -2,7 +2,7 @@
 #include "aurora/lunatic.h"
 
 int main(int argc,const char *argv[]) {
-    const char *filename="stepper_request.angle";
+    const char *filename="stepper_report.angle";
     if (argc>1) {
         filename=argv[1];
         // Trim pathname up to trailing slash, so you can pass

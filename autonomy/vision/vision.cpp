@@ -224,14 +224,7 @@ int main(int argc,const char *argv[]) {
       else if (arg=="--no-aruco") aruco=false; 
       else if (arg=="--no-obstacle") obstacle=false; 
       else if (arg=="--erode") erode=atoi(argv[++argi]);
-      else if (arg=="--clear") 
-      {
-        unsigned char mark=aurora::field_unknown;
-        aurora::field_drivable clearField;
-        clearField.clear(mark);
-        exchange_field_raw.write_begin() = clearField;
-        exchange_field_raw.write_end();
-      }
+      
       else {
         std::cerr<<"Unknown argument '"<<arg<<"'.  Exiting.\n";
         return 1;
@@ -280,6 +273,7 @@ int main(int argc,const char *argv[]) {
 
             
             // Mark out the obstacles on the map
+            
             aurora::field_drivable &newField = exchange_field_raw.write_begin();
             mark_obstacles(map2D,newField);
             basicFilter(newField);

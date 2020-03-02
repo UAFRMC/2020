@@ -1,5 +1,6 @@
 #include <AccelStepper.h>
-// #include <MultiStepper.h> //<- not used
+#include "serial_byte.h"
+
 
 #define STEPS_PER_OREV 600 // output revolution: 200 steps/rev * 3x gear-down
 
@@ -8,13 +9,18 @@ AccelStepper myStep(AccelStepper::DRIVER, 2, 3);
 void setup()
 {
   Serial.begin(115200);
-  Serial.print("<Arduino Nano Ready>#");
+  Serial.write(BYTE_OK); /* send PC wakeup message at startup */
+
+  pinMode(13,OUTPUT); // debug pin
+  digitalWrite(13,LOW); // initially off
+  
   myStep.setMaxSpeed(1000.0); // 2000 doesn't lose steps
   myStep.setAcceleration(10000.0); // 40000 doesn't lose steps
   myStep.moveTo(0);
+  
 //  while(true)
 //  {
-//    myStep.runToNewPositio  n(600/4); // turn 1/4 rev
+//    myStep.runToNewPosition(600/4); // turn 1/4 rev == 90 degrees
 //    delay(500);
 //    myStep.runToNewPosition(0);
 //    delay(500);
@@ -36,50 +42,36 @@ long step2deg(long steps) // rounds down to whole degree
 long stepperComm(long ang)
 {
   long loc = deg2step(ang);
-  
-  myStep.runToNewPosition(loc); // blocking
-  //delay(1000); // needed?
-
-  //Serial.print("\nCurrent Position: ");
-  Serial.println(myStep.currentPosition());
+  if (loc!=myStep.currentPosition()) {
+    myStep.runToNewPosition(loc); // blocking
+  }
   long current = step2deg(myStep.currentPosition());
-  //delay(500);
   
   return current;
 }
 
-long newAng = 0.0, curAng;
+// Current stepper angle, in degrees
+long curAng=0;
 
 void loop()
 {
-  String str, res;
-  long newAng, curAng;
-
-  newAng += 10.0;
-  
-  while(Serial.available() > 0)
+  if (Serial.available() > 0)
   {
-    str = Serial.readString();
+    serial_byte b = Serial.read();
 
-    if(str.length() > 0)
+    if (b==BYTE_HOME) { /* FIXME: re-home the stepper */
+       Serial.write(BYTE_ERROR+5); 
+    }
+    else if (b<=BYTE_MAX_ANGLE)
     {
-      Serial.print("RECEIVED: New Angle (" + str + "°)#");
-
-      newAng = str.toInt(); // this returns a long
-
-      if(newAng != step2deg(myStep.currentPosition()))
-      {
-        //Serial.print("\nTold stepper to move: ");
-        Serial.println(newAng);
-        curAng = stepperComm(newAng);
-      
-        Serial.print("CONFIRM: Curr Angle (");
-        Serial.print(curAng); Serial.print("°)#");
-        //Serial.print("\nShould have moved: ");
-        Serial.println(curAng);
-      }
-      
-      str = "";
+      digitalWrite(13,HIGH); // light LED while moving
+      long newAng = byte2deg(b); 
+      curAng = stepperComm(newAng);
+      digitalWrite(13,LOW); // LED off again
+      Serial.write(deg2byte(curAng));
+    }
+    else { /* unknown command */
+      Serial.write(BYTE_ERROR+0);
     }
   }
 }
