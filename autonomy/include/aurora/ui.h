@@ -194,9 +194,9 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 
 	/* Oerate the mining head*/
 	 float dumpJoy=-js_axis(3,"Operate Dump Buckets");
-	 float mineJoy=js_axis(4,"Run Mine Head");
+	 float conveyor_joy=js_axis(4,"Run Conveyor belt");
 
-	if(forward!=0.0 || turn!=0.0 || dumpJoy!=0 || mineJoy!=0)
+	if(forward!=0.0 || turn!=0.0 || dumpJoy!=0 || conveyor_joy!=0)
 	{
 		joyDrive=true; // using joystick
 	}
@@ -206,7 +206,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 		left=driveLimit*(forward+turn);
 		right=driveLimit*(forward-turn);
          	dump=dumpLimit*dumpJoy;
-		mine+=mineJoy;
+		roll+=conveyor_joy;
 
 		description += "  joystick\n";
 	}
