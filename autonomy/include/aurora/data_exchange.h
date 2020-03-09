@@ -56,12 +56,18 @@ public:
 /**
  Set up a read/write data exchange for data of type T.
  
+ T MUST be trivially copyable--it can be a struct or class, but it can't contain pointers.
+ This means std::array is OK, but std::vector or std::map or std::string won't work.
+ 
  You should make one instance of this class early in your program,
  such as a long-lived member, global, or static.
  You shouldn't re-make it repeatedly (such as a local variable).
 */
 template <typename T>
 class data_exchange {
+    // C++11 macro magic to enforce T datatype limits.
+    static_assert(std::is_trivially_copyable<T>::value, "Data exchange datatypes are exchanged as raw bytes in files, so they can't contain pointers (like std::vector or std::string), or have copy constructors, move constructors, or destructors.  We use std::is_trivially_copyable to determine this.");
+
 public:
     // Open this data_exchange
     data_exchange(const std::string &name);
@@ -110,6 +116,7 @@ private:
     size_t mmap_len; // length of file on disk (in pages)
     uint64_t last_update; // last-seen value of updates
     
+    
     // Don't copy or assign this type
     data_exchange(const data_exchange &e) =delete;
     void operator=(const data_exchange &e) =delete;
@@ -127,6 +134,7 @@ data_exchange<T>::data_exchange(const std::string &name)
     :filename(DATA_EXCHANGE_DIR+name),
      fd(0), mem(0), mmap_len(0)
 {
+
     //   We want rwx for everybody, so that running once as root 
     //   doesn't break the directory for everyone else.
     umask(~DATA_EXCHANGE_CHMOD);
