@@ -63,12 +63,12 @@ public:
 
   /* Raster pattern of GRIDX * GRIDY cells,
      where we accumulate depth data. */
-  std::vector<grid_square> grid;
+  std::array<grid_square,GRIDTOTAL> grid;
   grid_square &at(int x,int y) { return grid[y*obstacle_grid::GRIDX + x]; }
   const grid_square &at(int x,int y) const { return grid[y*obstacle_grid::GRIDX + x]; }
   
   obstacle_grid() 
-    :grid(obstacle_grid::GRIDTOTAL)
+    :grid()
   {
   }
   
