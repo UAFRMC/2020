@@ -41,6 +41,7 @@ MAKE_exchange_plan_target();
 MAKE_exchange_drive_commands();
 //Needed for localization
 MAKE_exchange_plan_current();
+
 aurora::robot_loc2D currentLocation;
 
 bool show_GUI=true;
@@ -317,6 +318,14 @@ private:
       }
       if (cur_time - last_drive_update<max_drive_seconds) 
       {
+        if(last_drive.left < 0 && last_drive.right < 0)
+        {
+          point_camera(180);
+        }
+        else 
+        {
+          point_camera(0);
+        }
         robot.power.left =64+63*last_drive.left /100.0;
         robot.power.right=64+63*last_drive.right/100.0;
       }
