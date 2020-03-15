@@ -42,6 +42,7 @@ public:
 	/// real array constructor
 	Vector3dT(const real *arr) {x=arr[0];y=arr[1];z=arr[2];}
 
+    /* //<- this breaks is_trivially_copyable property, hmmm....
 	/// Constructors from other types of Vector:
 	Vector3dT(const Vector3dT<float> &src) 
 	  {x=(real)src.x; y=(real)src.y; z=(real)src.z;}
@@ -49,6 +50,7 @@ public:
 	  {x=(real)src.x; y=(real)src.y; z=(real)src.z;}
 	Vector3dT(const Vector3dT<int> &src) 
 	  {x=(real)src.x; y=(real)src.y; z=(real)src.z;}
+	*/
 
 	// Copy constructor & assignment operator are by default
 	

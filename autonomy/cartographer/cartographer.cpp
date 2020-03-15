@@ -24,7 +24,6 @@ void mark_obstacles(const obstacle_grid &map2D,aurora::field_drivable &field)
   for (int y = 0; y < obstacle_grid::GRIDY; y++)
   for (int x = 0; x < obstacle_grid::GRIDX; x++)
   {
-    std::cout << "current x,y = " << x << "," << y << "\n";
     const grid_square &me=map2D.at(x,y);
     if (me.getCount()<3) continue; // skip cells where we don't have data (common case)
     
@@ -78,14 +77,15 @@ int main(){
     MAKE_exchange_obstacle_view();
     aurora::robot_coord3D view3D = exchange_obstacle_view.read();
     aurora::field_drivable newField;
+    obstacle_grid map2D = exchange_field_raw.read();
     bool first_time=true;
     while(true){
         if (first_time || exchange_field_raw.updated()) 
         {
             first_time=false; 
-            newField= exchange_field_raw.read();
-            // mark_obstacles(map2D,newField);
-            // basicFilter(newField);
+            map2D = exchange_field_raw.read();
+            mark_obstacles(map2D,newField);
+            basicFilter(newField);
             exchange_field_drivable.write_begin() = newField;
             exchange_field_drivable.write_end();
        }

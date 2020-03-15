@@ -271,12 +271,12 @@ int main(int argc,const char *argv[]) {
             aurora::robot_coord3D view3D = exchange_obstacle_view.read();
             project_depth_to_2D(cap,view3D,map2D);
 
-            
+            exchange_field_raw.write_begin() = map2D;
             // Mark out the obstacles on the map
             
-            aurora::field_drivable &newField = exchange_field_raw.write_begin();
-            mark_obstacles(map2D,newField);
-            basicFilter(newField);
+            // aurora::field_drivable &newField = exchange_field_raw.write_begin();
+            // mark_obstacles(map2D,newField);
+            // basicFilter(newField);
             exchange_field_raw.write_end();
             
             if (show_GUI) {
