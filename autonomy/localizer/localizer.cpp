@@ -171,7 +171,7 @@ int main() {
         
         // Add the camera's inherent coordinate system and mounting angle
         aurora::robot_coord3D camera_downtilt;
-        vec3 tilt=aurora::vec3_from_angle(20.0);
+        vec3 tilt=aurora::vec3_from_angle(30.0);
         float c=tilt.x, s=tilt.y;
         camera_downtilt.X=vec3( 0,-1, 0); // camera X is robot -Y
         camera_downtilt.Y=vec3(-s, 0,-c); // camera Y is mostly down
