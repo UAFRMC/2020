@@ -164,44 +164,52 @@ int main() {
         camera3D.origin=vec3(0,23.0,87.0); // centimeters relative to robot turning center
         
         // We define camera_heading == 0 -> camera is facing forward on robot
-        float camera_heading=exchange_stepper_report.read().angle; 
-        camera3D.X=aurora::vec3_from_angle(camera_heading);
-        camera3D.Y=aurora::rotate_90_Z(camera3D.X);
-        camera3D.Z=vec3(0,0,1);
-        
-        // Add the camera's inherent coordinate system and mounting angle
-        aurora::robot_coord3D camera_downtilt;
-        vec3 tilt=aurora::vec3_from_angle(20.0);
-        float c=tilt.x, s=tilt.y;
-        camera_downtilt.X=vec3( 0,-1, 0); // camera X is robot -Y
-        camera_downtilt.Y=vec3(-s, 0,-c); // camera Y is mostly down
-        camera_downtilt.Z=vec3( c, 0,-s); // camera Z is mostly robot +X (forward)
-        
-        aurora::robot_coord3D camera_total = robot3D.compose(camera3D.compose(camera_downtilt));
-        exchange_obstacle_view.write_begin() = camera_total;
-        exchange_obstacle_view.write_end();
-        if (print) { printf("Camera: "); camera_total.print(); }
+        auto camera_heading=exchange_stepper_report.read(); 
+        if (camera_heading.stable == 0)
+        {
+            camera3D.percent = 0.0;
+        }
+        else 
+        {
+            camera3D.percent = 1.0;
+        }
+        camera3D.X=aurora::vec3_from_angle(camera_heading.angle);
+            camera3D.Y=aurora::rotate_90_Z(camera3D.X);
+            camera3D.Z=vec3(0,0,1);
+            
+            // Add the camera's inherent coordinate system and mounting angle
+            aurora::robot_coord3D camera_downtilt;
+            vec3 tilt=aurora::vec3_from_angle(20.0);
+            float c=tilt.x, s=tilt.y;
+            camera_downtilt.X=vec3( 0,-1, 0); // camera X is robot -Y
+            camera_downtilt.Y=vec3(-s, 0,-c); // camera Y is mostly down
+            camera_downtilt.Z=vec3( c, 0,-s); // camera Z is mostly robot +X (forward)
+            
+            aurora::robot_coord3D camera_total = robot3D.compose(camera3D.compose(camera_downtilt));
+            exchange_obstacle_view.write_begin() = camera_total;
+            exchange_obstacle_view.write_end();
+            if (print) { printf("Camera: "); camera_total.print(); }
         
         
      // If you see a newly updated aruco marker, incorporate it into your likely position
-        if (exchange_marker_reports.updated()) {
-            const aurora::vision_marker_reports &currentvision = exchange_marker_reports.read();
-            for (aurora::vision_marker_report report : currentvision)
-                if (report.is_valid())
-                {
-                    // Put the marker in world coordinates
-                    aurora::robot_coord3D marker_coords=camera_total.compose(report.coords);
-                    // fixme: estimate robot position from marker position
-                    marker_update_robot_pos(pos,marker_coords,report.markerID);
-                    if (print) { printf("Marker%d: ",report.markerID); marker_coords.print(); }
-                    loc_changed=true;
-                }
-        }
+            if (exchange_marker_reports.updated()) {
+                const aurora::vision_marker_reports &currentvision = exchange_marker_reports.read();
+                for (aurora::vision_marker_report report : currentvision)
+                    if (report.is_valid())
+                    {
+                        // Put the marker in world coordinates
+                        aurora::robot_coord3D marker_coords=camera_total.compose(report.coords);
+                        // fixme: estimate robot position from marker position
+                        marker_update_robot_pos(pos,marker_coords,report.markerID);
+                        if (print) { printf("Marker%d: ",report.markerID); marker_coords.print(); }
+                        loc_changed=true;
+                    }
         
 
         if (print) { printf("\n"); }
         // Limit our cycle rate to 100Hz maximum (to save CPU)
         aurora::data_exchange_sleep(10);
+        }
     }
     return 0;
 }
