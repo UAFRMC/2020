@@ -32,7 +32,7 @@ int main(int argc, char * argv[])
             do_serial_comms = false;
         }
         else if(0==strcmp(argv[i],"--dev"))
-        {  
+        {
             serial_port = argv[++i];
         }
         else {
@@ -44,35 +44,44 @@ int main(int argc, char * argv[])
     if(do_serial_comms)
     {
         Serial.Open(serial_port);
-        Serial.Set_baud(115200);        
+        Serial.Set_baud(115200);
         //Serial.begin(115200);
         if(Serial.Is_open())
         {
             std::cout << "Opened serial port, waiting for bootloader" << std::endl;
-            usleep(1 * 2000000);  // wait through bootloader
+            usleep(2 * 1000000);  // wait through bootloader
         }
     }
-    
+
     bool first_time=true;
     while (true)
     {
-        if (first_time || exchange_stepper_request.updated()) 
+        if (first_time) // or sent home?
+        { // Send out a motion request
+            Serial.write(BYTE_HOME);
+            printf("Sending the stepper home\n");
+            first_time=false;
+
+            // Mark the stepper as moving in the exchange
+            exchange_stepper_report.write_begin().stable=0;
+            exchange_stepper_report.write_end();
+        }
+        else if (exchange_stepper_request.updated())
         { // Send out a motion request
             aurora::stepper_pointing reqDir = exchange_stepper_request.read();
             float angle=aurora::normalize_angle(reqDir.angle);
             Serial.write(deg2byte(angle));
             printf("Moving stepper to angle %.1f\n",angle);
-            first_time=false;
-            
+
             // Mark the stepper as moving in the exchange
             exchange_stepper_report.write_begin().stable=0;
             exchange_stepper_report.write_end();
         }
-        
-        while (Serial.available()>0) 
+
+        while (Serial.available()>0)
         { // Read back the nano's state, and post it to the data exchange
             serial_byte b=Serial.read();
-            
+
             aurora::stepper_pointing newDir;
             newDir.angle=0;
             newDir.stable=0;
@@ -81,18 +90,21 @@ int main(int argc, char * argv[])
                 newDir.stable=1;
                 printf("Stepper has now reached angle %.1f\n",newDir.angle);
             }
+            else if (b==BYTE_HOME) {
+                printf("Arduino reports that it has reached HOME.\n");
+            }
             else if (b==BYTE_OK) {
                 printf("Arduino reports that it started up OK.\n");
             }
             else {  /* Error or weird from Arduino */
                 printf("Arduino sent unknown / error byte: %02x\n",b);
             }
-            
+
             // Post the new status to the data exchange
             exchange_stepper_report.write_begin() = newDir;
             exchange_stepper_report.write_end();
         }
-        
+
         aurora::data_exchange_sleep(10);
     }
 
