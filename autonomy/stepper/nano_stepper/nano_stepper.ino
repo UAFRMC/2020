@@ -76,7 +76,7 @@ void loop()
       }
       myStep.stop(); // stop at fast as possible
       digitalWrite(13, LOW); // LED off again
-      Serial.write(deg2byte(curAng));
+      Serial.write(deg2byte(0)); // hit switch, must be zero
       Serial.write(BYTE_HOME);
     }
     else if (b<=BYTE_MAX_ANGLE)
