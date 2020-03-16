@@ -14,7 +14,7 @@ void setup()
   pinMode(13,OUTPUT); // debug pin
   digitalWrite(13,LOW); // initially off
   
-  pinMode(4,INPUT); // limit switch pin #1
+  pinMode(4,INPUT_PULLUP); // limit switch pin #1
   
   myStep.setMaxSpeed(1000.0); // 2000 doesn't lose steps
   myStep.setAcceleration(10000.0); // 40000 doesn't lose steps
@@ -68,9 +68,9 @@ void loop()
     {
       int seeker = 0;
       digitalWrite(13, HIGH); // light LED while moving
-      while(!digitalRead(4)) // while limit switch not activated
+      while(digitalRead(4)) // while limit switch not activated
       {
-        Serial.print(digitalRead(4));
+        //Serial.print(digitalRead(4));
         seeker -= 5;
         curAng = stepperComm(seeker); // go left 5 degs at a time
       }
