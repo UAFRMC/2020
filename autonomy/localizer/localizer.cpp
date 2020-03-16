@@ -166,7 +166,7 @@ int main() {
         // We define camera_heading == 0 -> camera is facing forward on robot
 
         auto camera_heading=exchange_stepper_report.read(); 
-        if (camera_heading.stable == 0)
+        if (camera_heading.stable == 0.0)
         {
             camera3D.percent = 0.0;
         }
