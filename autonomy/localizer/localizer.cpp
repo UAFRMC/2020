@@ -166,7 +166,8 @@ int main() {
         // We define camera_heading == 0 -> camera is facing forward on robot
 
         auto camera_heading=exchange_stepper_report.read(); 
-        if (camera_heading.stable == 0.0)
+        std::cout << "current stability is:" << camera_heading.stable << "\n"; 
+        if (camera_heading.stable == 0)
         {
             camera3D.percent = 0.0;
         }
@@ -185,8 +186,9 @@ int main() {
             camera_downtilt.X=vec3( 0,-1, 0); // camera X is robot -Y
             camera_downtilt.Y=vec3(-s, 0,-c); // camera Y is mostly down
             camera_downtilt.Z=vec3( c, 0,-s); // camera Z is mostly robot +X (forward)
-            
+            camera_downtilt.percent = 100.0;
             aurora::robot_coord3D camera_total = robot3D.compose(camera3D.compose(camera_downtilt));
+            std::cout << "camera_total:" << camera_total.percent << "\n";
             exchange_obstacle_view.write_begin() = camera_total;
             exchange_obstacle_view.write_end();
             if (print) { printf("Camera: "); camera_total.print(); }

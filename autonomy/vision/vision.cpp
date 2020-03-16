@@ -211,6 +211,7 @@ int main(int argc,const char *argv[]) {
             // Project to 2D map
             obstacle_grid map2D;
             aurora::robot_coord3D view3D = exchange_obstacle_view.read();
+            std::cout << "current percent: " << view3D.percent << "\n";
             if(view3D.percent > 0.0)
             {
                 project_depth_to_2D(cap,view3D,map2D);
