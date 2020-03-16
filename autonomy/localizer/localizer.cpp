@@ -172,7 +172,7 @@ int main() {
         }
         else 
         {
-            camera3D.percent = 1.0;
+            camera3D.percent = 100.0;
         }
         camera3D.X=aurora::vec3_from_angle(camera_heading.angle);
             camera3D.Y=aurora::rotate_90_Z(camera3D.X);
@@ -206,12 +206,12 @@ int main() {
                         if (print) { printf("Marker%d: ",report.markerID); marker_coords.print(); }
                         loc_changed=true;
                     }
-        
-
-        if (print) { printf("\n"); }
+    
+                if (print) { printf("\n"); }
         // Limit our cycle rate to 100Hz maximum (to save CPU)
+            }
         aurora::data_exchange_sleep(10);
-        }
+
     }
     return 0;
 }
