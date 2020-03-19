@@ -58,7 +58,7 @@ namespace nano_net
     },
   };
 
-  typedef speed_controller_t<4> speed_controller;
+  typedef speed_controller_t<4,100> speed_controller;
   speed_controller speed_controllers[n_motors];
   
   void got_setup() { // read last_setup and do it
@@ -227,9 +227,11 @@ void setup()
 
 void loop()
 {
+  delay(4); // limit motor control loop to about 200Hz
   milli=micros()>>10;
   
   nano_net::read_encoders();
+  next_sensors.heartbeat++;
   
   A_packet p;
   if (mega.read_packet(p))

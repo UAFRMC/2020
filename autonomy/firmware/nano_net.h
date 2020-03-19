@@ -1,6 +1,5 @@
 /* 
-Packets exchanged between mega and nano. 
-
+Packets exchanged with the Arduino nanos with motor controllers attached. 
 */
 #ifndef __AURORA_NANO_NET_H
 #define __AURORA_NANO_NET_H
@@ -10,7 +9,7 @@ namespace nano_net
 {
   enum { n_motors=4 };
   enum { n_sensors=6 };
-  enum { n_nanos=1 };
+  enum { n_nanos=2 };
 
   // Motor control modes
   enum { 
@@ -52,7 +51,7 @@ namespace nano_net
     unsigned char stall:4; // For each motor: 0-not stalled.  1-currently stalled.
     unsigned char ok:1; // 0- no commands recently.  1- nano is receiving commands regularly.
     unsigned char nosetup:1; // 1- nano needs setup packet
-    unsigned char pad1:2;
+    unsigned char heartbeat:2; // increments every nano loop
     
     unsigned char raw:6; // 6 raw encoder pins (for debugging, or for level-triggered stuff)
     unsigned char pad2:2; // reserved for future use
