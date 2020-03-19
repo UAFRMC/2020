@@ -44,8 +44,54 @@ This is the project Interface Control Document (ICD).
 #include "../aurora/data_exchange.h"
 #include "../aurora/coords.h"
 #include "../vision/grid.hpp"
+#include "../../firmware/nano_net.h"
 
 namespace aurora {
+
+/* --------------- Nano Net ------------
+ Low level microcontroller communication.
+*/
+struct nano_net_data {
+    nano_net::nano_net_setup setup[nano_net::n_nanos];
+    nano_net::nano_net_command command[nano_net::n_nanos];
+    nano_net::nano_net_sensors sensor[nano_net::n_nanos];
+    
+    void print(int n=0,FILE *f=stdout, const char *terminator="\n") const {
+        fprintf(f,"nano.setup[%d]: { motorMode: [",n);
+        for (int m=0;m<nano_net::n_motors;m++) 
+            fprintf(f,"'%c' ",setup[n].motorMode[m]);
+        fprintf(f,"], sensorMode: [");
+        for (int s=0;s<nano_net::n_sensors;s++) 
+            fprintf(f,"'%c' ",setup[n].sensorMode[s]);
+        fprintf(f,"]}%s",terminator);
+        
+        fprintf(f,"nano.command[%d]: { %s %s %s, speed: [",
+            n, 
+            command[n].stop?"STOP":"run", 
+            command[n].torque?"TORQUE":"speed",
+            command[n].LED?"LED":"dark");
+        for (int m=0;m<nano_net::n_motors;m++) 
+            fprintf(f,"%4d ",(int)command[n].speed[m]);
+        fprintf(f,"]}%s",terminator);
+        
+        fprintf(f,"nano.sensor[%d]: ok:%d, heartbeat:%d, [", n,
+            (int)sensor[n].ok,(int)sensor[n].heartbeat);
+        for (int s=0;s<nano_net::n_sensors;s++) 
+        {
+            fprintf(f,"{%s%s %3d}, ",
+                ((n<nano_net::n_motors) && ((sensor[n].stall>>s)&1))?"STALL":" ",
+                ((sensor[n].raw>>s)&1)?"#":"_",
+                (int)sensor[n].counts[s]);
+        }
+        fprintf(f,"]}%s",terminator);
+    }
+};
+
+/* This macro declares the variable used to communicate with the nano_net
+    Setup and commands written by the bac part of the backend
+    Sensors written by the kend modules for each nano
+*/
+#define MAKE_exchange_nano_net()  aurora::data_exchange<aurora::nano_net_data> exchange_nano_net("nano.net")
 
 /* -------------- Drive Command ---------------- 
   Track speed commands, for the left and right tracks.
