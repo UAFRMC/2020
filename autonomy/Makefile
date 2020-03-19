@@ -1,4 +1,4 @@
-PROGS=backend frontend localizer pathplanner stepper vision lunabug andretti cartographer
+PROGS=backend kend frontend localizer pathplanner stepper vision lunabug andretti cartographer
 
 all: 
 	for dir in $(PROGS); do make -C $$dir; done

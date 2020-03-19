@@ -35,6 +35,96 @@
 #include "aurora/lunatic.h"
 
 // Crude global variables for lunatic data exchange
+MAKE_exchange_nano_net();
+void arduino_setup_exchange()
+{
+    const static nano_net::nano_net_setup nano_setup[nano_net::n_nanos] = 
+    {
+        /* nano[0]: on the back of the robot */ {
+        /* Motors: */ {
+        /* motor[0] */ '0', // drive right 
+        /* motor[1] */ '1', // drive left
+        /* motor[2] */ '2', // conveyor belt
+        /* motor[3] */ '3', // conveyor raise
+        },
+        /* Sensors: */ {
+        /* sensor[0] */ '0', // drive right
+        /* sensor[1] */ '1', // drive left
+        /* sensor[2] */ '2', // conveyor
+        /* sensor[3] */ 'B',
+        /* sensor[4] */ 'B', 
+        /* sensor[5] */ 'C',
+        },
+        },
+    //  /* nano[1]: on the mining head in front */ {
+    //    /* Motors: */ {
+    //    /* motor[0] */ 'T', // mine left
+    //    /* motor[1] */ 'T', // raise mining head
+    //    /* motor[2] */ 'T', // extend mining head
+    //    /* motor[3] */ 'T', // mine right
+    //    },
+    //    /* Sensors: */ {
+    //    /* sensor[0] */ 'B', // mine left
+    //    /* sensor[1] */ 'B', // bag roll
+    //    /* sensor[2] */ 'B', // mine limit low
+    //    /* sensor[3] */ 'B', // mine limit high
+    //    /* sensor[4] */ 'B', // back-up left?
+    //    /* sensor[5] */ 'C',
+    //    },
+    //  },
+    };
+    
+    // Write setup data out to the exchange
+    aurora::nano_net_data nano=exchange_nano_net.write_begin();
+    for (int n=0;n<nano_net::n_nanos;n++)
+        nano.setup[n]=nano_setup[n];
+    exchange_nano_net.write_end();
+}
+
+// Scale Sabertooth style 0..64..127 to -100 .. 0 .. +100
+signed char scale_from_64(unsigned char speed_64) {
+  return (int(speed_64)*100)/64-100;
+}
+
+void arduino_runtime_exchange(robot_base &robot)
+{
+    // Read sensor data from the exchange
+    aurora::nano_net_data nano=exchange_nano_net.read();
+    
+    robot.sensor.DR1count=nano.sensor[0].counts[0];
+    robot.sensor.DRstall = nano.sensor[0].stall&(1<<0);
+    
+    robot.sensor.DL1count=nano.sensor[0].counts[1];
+    robot.sensor.DLstall = nano.sensor[0].stall&(1<<1);
+    
+    robot.sensor.heartbeat = nano.sensor[0].heartbeat; // fixme: report [1].heartbeat?
+    
+    robot.sensor.encoder_raw=int(nano.sensor[0].raw) | (int(nano.sensor[1].raw)<<nano_net::n_sensors);
+    robot.sensor.stall_raw=int(nano.sensor[0].stall) | (int(nano.sensor[1].stall)<<nano_net::n_sensors);
+
+    // Write commands to the exchange
+    for (int n=0;n<nano_net::n_nanos;n++)
+    {
+        nano.command[n].stop = robot.state==state_STOP;
+        nano.command[n].torque = robot.power.torqueControl;
+        //nano.command[n].LED = ((milli%1024)<200); // backend tells nanos to blink
+        nano.command[n].LED = 1;
+    }
+
+    nano.command[0].speed[0]=+scale_from_64(robot.power.right);
+    nano.command[0].speed[1]=-scale_from_64(robot.power.left);
+    nano.command[0].speed[2]=scale_from_64(robot.power.roll);
+    nano.command[0].speed[3]=scale_from_64(robot.power.conveyor_raise);
+
+//  nano.command[1].speed[2]=-scale_from_64(robot.power.roll);
+//  nano.command[1].speed[2]=0;
+//  nano.command[1].speed[3]=-scale_from_64(robot.power.dump);
+    
+    exchange_nano_net.write_begin()=nano;
+    exchange_nano_net.write_end();
+}
+
+
 MAKE_exchange_drive_encoders();
 MAKE_exchange_stepper_request();
 MAKE_exchange_plan_target();
@@ -98,8 +188,6 @@ public:
   robot_ui ui; // keyboard interface
   robot_realsense_comms realsense_comms;
 
-  robot_serial arduino;
-
   robot_simulator sim;
 
   robot_manager_t() {
@@ -110,6 +198,8 @@ public:
     memset(&command,0,sizeof(command));
     robot.sensor.limit_top=1;
     robot.sensor.limit_bottom=1;
+    
+    arduino_setup_exchange();
 
     // Start simulation in random real start location
     sim.loc.y=80.0;
@@ -811,20 +901,8 @@ void robot_manager_t::update(void) {
     robot.sensor.limit_top=0;
     robot.sensor.limit_bottom=0;
   }
-  else { // real arduino
-    arduino.update(robot);
-
-    //Reset encoder offset if needed
-    if(robot.sensor.limit_top==0)
-    {
-      arduino.Rdiff+=box_raise_limit_high-robot.sensor.Rcount;
-      robot.sensor.Rcount=box_raise_limit_high;
-    }
-    if(robot.sensor.limit_bottom==0)
-    {
-      arduino.Rdiff+=box_raise_limit_low-robot.sensor.Rcount;
-      robot.sensor.Rcount=box_raise_limit_low;
-    }
+  else { // Send data to/from real arduino
+    arduino_runtime_exchange(robot);
   }
   speed_Mcount=robot.sensor.McountL-last_Mcount;
   float smoothing=0.3;
