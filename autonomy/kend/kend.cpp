@@ -39,6 +39,11 @@ int main(int argc, char * argv[])
         std::cout << "Opened serial port, waiting for bootloader" << std::endl;
         usleep(2 * 1000000);  // wait through bootloader
     }
+    else 
+    {
+        std::cout << "Can't open serial port "<<serial_port<<"\n";
+        exit(1);
+    }
     A_packet_formatter<SerialPort> pkt(Serial);
     
     // We exchange data with the nanos:
