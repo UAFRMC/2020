@@ -1,19 +1,11 @@
 #!/bin/bash
 
-# make clean all
+../build/wait_for_X.sh
+
 make
 
-file=./backend
+export file=./backend
+export args=--sim
 
-if [ ! -f "$file" ]; 
-then
-    echo "$file does not exist"
-    exit 1
-elif [ ! -x "$file" ]; 
-    then  
-    echo "$file is not excutable"
-    exit 1
-fi
+exec ../build/service.sh
 
-# $file
-$file --sim >$file.log 2>&1
