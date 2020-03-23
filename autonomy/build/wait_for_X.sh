@@ -1,8 +1,9 @@
 #!/bin/sh
 
-export DISPLAY=:1   # FIXME: what is it on the pi?
+# FIXME: it's :1 on my Ubuntu laptop; :0 on the pi
+[ -z ${DISPLAY+x} ] && export DISPLAY=:0   
 
-echo "Trying to find X"
+echo "Trying to connect to X on $DISPLAY"
 while [ true ]
 do
     xdpyinfo > /dev/null 2>&1
