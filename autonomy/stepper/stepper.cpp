@@ -73,9 +73,15 @@ int main(int argc, char * argv[])
             Serial.write(deg2byte(angle));
             printf("Moving stepper to angle %.1f\n",angle);
 
-            // Mark the stepper as moving in the exchange
-            exchange_stepper_report.write_begin().stable=0;
-            exchange_stepper_report.write_end();
+            if (do_serial_comms) {
+                // Mark the stepper as moving in the exchange
+                exchange_stepper_report.write_begin().stable=0;
+                exchange_stepper_report.write_end();
+            } else { // sim mode
+                reqDir.stable=1;
+                exchange_stepper_report.write_begin()=reqDir;
+                exchange_stepper_report.write_end();
+            }
         }
 
         while (Serial.available()>0)
