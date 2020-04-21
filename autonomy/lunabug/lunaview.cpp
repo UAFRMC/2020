@@ -235,8 +235,6 @@ void draw_path_plan(aurora::path_plan &path,field_debug_image &img)
 }
 
 int main(int argc,char *argv[]) {
-    // Figure out which grid filename to read
-    std::string name="obstacles_debug.bin";
     int ht=995;
     for (int argi=1;argi<argc;argi++) {
       std::string arg=argv[argi];
@@ -246,7 +244,6 @@ int main(int argc,char *argv[]) {
         return 1;
       }
     }
-    if (argc>1) name=argv[1];
 
     MAKE_exchange_drive_encoders();
     MAKE_exchange_plan_current();
