@@ -70,9 +70,8 @@ public:
             float z=0.0;
             
             char c=field[oy][ox];
-            if (c=='1') z=10.0;
-            if (c=='2') z=50.0;
-            if (c=='3') z=50.0;
+            if (c==' ') z=0.0; 
+            else z=50.0; // <- fire high limit
             
             if (z!=0.0) count_obstacle++; else count_flat++;
             
