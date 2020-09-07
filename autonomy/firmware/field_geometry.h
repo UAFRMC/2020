@@ -28,13 +28,13 @@ enum {
   Both coordinates are always positive.
 */
 enum {
-	field_y_size=540, // Y-length of field, in centimeters
+	field_y_size=680, // Y-length of field, in centimeters
 //	field_y_size=500, // Y-length of field, in centimeters for the test arena
-	field_y_start_zone=150, // y end of start area, in centimeters
-	field_y_mine_zone=field_y_start_zone+200, // y where mining area starts
+	field_y_start_zone=140, // y end of start area, in centimeters
+	field_y_mine_zone=field_y_start_zone+220, // y where mining area starts
 	field_y_mine_start=field_y_mine_zone+30, // y where it's safe to start mining
 	
-  field_x_size=360, // X-width of field, in cm
+  field_x_size=250, // X-width of field, in cm
 
 #define TROUGH_LEFT 1
 #if TROUGH_LEFT
