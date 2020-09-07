@@ -113,8 +113,10 @@ void arduino_runtime_exchange(robot_base &robot)
 
     nano.command[0].speed[0]=+scale_from_64(robot.power.right);
     nano.command[0].speed[1]=-scale_from_64(robot.power.left);
-    nano.command[0].speed[2]=scale_from_64(robot.power.roll);
-    nano.command[0].speed[3]=scale_from_64(robot.power.conveyor_raise);
+    nano.command[0].speed[2]=+scale_from_64(robot.power.right);
+    nano.command[0].speed[3]=-scale_from_64(robot.power.left);
+    //nano.command[0].speed[2]=scale_from_64(robot.power.roll);
+    //nano.command[0].speed[3]=scale_from_64(robot.power.conveyor_raise);
 
 //  nano.command[1].speed[2]=-scale_from_64(robot.power.roll);
 //  nano.command[1].speed[2]=0;
