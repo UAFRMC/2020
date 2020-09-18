@@ -146,10 +146,10 @@ bool nodrive=false; // --nodrive flag (for testing indoors)
 aurora::robot_navtarget no_idea_loc(0.0f,0.0f,0.0f);
 
 /** X,Y field target location where we drive to, before finally backing up */
-aurora::robot_navtarget dump_target_loc(field_x_trough_center,field_y_trough_center,0,
-    aurora::robot_navtarget::DONTCARE,10.0,90.0); // get back to starting area
-aurora::robot_navtarget dump_align_loc(field_x_trough_center,dump_target_loc.y,field_angle_trough,
-    30.0,10.0,5.0); // final alignment
+aurora::robot_navtarget dump_target_loc(field_x_trough_center,field_y_trough_stop+20.0,field_angle_trough,
+    20.0,30.0,70.0); // get back to starting area
+aurora::robot_navtarget dump_align_loc(field_x_trough_center,field_y_trough_stop,field_angle_trough,
+    20.0,10.0,5.0); // final alignment
 
 /** X,Y field target location that we target for mining */
 aurora::robot_navtarget mine_target_loc(field_x_trough_center,field_y_size-45,90,
@@ -676,7 +676,7 @@ void robot_manager_t::autonomous_state()
   {
     point_camera(-180);
     if (autonomous_drive(dump_target_loc) 
-     || locator.merged.y<dump_target_loc.y+20.0)
+     || locator.merged.y<dump_target_loc.y+50.0)
     {
       enter_state(state_dump_align);
     }
