@@ -146,13 +146,13 @@ bool nodrive=false; // --nodrive flag (for testing indoors)
 aurora::robot_navtarget no_idea_loc(0.0f,0.0f,0.0f);
 
 /** X,Y field target location where we drive to, before finally backing up */
-aurora::robot_navtarget dump_target_loc(field_x_size/2,field_y_trough_center,0,
-    aurora::robot_navtarget::DONTCARE,10.0,90.0); // get back to starting area area
-aurora::robot_navtarget dump_align_loc(field_x_trough_edge,dump_target_loc.y,field_angle_trough,
-    10.0,30.0,5.0); // final alignment
+aurora::robot_navtarget dump_target_loc(field_x_trough_center,field_y_trough_center,0,
+    aurora::robot_navtarget::DONTCARE,10.0,90.0); // get back to starting area
+aurora::robot_navtarget dump_align_loc(field_x_trough_center,dump_target_loc.y,field_angle_trough,
+    30.0,10.0,5.0); // final alignment
 
 /** X,Y field target location that we target for mining */
-aurora::robot_navtarget mine_target_loc(field_x_size/2,field_y_size-45,90,
+aurora::robot_navtarget mine_target_loc(field_x_trough_center,field_y_size-45,90,
     aurora::robot_navtarget::DONTCARE, 30.0,80.0);
 
 /* Convert this unsigned char difference into a float difference */
@@ -685,10 +685,10 @@ void robot_manager_t::autonomous_state()
   { 
     // target.y=currentLocation.y; // don't try to turn when this close
     // if (autonomous_drive(target,dump_target_angle)
-    //   || (fabs(currentLocation.y-target.y)<30 && fabs(currentLocation.x-field_x_trough_stop)<=10) )
+    //   || (fabs(currentLocation.y-target.y)<30 && fabs(currentLocation.y-field_y_trough_stop)<=10) )
 
     if (autonomous_drive(dump_align_loc)
-      || (fabs(locator.merged.x-field_x_trough_stop)<=10) )
+      || (fabs(locator.merged.y-field_y_trough_stop)<=10) )
     {
       if (driver_test) {
         // mine_target_loc.x=50+(rand()%250); // retarget in mining area every run

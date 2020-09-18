@@ -9,8 +9,8 @@
 #include "aurora/lunatic.h"
 
 const aurora::vision_marker_reports knownMarkers {
-    aurora::vision_marker_report(10.0, 100.0, 90.0, 13), //mullet thing
-    aurora::vision_marker_report(10.0, 64.0, 90.0, 14), //cat
+    aurora::vision_marker_report(field_x_trough_center, 00.0, 180.0, 13), //mullet thing
+    aurora::vision_marker_report(field_x_trough_center, 30.0, 180.0, 14), //cat
     };
 
 void marker_update_robot_pos(aurora::robot_loc2D & currentPos, const aurora::robot_coord3D & currentReportCoord,const int32_t markerID){

@@ -165,8 +165,8 @@ void robot_display_setup(const robot_base &robot) {
 
 // Draw the scoring trough
 	glColor4f(0.3,1.0,1.0,1.0);
-	glVertex2i(field_x_trough_edge,field_y_trough_start);
-	glVertex2i(field_x_trough_edge,field_y_trough_end);
+	glVertex2i(field_x_trough_start,field_y_trough_edge);
+	glVertex2i(field_x_trough_end,field_y_trough_edge);
 	glEnd();
 
 // Outline the field

@@ -36,39 +36,23 @@ enum {
 	
   field_x_size=250, // X-width of field, in cm
 
-#define TROUGH_LEFT 1
-#if TROUGH_LEFT
-  field_x_trough_edge=50, // Dump edge of scoring trough (left-side dump)
-  field_x_trough_stop=field_x_trough_edge+(robot_x-10), // stop here
+  field_angle_trough=+90, // Robot's heading angle when dumping at trough
   
-  field_x_trough_align=field_x_trough_edge+20, // drive target
-  field_x_trough_start=0,
-  field_x_trough_end=field_x_trough_edge,
-
-  field_angle_trough=0, // Robot's heading angle when dumping at trough (left)
+  field_y_trough_center=20, // Center of scoring trough
+  field_x_trough_center=field_x_size/2, 
   
-#else // Trough is right
-  field_x_trough_edge=field_x_size-55, // Edge of scoring trough (right-side dump)
-  field_x_trough_stop=field_x_trough_edge-(robot_x-10),
+  field_y_trough_edge=40, // Dump edge of scoring trough
+  field_y_trough_stop=field_y_trough_edge+(robot_x-10), // stop here
   
-  field_x_trough_align=field_x_trough_edge-20,
-  field_x_trough_start=field_x_trough_edge,
-  field_x_trough_end=field_x_size,
-
-  field_angle_trough=180, // Robot's heading angle when dumping at trough (right)
-#endif
+  field_x_trough_size=100, // width of dump trough
+  field_x_trough_hsize=field_x_trough_size/2,
+  field_x_trough_start=field_x_trough_center-field_x_trough_hsize,
+  field_x_trough_end=field_x_trough_center+field_x_trough_hsize,
   
-  field_y_trough_center=75, // Center of scoring trough, minus space for beacon
-  field_x_trough_center=25, // X
-  
-  field_y_trough_size=100, // length of trough in Y axis
+  field_y_trough_size=30, // length of trough in Y axis
   field_y_trough_hsize=field_y_trough_size/2, // length of trough in Y axis
   field_y_trough_start=field_y_trough_center-field_y_trough_hsize,
   field_y_trough_end=field_y_trough_center+field_y_trough_hsize,
-  
-  field_y_beacon=field_y_trough_end-10, // center point of beacon
-  field_x_beacon=field_x_trough_edge+15, // beacon sticks out this far from sieve lip
-  
   
 	field_x_GUI=field_x_size+20, // start X for GUI display
 };
