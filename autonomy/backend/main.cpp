@@ -51,8 +51,8 @@ void arduino_setup_exchange()
         /* sensor[0] */ '0', // drive right
         /* sensor[1] */ '1', // drive left
         /* sensor[2] */ '2', // conveyor
-        /* sensor[3] */ 'B',
-        /* sensor[4] */ 'B', 
+        /* sensor[3] */ '0',
+        /* sensor[4] */ '1', 
         /* sensor[5] */ 'C',
         },
         },
