@@ -220,6 +220,7 @@ Coordinate system: absolute field coordinates
 #define MAKE_exchange_plan_target()   aurora::data_exchange<aurora::robot_navtarget> exchange_plan_target("plan_target.loc2D")
 
 
+ #define MAKE_exchange_T265()     aurora::data_exchange<aurora::robot_coord3D> exchange_T265("t265.loc3D")
 
 /* This macro declares the variable used to 
 project depth camera obstacles into field coordinates:
