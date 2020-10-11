@@ -75,7 +75,7 @@ void arduino_setup_exchange()
     };
     
     // Write setup data out to the exchange
-    aurora::nano_net_data nano=exchange_nano_net.write_begin();
+    aurora::nano_net_data &nano=exchange_nano_net.write_begin();
     for (int n=0;n<nano_net::n_nanos;n++)
         nano.setup[n]=nano_setup[n];
     exchange_nano_net.write_end();
