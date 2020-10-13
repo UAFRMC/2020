@@ -90,3 +90,6 @@ autonomy/aruco/aruco-3.0.11/src/Makefile
 autonomy/aruco/aruco-3.0.11/Makefile
 autonomy/include/readme.md
 autonomy/include/CMakeLists.txt
+autonomy/kend/kend
+autonomy/lunabug/lunatic_set_stepper
+autonomy/t265/t265
