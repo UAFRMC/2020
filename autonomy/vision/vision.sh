@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# make clean all
-make clean all
-
 file=./vision
 
 if [ ! -f "$file" ]; 

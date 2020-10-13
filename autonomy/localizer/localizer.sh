@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# make clean all
-make
-
 file=./localizer
 if [ ! -f "$file" ]; 
 then
