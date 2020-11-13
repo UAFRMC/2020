@@ -5,11 +5,14 @@ Orion Lawlor, Arsh Chauhan, Addeline Mitchell 2019-11-24
 #ifndef __AURORA_DATA_EXCHANGE_H
 #define __AURORA_DATA_EXCHANGE_H
 
-#include <stdint.h>
+#include <chrono> // for timers
+#include <stdint.h> // for uint64_t and such
+#include <atomic> // for std::atomic_thread_fence
+#include <stdexcept> // for std::runtime_error
+
 #ifdef _WIN32
 #  error "Somebody needs to write a windows version of this header"
 #else
-#  include <atomic> // for std::atomic_thread_fence
 #  include <sys/mman.h> // for mmap
 #  include <unistd.h> // for seeks
 #  include <sys/stat.h> 
@@ -23,6 +26,35 @@ Orion Lawlor, Arsh Chauhan, Addeline Mitchell 2019-11-24
 
 namespace aurora {
 
+/** This is the on-disk format for the start of a data_exchange file. */
+struct data_exchange_disk_header {
+    // This is the size, in bytes, of the type T of data being exchanged.
+    //  If this doesn't match, the file and your object
+    //  T aren't the same size--check for version mismatch.
+    uint64_t T_size;
+    
+    // This counter changes everytime somebody calls write_end().
+    //   It's more useful for finding hangs than really tracking changes.
+    uint32_t updates;
+
+    // These are flags, like an in-use marker
+    uint32_t flags;
+    enum {
+        flag_being_written=1<<0 // bit 0: a write is in progress now
+    };
+/*
+    // This is an atomic integer, used as a mutex for data writes 
+    std::atomic<uint32_t> write_lock;
+*/
+};
+
+/** This is the on-disk format for the end of a data_exchange file. */
+struct data_exchange_disk_footer {
+    // This marks the end of the file
+    enum{eof_value=0xe0f};
+    uint32_t eof;
+};
+
 /** 
  This is the on-disk storage format that we use to exchange data
  of type T, in files in /tmp/data_exchange/.
@@ -35,21 +67,14 @@ namespace aurora {
 template <typename T>
 struct data_exchange_ondisk {
 public:
-    // This is the size, in bytes, of the type T
-    //  If this doesn't match, the file and your object
-    //  T aren't the same size--you should only use specified-size ints.
-    uint64_t T_size;
+    // The header contains the data size
+    data_exchange_disk_header header;
     
     // This is the data being exchanged
     T data;
     
-    // This counter changes everytime somebody calls write().
-    //   It's more useful for finding hangs than really tracking changes.
-    uint64_t updates;
-    
-    // This marks the end of the file
-    enum{eof_value=0xe0f};
-    uint64_t eof;
+    // The footer contains an update counter, and end-of-file marker.
+    data_exchange_disk_footer footer;
 };
 
 
@@ -75,31 +100,33 @@ public:
     // Do a data consistency check--make sure the file is still OK.
     //   Throws if it finds problems.
     // Returns the current write count.
-    uint64_t check(const char *when="");
+    uint32_t check(const char *when="");
     
     // Return true if this data has been updated since the last read()
     bool updated(void) const {
-        return last_update != mem->updates;
+        return last_update != mem->header.updates;
     }
     
     // Get a read-only copy of the file data
     inline const T &read() { 
         // Do I want a memory read fence here?  std::atomic_thread_fence();
-        last_update = mem->updates;
+        last_update = mem->header.updates;
         return mem->data; 
     }
     
     // Get a writeable copy of the file's stored data.
     //   Returns a reference to writeable data.
     inline T &write_begin(void) { 
-        mem->T_size = sizeof(T);
+        mem->header.T_size = sizeof(T); //<- our write is this size
+        mem->header.flags |= (uint32_t)(data_exchange_disk_header::flag_being_written);
         return mem->data; 
     }
     
     // Finish a write operation, making these changes visible outside.
     inline void write_end(void) {
-        last_update = ++mem->updates;
-        mem->eof = data_exchange_ondisk<T>::eof_value;
+        last_update = ++mem->header.updates;
+        mem->header.flags &= ~(uint32_t)(data_exchange_disk_header::flag_being_written);
+        mem->footer.eof = data_exchange_disk_footer::eof_value;
         // Do I want a write fence here?  std::atomic_thread_fence(std::memory_order_release);
     }
     
@@ -114,8 +141,7 @@ private:
     int fd; // UNIX open'd file
     data_exchange_ondisk<T> *mem; // mmap'd file
     size_t mmap_len; // length of file on disk (in pages)
-    uint64_t last_update; // last-seen value of updates
-    
+    uint32_t last_update; // last-seen value of updates
     
     // Don't copy or assign this type
     data_exchange(const data_exchange &e) =delete;
@@ -171,6 +197,7 @@ data_exchange<T>::data_exchange(const std::string &name)
     }
     
     // Make the file be the length we expect (otherwise mmap fails)
+    //  SUBTLE: for a new file, this also zeros out the file data.
     if (0!=ftruncate(fd,mmap_len)) { 
         throw std::runtime_error(std::string(__FILE__)+" can't extend "+filename+" because "+strerror(errno));
     }
@@ -187,7 +214,7 @@ data_exchange<T>::data_exchange(const std::string &name)
     }
     
     // Check the file's internal length attribute
-    uint64_t old_size=mem->T_size;
+    uint64_t old_size=mem->header.T_size;
     uint64_t new_size=sizeof(T);
     if (old_size != 0 && old_size != new_size) {
         printf("Upgrading data exchange file %s from %ld byte to %ld byte T size\n",
@@ -195,8 +222,8 @@ data_exchange<T>::data_exchange(const std::string &name)
     }
     
     // Mark our size.  This will error out any incompatible copies.
-    mem->T_size = new_size;
-    mem->eof = data_exchange_ondisk<T>::eof_value;
+    mem->header.T_size = new_size;
+    mem->footer.eof = data_exchange_disk_footer::eof_value;
     
     check("Just after opening the file");
 }
@@ -204,15 +231,27 @@ data_exchange<T>::data_exchange(const std::string &name)
 // Do a data consistency check--make sure the file is still OK.
 //   Returns the current update count.
 template <typename T>
-uint64_t data_exchange<T>::check(const char *when)
+uint32_t data_exchange<T>::check(const char *when)
 {
-    bool bad_size = mem->T_size != sizeof(T);
-    bool bad_eof = mem->eof != data_exchange_ondisk<T>::eof_value;
+    bool bad_size = mem->header.T_size != sizeof(T);
+    bool bad_eof = mem->footer.eof != data_exchange_disk_footer::eof_value;
     if (bad_size || bad_eof)
     {
         throw std::runtime_error(std::string("Data exchange error: ")+when+" "+__FILE__+" found unexpected data in "+filename+":"+(bad_size?" invalid header size":"")+(bad_eof?" invalid eof marker":"")+".  Is another version running using a different data size?");
     }
-    return mem->updates;
+    return mem->header.updates;
+}
+
+
+// Millisecond timestamps
+// Wraps around every half billion years
+typedef uint64_t millsecond_time_t;
+
+// Return the real time in milliseconds since the UTC epoch (1970)
+millsecond_time_t time_in_milliseconds() {
+	auto now=std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::milliseconds>
+		(now.time_since_epoch()).count();
 }
 
 
