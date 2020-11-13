@@ -9,6 +9,7 @@ Orion Lawlor, Arsh Chauhan, Addeline Mitchell 2019-11-24
 #include <stdint.h> // for uint64_t and such
 #include <atomic> // for std::atomic_thread_fence
 #include <stdexcept> // for std::runtime_error
+#include <string.h>  // for strerror
 
 #ifdef _WIN32
 #  error "Somebody needs to write a windows version of this header"
@@ -16,15 +17,98 @@ Orion Lawlor, Arsh Chauhan, Addeline Mitchell 2019-11-24
 #  include <sys/mman.h> // for mmap
 #  include <unistd.h> // for seeks
 #  include <sys/stat.h> 
-#  include <string.h>  // for strerror
 #  include <fcntl.h> // for open
-#  define DATA_EXCHANGE_DIR "/tmp/data_exchange/"
-#  define DATA_EXCHANGE_CHMOD 0777 /* rwx for everybody */
 #  define PAGE_SIZE 4096
 #endif
 
+#  define DATA_EXCHANGE_DIR "/tmp/data_exchange/"
+#  define DATA_EXCHANGE_CHMOD 0777 /* rwx for everybody */
 
 namespace aurora {
+
+
+
+inline void make_data_exchange_dir(bool silent=false) {
+    // Try to create the data_exchange directory
+    if (0==mkdir(DATA_EXCHANGE_DIR,DATA_EXCHANGE_CHMOD)) 
+    { 
+        // It didn't already exist.  Print a warning about this.
+        if (!silent) printf("Created data exchange directory %s\n",DATA_EXCHANGE_DIR);
+    } 
+    else if (errno!=EEXIST) 
+    { // something actually went wrong making the directory
+        throw std::runtime_error(std::string(__FILE__)+" can't create "+DATA_EXCHANGE_DIR+" because "+strerror(errno));
+    }
+}
+
+// This is an opened file, mapped read/write into memory.
+//  This is shared by the templated class below, and runtime classes in exchange_read.
+class data_exchange_mmap
+{
+    int fd; // UNIX open'd file
+public:
+    void *mem; // mapped memory
+    size_t mmap_len; // length of file on disk (in pages)
+    
+    /*
+     Open a data_exchange file for mmap.  Return the mmap'd memory.
+    */
+    data_exchange_mmap(const char *filename,size_t bytelength,bool silent=false)
+        :fd(0), mem(0), mmap_len(bytelength)
+    {
+        // Can't mmap a zero-length file
+        if (bytelength==0) return; 
+        
+        //   We want rwx for everybody, so that running once as root 
+        //   doesn't break the directory for everyone else.
+        mode_t old_mask=umask(~DATA_EXCHANGE_CHMOD);
+        
+        make_data_exchange_dir();
+        
+        // Warn if we're creating a new file
+        if (0!=access(filename,F_OK)) {
+            if (!silent) printf("Creating new exchange file %s\n",filename);
+        }
+        
+        // Open our file (and create it, if it doesn't already exist)
+        fd=open(filename,O_CREAT|O_RDWR,DATA_EXCHANGE_CHMOD);
+        if (fd<0) { 
+            throw std::runtime_error(std::string(__FILE__)+" can't create "+filename+" because "+strerror(errno));
+        }
+    
+        umask(old_mask);
+        
+        uint64_t old_len = lseek(fd,0,SEEK_END);
+        if (old_len != 0 && old_len != mmap_len) {
+            if (!silent) printf("Upgrading data exchange file %s from %ld byte to %ld byte file length\n",
+                filename, (long)old_len, (long)mmap_len);
+        }
+        
+        // Make the file be the length we expect (otherwise mmap fails)
+        //  SUBTLE: for a new file, this also zeros out the file data.
+        if (0!=ftruncate(fd,mmap_len)) { 
+            throw std::runtime_error(std::string(__FILE__)+" can't extend "+filename+" because "+strerror(errno));
+        }
+        
+        // round up to multiple of page size for mmap
+        mmap_len = (mmap_len+PAGE_SIZE-1)/PAGE_SIZE*PAGE_SIZE;
+        
+        // mmap the file
+        mem = mmap(0,mmap_len,
+            PROT_READ|PROT_WRITE, MAP_SHARED,
+            fd,0);
+        if ((long)mem==(long)-1) { 
+            throw std::runtime_error(std::string(__FILE__)+" can't mmap "+filename+" because "+strerror(errno));
+        }
+    }
+    
+    ~data_exchange_mmap() {
+        if (mem) { munmap(mem,mmap_len); mem=0; mmap_len=0; }
+        if (fd) { close(fd); fd=0; }
+    } 
+};
+
+
 
 /** This is the on-disk format for the start of a data_exchange file. */
 struct data_exchange_disk_header {
@@ -132,15 +216,12 @@ public:
     
     // Close this data_exchange
     ~data_exchange() {
-        if (mem) { munmap(mem,mmap_len); mem=0; mmap_len=0; }
-        if (fd) { close(fd); fd=0; }
     }
     
 private:
     std::string filename;
-    int fd; // UNIX open'd file
+    data_exchange_mmap mmap;
     data_exchange_ondisk<T> *mem; // mmap'd file
-    size_t mmap_len; // length of file on disk (in pages)
     uint32_t last_update; // last-seen value of updates
     
     // Don't copy or assign this type
@@ -158,67 +239,16 @@ private:
 template <typename T>
 data_exchange<T>::data_exchange(const std::string &name)
     :filename(DATA_EXCHANGE_DIR+name),
-     fd(0), mem(0), mmap_len(0)
+     mmap(filename.c_str(),sizeof(data_exchange_ondisk<T>))
 {
-
-    //   We want rwx for everybody, so that running once as root 
-    //   doesn't break the directory for everyone else.
-    umask(~DATA_EXCHANGE_CHMOD);
-    
-    // Try to create the data_exchange directory
-    if (0==mkdir(DATA_EXCHANGE_DIR,DATA_EXCHANGE_CHMOD)) 
-    { 
-        // It didn't already exist.  Print a warning about this.
-        printf("Created data exchange directory %s\n",DATA_EXCHANGE_DIR);
-    } 
-    else if (errno!=EEXIST) 
-    { // something actually went wrong making the directory
-        throw std::runtime_error(std::string(__FILE__)+" can't create "+DATA_EXCHANGE_DIR+" because "+strerror(errno));
-    }
-    
-    // Warn if we're creating a new file
-    if (0!=access(filename.c_str(),F_OK)) {
-        printf("Creating new exchange file %s\n",filename.c_str());
-    }
-    
-    // Open our file (and create it, if it doesn't already exist)
-    fd=open(filename.c_str(),O_CREAT|O_RDWR,DATA_EXCHANGE_CHMOD);
-    if (fd<0) { 
-        throw std::runtime_error(std::string(__FILE__)+" can't create "+filename+" because "+strerror(errno));
-    }
-    
-    // Change the file's length to match our datatype
-    mmap_len = sizeof(data_exchange_ondisk<T>);
-    
-    uint64_t old_len = lseek(fd,0,SEEK_END);
-    if (old_len != 0 && old_len != mmap_len) {
-        printf("Upgrading data exchange file %s from %ld byte to %ld byte file length\n",
-            filename.c_str(), (long)old_len, (long)mmap_len);
-    }
-    
-    // Make the file be the length we expect (otherwise mmap fails)
-    //  SUBTLE: for a new file, this also zeros out the file data.
-    if (0!=ftruncate(fd,mmap_len)) { 
-        throw std::runtime_error(std::string(__FILE__)+" can't extend "+filename+" because "+strerror(errno));
-    }
-    
-    // round up to multiple of page size for mmap
-    mmap_len = (mmap_len+PAGE_SIZE-1)/PAGE_SIZE*PAGE_SIZE;
-    
-    // mmap the file
-    mem = (data_exchange_ondisk<T> *)mmap(0,mmap_len,
-        PROT_READ|PROT_WRITE, MAP_SHARED,
-        fd,0);
-    if ((long)mem==(long)-1) { 
-        throw std::runtime_error(std::string(__FILE__)+" can't mmap "+filename+" because "+strerror(errno));
-    }
+    mem = (data_exchange_ondisk<T> *)mmap.mem;
     
     // Check the file's internal length attribute
     uint64_t old_size=mem->header.T_size;
     uint64_t new_size=sizeof(T);
     if (old_size != 0 && old_size != new_size) {
         printf("Upgrading data exchange file %s from %ld byte to %ld byte T size\n",
-            filename.c_str(), (long)old_len, (long)new_size);
+            filename.c_str(), (long)old_size, (long)new_size);
     }
     
     // Mark our size.  This will error out any incompatible copies.

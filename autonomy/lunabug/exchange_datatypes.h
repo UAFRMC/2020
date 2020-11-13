@@ -13,6 +13,7 @@ void fatal(const char *why) {
     exit(1);
 }
 
+// Unrecognized data: copy as raw bytes
 template <class T>
 void exchange_send(const T &v,FILE *f) {
 	if (1!=fwrite(&v,sizeof(T),1,f)) fatal("error in fwrite T");
@@ -22,6 +23,7 @@ void exchange_recv(T &v,FILE *f) {
 	if (1!=fread(&v,sizeof(T),1,f)) fatal("error in fread T");
 }
 
+// Binary const char *: copy as raw bytes
 void exchange_send(const char *bytes,exchange_size_t size,FILE *f) {
 	if (size!=fwrite(bytes,1,size,f)) fatal("error in fwrite bytes");
 }
@@ -29,6 +31,7 @@ void exchange_recv(char *bytes,exchange_size_t size,FILE *f) {
 	if (size!=fread(bytes,1,size,f)) fatal("error in fread bytes");
 }
 
+// Strings: send size and then data
 void exchange_send(const std::string &v,FILE *f) {
     exchange_size_t size=v.size();
     exchange_send(size,f); // send the size first
@@ -41,6 +44,7 @@ void exchange_recv(std::string &v,FILE *f) {
     exchange_recv(&v[0],size,f); // then the data
 }
 
+// Vectors: like strings, but recursive
 template <class T>
 void exchange_send(const std::vector<T> &v,FILE *f) {
     exchange_size_t size=v.size();
