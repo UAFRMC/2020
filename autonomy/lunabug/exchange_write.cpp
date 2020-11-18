@@ -31,7 +31,12 @@ int main(int argc,char *argv[]) {
             filename,(int)filesizes[i]);
         FILE *file=fopen(filenames[i].c_str(),"rb+");
         if (file==NULL) {
-            fprintf(stderr,"ERROR OPENING FILE '%s'\n",filename);
+            // Might just need to create it:
+            file=fopen(filenames[i].c_str(),"wb");
+            if (file==NULL) {
+                fprintf(stderr,"ERROR OPENING FILE '%s'\n",filename);
+                exit(1);
+            }
         }
         files.push_back(file);
         
