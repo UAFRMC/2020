@@ -42,17 +42,17 @@ void arduino_setup_exchange()
     {
         /* nano[0]: on the back of the robot */ {
         /* Motors: */ {
-        /* motor[0] */ '0', // drive right 
-        /* motor[1] */ '2', // drive left
-        /* motor[2] */ '3', // conveyor belt
-        /* motor[3] */ '4', // conveyor raise
+        /* motor[0] */ '4', // drive right 
+        /* motor[1] */ '3', // drive left
+        /* motor[2] */ '0', // conveyor belt
+        /* motor[3] */ '1', // conveyor raise
         },
         /* Sensors: */ {
-        /* sensor[0] */ 'B', // drive right
-        /* sensor[1] */ 'B', // drive left
-        /* sensor[2] */ '0', // conveyor
-        /* sensor[3] */ '1',
-        /* sensor[4] */ '2', 
+        /* sensor[0] */ 'B', // 
+        /* sensor[1] */ 'B', // 
+        /* sensor[2] */ 'B', // unreliable right
+        /* sensor[3] */ '1', // ratty left
+        /* sensor[4] */ '0', // reliable right 
         /* sensor[5] */ 'B',
         },
         },
@@ -90,8 +90,8 @@ void arduino_runtime_exchange(robot_base &robot)
 {
     // Read sensor data from the exchange
     aurora::nano_net_data nano=exchange_nano_net.read();
-    int right_wire = 3;
-    int left_wire = 4;
+    int right_wire = 4;
+    int left_wire = 3;
     robot.sensor.DR1count=nano.sensor[0].counts[right_wire];
     robot.sensor.DRstall = nano.sensor[0].stall&(1<<right_wire);
     
