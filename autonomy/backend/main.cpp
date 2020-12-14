@@ -92,10 +92,10 @@ void arduino_runtime_exchange(robot_base &robot)
     aurora::nano_net_data nano=exchange_nano_net.read();
     int right_wire = 4;
     int left_wire = 3;
-    robot.sensor.DR1count=nano.sensor[0].counts[right_wire];
+    robot.sensor.DR1count= - nano.sensor[0].counts[right_wire];
     robot.sensor.DRstall = nano.sensor[0].stall&(1<<right_wire);
     
-    robot.sensor.DL1count=nano.sensor[0].counts[left_wire];
+    robot.sensor.DL1count = nano.sensor[0].counts[left_wire];
     robot.sensor.DLstall = nano.sensor[0].stall&(1<<left_wire);
     
     robot.sensor.heartbeat = nano.sensor[0].heartbeat; // fixme: report [1].heartbeat?
