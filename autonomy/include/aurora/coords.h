@@ -256,8 +256,8 @@ struct robot_navtarget : public robot_center2D {
     bool matches(const robot_center2D &other) const
     {
         return 
-          std::abs(x-other.x)<=error.x &&
-          std::abs(y-other.y)<=error.y &&
+          fabs(x-other.x)<=error.x &&
+          fabs(y-other.y)<=error.y &&
           angle_abs_diff(angle,other.angle)<=error.angle;
     }
     

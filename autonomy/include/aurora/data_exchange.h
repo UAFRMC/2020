@@ -174,8 +174,10 @@ public:
 */
 template <typename T>
 class data_exchange {
+#if !defined(__GNUC__) || __GNUC__>=5 // missing from gcc 4
     // C++11 macro magic to enforce T datatype limits.
     static_assert(std::is_trivially_copyable<T>::value, "Data exchange datatypes are exchanged as raw bytes in files, so they can't contain pointers (like std::vector or std::string), or have copy constructors, move constructors, or destructors.  We use std::is_trivially_copyable to determine this.");
+#endif
 
 public:
     // Open this data_exchange
