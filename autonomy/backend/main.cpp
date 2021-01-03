@@ -48,10 +48,10 @@ void arduino_setup_exchange()
         /* motor[3] */ '1', // conveyor raise
         },
         /* Sensors: */ {
-        /* sensor[0] */ '0', // lf
-        /* sensor[1] */ '0', // lb
-        /* sensor[2] */ '1', // rf (extra counts! sus)
-        /* sensor[3] */ '1', // rb
+        /* sensor[0] */ '1', // lf
+        /* sensor[1] */ '1', // lb
+        /* sensor[2] */ '0', // rf (extra counts! sus)
+        /* sensor[3] */ '0', // rb
         /* sensor[4] */ '0', // reliable right 
         /* sensor[5] */ 'B',
         },
@@ -920,7 +920,8 @@ void robot_manager_t::update(void) {
   // some values for the determining location. needed by the localization.
   // FIXME: tune these for real tracks!
   float fudge=1.06; // fudge factor to make blue printed wheels work mo betta
-  float drivecount2cm=fudge*6*5.0/36; // cm of driving per wheel encoder tick == pegs on drive sprockets, space between sprockets, 36 encoder counts per revolution
+  //float drivecount2cm=fudge*6*5.0/36; // cm of driving per wheel encoder tick == pegs on drive sprockets, space between sprockets, 36 encoder counts per revolution
+  float drivecount2cm = 10.0/40.0;
   float driveL = fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm;
   float driveR = fix_wrap256(robot.sensor.DR1count-old_sensor.DR1count)*drivecount2cm;
   
