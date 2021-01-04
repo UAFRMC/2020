@@ -418,26 +418,17 @@ private:
         {
           point_camera(0);
         }
-        robot.power.left =64+63*last_drive.left /100.0;
-        robot.power.right=64+63*last_drive.right/100.0;
+        float autonomous_drive_power = .5 ; // scale factor for drive in autonomous
+        robot.power.left =64+63*last_drive.left /100.0 * autonomous_drive_power;
+        robot.power.right=64+63*last_drive.right/100.0 * autonomous_drive_power;
       }
       
       path_planning_OK=true; // FIXME: sanity check the path planner
     }
     if (!path_planning_OK)
     { // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
-      double forward=0.0; // forward-backward
-      double turn=0.0; // left-right
-
-      double angle=locator.merged.angle; // degrees (!?)
-      double arad=angle*M_PI/180.0; // radians
-      vec2 orient(cos(arad),sin(arad)); // orientation vector (forward vector of robot)
-      vec2 should=normalize(cur-vec2(target.x,target.y)); // we should be facing this way
-
-      turn=orient.x*should.y-orient.y*should.x; // cross product (sin of angle)
-      forward=-dot(orient,should); // dot product (like distance)
-      printf("Path planning FAILURE: manual greedy mode %.0f,%.0f\n", forward,turn);
-      set_drive_powers(forward,turn);
+      robotPrintln("Path planner failed NO path can be found!!!!!");
+      enter_state(state_drive);
     }
 
     return target.matches(locator.merged); // we're basically there
@@ -919,7 +910,7 @@ void robot_manager_t::update(void) {
 
   // some values for the determining location. needed by the localization.
   // FIXME: tune these for real tracks!
-  float fudge=1.06; // fudge factor to make blue printed wheels work mo betta
+  //float fudge=1.06; // fudge factor to make blue printed wheels work mo betta
   //float drivecount2cm=fudge*6*5.0/36; // cm of driving per wheel encoder tick == pegs on drive sprockets, space between sprockets, 36 encoder counts per revolution
   float drivecount2cm = 10.0/40.0;
   float driveL = fix_wrap256(robot.sensor.DL1count-old_sensor.DL1count)*drivecount2cm;
