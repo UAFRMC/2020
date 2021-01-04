@@ -37,7 +37,7 @@ void marker_update_robot_pos(aurora::robot_loc2D & currentPos, const aurora::rob
 // Move the robot based on wheel encoder ticks
 aurora::robot_loc2D move_robot_encoder(const aurora::robot_loc2D &pos,const aurora::drive_encoders &encoderchange)
 {
-    float wheelbase=37; // cm between track centerlines
+    float wheelbase=42; // cm between track centerlines
     
     // Don't move if the encoders are stopped (save CPU and confidence loss)
     if (encoderchange.left == 0 && encoderchange.right==0) return pos;
