@@ -201,7 +201,7 @@ public:
     // if (planned_path.size()>0) last_drive=planned_path[0].drive;
     last_drive=next_drive; 
     
-    const float autonomous_speed=15.0f; // drive speed, as percent power
+    const float autonomous_speed=100.0f; // drive speed, as percent power
     drive.left =autonomous_speed*(next_drive.forward-next_drive.turn);
     drive.right=autonomous_speed*(next_drive.forward+next_drive.turn);
 
