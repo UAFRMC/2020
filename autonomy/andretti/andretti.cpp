@@ -54,7 +54,7 @@ aurora::drive_commands path_to_drive(const aurora::path_plan &path,
         float turn = aurora::angle_signed_diff(next.angle,cur.angle); 
         const double turnscale = 0.1; // degrees to 0-1 drive power (steering agressiveness)
         
-        const float   autonomous_speed=15.0f; //<- fixme: put this scale factor into backend
+        const float   autonomous_speed=100.0f; //<- fixme: put this scale factor into backend
         drive.left  = autonomous_speed * (forward - turncap(turnscale*turn));
         drive.right = autonomous_speed * (forward + turncap(turnscale*turn));
         if (verbose) {
