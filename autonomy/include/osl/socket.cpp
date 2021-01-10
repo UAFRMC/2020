@@ -231,7 +231,7 @@ skt_ip_t skt_lookup_ip(const char *name)
 {
   skt_ip_t ret=skt_lookup_invalid(name);
   if (skt_ip_match(_skt_invalid_ip,ret)) {
-     char buf[1000];
+     char buf[1100];
      sprintf(buf,"Invalid domain name: '%s'\n",strlen(name)<900?name:"absurdly long name");
      skt_abort(99573,buf);
      return _skt_invalid_ip;
