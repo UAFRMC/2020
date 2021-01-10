@@ -72,7 +72,8 @@ public:
 	robot_power power; ///< Current actuator power values (for debugging only)
 	robot_autonomy_state autonomy;
 	
-	robot_telemetry() { type='h'; count=0; state=state_STOP; }
+	// Works like a constructor, but can't have constructors, this is plain-old-data.
+	void initialize() { type='h'; count=0; state=state_STOP; }
 };
 
 /**

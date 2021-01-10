@@ -114,9 +114,9 @@ public:
 	// Convert a raw float to a motor command, with this maximum range
 	byte toMotor(float v,float maxPower) const {
 		v=limit(v,maxPower);
-		int iv=(int)(v*63+64);
-		if (iv<1) iv=1;
-		if (iv>127) iv=127;
+		int iv=(int)(v*100);
+		if (iv<-100) iv=-100;
+		if (iv>100) iv=100;
 		return iv;
 	}
 };
