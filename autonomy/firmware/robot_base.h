@@ -68,44 +68,33 @@ public:
 /**
  This class contains a power setting for each of the robot's actuators.
 
- The ":7" makes each a 7-bit field, with values:
-	1 (reverse)
-	64 (stop)
-	127 (forward)
+ The signed char run from -100 (full backwards) to 0 (stop) to +100 (full forwards)
 */
 class robot_power {
 public:
-	enum { drive_stop=64 };
+	enum { drive_stop=0 };
 
-	unsigned char left:7; // left drive wheels
+	signed char left; // left drive wheels
+	signed char right; // right drive wheels
+	signed char mine; // mining head dig
+	signed char conveyor_raise;
+	signed char dump; // storage bucket lift
+	signed char roll; //Roll bag
+	signed char head_extend; // Extend mining head linear
+	
 	unsigned char high:1; // High power mode
-
-	unsigned char right:7; // right drive wheels
 	unsigned char torqueControl:1; // Drive backwards (for final dump)
-
-	unsigned char mineHooks:1; //Line up with hooks
 	unsigned char mineDump:1; // Run backwards and dump
 	unsigned char mineEncoderReset:1; //Get ready to go out and mine again
-	unsigned char padding:5; //Spare bits
-	unsigned char motorControllerReset:1; //Reset BTS motor controller enable pin
-	unsigned char conveyor_raise:7;
 	
-	unsigned char mine:7; // mining head dig
+	unsigned char motorControllerReset:1; //Reset BTS motor controller enable pin
 	unsigned char mineMode:1; // if true, autonomously run mining head
-
-	unsigned char dump:7; // storage bucket lift
 	unsigned char dumpMode:1; // dock-and-dump mode
-
-	unsigned char roll:7; //Roll bag
-	unsigned char paddingRoll:1;
-
-  unsigned char head_extend:7; // Extend mining head linear
-  unsigned char padding_extend:1;
 
 	robot_power() { stop(); }
 	void stop(void) {
 		left=right=mine=dump=roll=head_extend=conveyor_raise=drive_stop; // all-stop
-		high=dumpMode=mineMode=mineHooks=mineDump=mineEncoderReset=0;
+		high=dumpMode=mineMode=mineDump=mineEncoderReset=0;
 	}
 };
 
