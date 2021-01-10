@@ -257,17 +257,16 @@ void robot_display_setup(const robot_base &robot) {
 	robotPrintf_enable=true;
 
 // Draw current robot power values
-	unsigned char *powers=(unsigned char *)&robot.power; // HACK: want array of powers
+	signed char *powers=(signed char *)&robot.power; // HACK: want array of powers
 	glBegin(GL_TRIANGLES);
-	for (unsigned int i=0;i<sizeof(robot.power);i++) {
-		int pow=powers[i]&0x7f;
-		int autonomous=powers[i]&0x80;
+	for (unsigned int i=0;i<7;i++) {
+		int pow=powers[i];
 		float cenx=50*(0.5+i)+field_x_GUI;
 		float ceny=0.10*field_y_size;
-		glColor3ub(128+pow,autonomous?255:128,255-pow);
+		glColor3ub(128+pow,128,255-pow);
 		glVertex2f(cenx-20,ceny);
 		glVertex2f(cenx+20,ceny);
-		glVertex2f(cenx,ceny+2.0*(pow-63));
+		glVertex2f(cenx,ceny+0.8*(pow+1));
 	}
 	glEnd();
 
