@@ -92,13 +92,13 @@ public:
 		float sidepower[2]={0.0,0.0};
 		float sideticks[2]={0.0,0.0};
 		float topspeed=130.0; // <- speed in cm/sec at 100% power (hypothetical!)
-		sidepower[0]=power.left-64.0;
-		sidepower[1]=power.right-64.0;
+		sidepower[0]=power.left;
+		sidepower[1]=power.right;
 
 		for (int s=0;s<2;s++) {
 			double torque=sidepower[s]; // wheel torque command
 			if (fabs(torque)>2.0) { // friction
-				double distance=torque/64*topspeed*dt;
+				double distance=torque/100*topspeed*dt;
 				sideticks[s]=distance;
 				side[s]+=distance*forward();
 			}
@@ -114,11 +114,11 @@ public:
 	
 	// Update bag roll counter
 	  float Rcount_per_sec=72*220.0/60.0; // roll motor counts/sec at full speed
-  	Rcount+=dt*Rcount_per_sec*(power.roll-64.0)/64.0;
+  	Rcount+=dt*Rcount_per_sec*(power.roll)/100.0;
   	
 	// Update mining head counter
 		float Mcount_per_sec=100.0; // mining head counts/sec at max speed
-		float Mpower=(power.mine-64.0)/64.0;
+		float Mpower=power.mine/100.0;
 		if (power.mineDump) Mpower=-0.3;
 		if (power.mineMode) Mpower=0.6;
 		Mcount+=dt*Mpower*Mcount_per_sec;
@@ -126,9 +126,9 @@ public:
 		while (Mcount<0.0) Mcount+=120.0;
 	
 	// Update linear actuators
-		double linear_scale=1.0/7.0/64.0; // seconds to full deploy, and power scale factor
+		double linear_scale=1.0/7.0/100.0; // seconds to full deploy, and power scale factor
 		
-		bucket+=dt*(power.dump-64.0)*linear_scale;
+		bucket+=dt*(power.dump)*linear_scale;
 		if (bucket<0.0) bucket=0.0; 
 		if (bucket>1.0) bucket=1.0;
 	}
