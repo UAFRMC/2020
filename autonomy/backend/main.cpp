@@ -81,11 +81,6 @@ void arduino_setup_exchange()
     exchange_nano_net.write_end();
 }
 
-// Scale Sabertooth style 0..64..127 to -100 .. 0 .. +100
-signed char scale_from_64(unsigned char speed_64) {
-  return (int(speed_64)*100)/64-100;
-}
-
 void arduino_runtime_exchange(robot_base &robot)
 {
     // Read sensor data from the exchange
@@ -112,17 +107,11 @@ void arduino_runtime_exchange(robot_base &robot)
         nano.command[n].LED = 1;
     }
 
-    nano.command[0].speed[0]=-scale_from_64(robot.power.right);
-    nano.command[0].speed[1]=-scale_from_64(robot.power.left);
-    nano.command[0].speed[2]=-scale_from_64(robot.power.right);
-    nano.command[0].speed[3]=-scale_from_64(robot.power.left);
-    //nano.command[0].speed[2]=scale_from_64(robot.power.roll);
-    //nano.command[0].speed[3]=scale_from_64(robot.power.conveyor_raise);
-
-//  nano.command[1].speed[2]=-scale_from_64(robot.power.roll);
-//  nano.command[1].speed[2]=0;
-//  nano.command[1].speed[3]=-scale_from_64(robot.power.dump);
-    
+    nano.command[0].speed[0]=-robot.power.right;
+    nano.command[0].speed[1]=-robot.power.left;
+    nano.command[0].speed[2]=-robot.power.right;
+    nano.command[0].speed[3]=-robot.power.left;
+      
     exchange_nano_net.write_begin()=nano;
     exchange_nano_net.write_end();
 }
@@ -292,9 +281,9 @@ private:
 
   // Raw robot.power levels for various speeds
   enum {
-    power_full_fw=127, // forward
-    power_stop=64,
-    power_full_bw=1, // backward
+    power_full_fw=100, // forward
+    power_stop=0,
+    power_full_bw=-100, // backward
   };
 
   // Dump bucket encoder target a/d values
@@ -310,8 +299,8 @@ private:
   // Run autonomous mining, if possible
   bool tryMineMode(void) {
     //if (drive_posture()) {    
-    robot.power.mine=120; // TUNE THIS mining head rate
-    robot.power.dump=64-8; // TUNE THIS lowering rate
+    robot.power.mine=100; // TUNE THIS mining head rate
+    robot.power.dump=0; // TUNE THIS lowering rate
     robot.power.mineMode = true; // Start PID based mining
     mining_head_lowered=true;
     
@@ -323,10 +312,10 @@ private:
   //  Return true if we're safe to drive
   bool drive_posture() {
     if (!mining_head_extended && (cur_time-state_start_time <10))
-      robot.power.head_extend = 127;
+      robot.power.head_extend = 100;
     mining_head_extended = true;
     if(mining_head_lowered && cur_time-state_start_time <10)
-      robot.power.dump = 127;
+      robot.power.dump = 100;
     if (sim.bucket>0.9) { // we're back up in driving range
       mining_head_lowered=false;
     }
@@ -352,8 +341,8 @@ private:
     double d=limit(forward*0.5,drive_power);
     double L=d-t;
     double R=d+t;
-    robot.power.left=64+63*limit(L,max_autonomous_drive);
-    robot.power.right=64+63*limit(R,max_autonomous_drive);
+    robot.power.left= 100 * limit(L,max_autonomous_drive);
+    robot.power.right=100 * limit(R,max_autonomous_drive);
   }
 
   // Autonomous feeler-based backing up: drive backward slowly until both switches engage.
@@ -392,40 +381,34 @@ private:
     }
 */
 
-    bool path_planning_OK=false;
-    if (should_plan_paths)
-    { 
-      // Send off request to the path planner
-      exchange_plan_target.write_begin()=target;
-      exchange_plan_target.write_end();
-      
-      // Check for a response from the path planner
-      static aurora::drive_commands last_drive={0.0f,0.0f};
-      static double last_drive_update=0.0;
-      const double max_drive_seconds=1.0; // drive this many long on an old plan
-      
-      if (exchange_drive_commands.updated()) {
-        last_drive=exchange_drive_commands.read();
-        last_drive_update=cur_time;
-      }
-      if (cur_time - last_drive_update<max_drive_seconds) 
-      {
-        if(last_drive.left < 0 && last_drive.right < 0)
-        {
-          point_camera(180);
-        }
-        else 
-        {
-          point_camera(0);
-        }
-        float autonomous_drive_power = .5 ; // scale factor for drive in autonomous
-        robot.power.left =64+63*last_drive.left /100.0 * autonomous_drive_power;
-        robot.power.right=64+63*last_drive.right/100.0 * autonomous_drive_power;
-      }
-      
-      path_planning_OK=true; // FIXME: sanity check the path planner
+    // Send off request to the path planner
+    exchange_plan_target.write_begin()=target;
+    exchange_plan_target.write_end();
+    
+    // Check for a response from the path planner
+    static aurora::drive_commands last_drive={0.0f,0.0f};
+    static double last_drive_update=0.0;
+    const double max_drive_seconds=1.0; // drive this many long on an old plan
+    
+    if (exchange_drive_commands.updated()) {
+      last_drive=exchange_drive_commands.read();
+      last_drive_update=cur_time;
     }
-    if (!path_planning_OK)
+    if (cur_time - last_drive_update<max_drive_seconds && last_drive.is_sane()) 
+    {
+      if(last_drive.left < 0 && last_drive.right < 0)
+      {
+        point_camera(180);
+      }
+      else 
+      {
+        point_camera(0);
+      }
+      float autonomous_drive_power = .5 ; // scale factor for drive in autonomous
+      robot.power.left =last_drive.left * autonomous_drive_power;
+      robot.power.right=last_drive.right * autonomous_drive_power;
+    }
+    else 
     { // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
       robotPrintln("Path planner failed NO path can be found!!!!!");
       enter_state(state_drive);
@@ -540,24 +523,11 @@ void robot_manager_t::autonomous_state()
 	  if (time_in_state<7.0)
     {
       robot.power.dump=power_full_fw; // raise bin
-      robot.power.head_extend = 127; // 127 for extend, 1 for tuck
+      robot.power.head_extend = power_full_fw; // 127 for extend, 1 for tuck
 	  }
 	  else
 	  {
 		  mining_head_extended = true;
-		  enter_state(state_setup_lower);
-	  }
-  }
-  // state_setup_lower: lower the box
-  else if (robot.state==state_setup_lower)
-  {
-	  if (time_in_state<8.0 && robot.sensor.limit_bottom==1)
-    {
-      robot.power.roll = 30; // lower box somewhat slowly
-      robot.power.head_extend = 127;
-	  }
-	  else
-	  {
 		  enter_state(state_find_camera);
 	  }
   }
@@ -567,14 +537,6 @@ void robot_manager_t::autonomous_state()
     if (!drive_posture()) { /* correct posture first */ }
     else if (locator.merged.percent>=15.0) { // we know where we are!
       sim.loc=locator.merged; // reset simulator to real detected values
-
-    // if(exchange_plan_current.updated())
-    // {
-    //   currentLocation = exchange_plan_current.read();
-    // }
-    // else if (currentLocation.percent>=0.1) { // we know where we are!
-      // Need some interefacing with the simulation stuff
-
       sim.loc=locator.merged; // reset simulator to real detected values
       enter_state(state_scan_obstacles);
     }
@@ -697,51 +659,26 @@ void robot_manager_t::autonomous_state()
     back_up();
     if (time_in_state>1.0)
     {
-      enter_state(state_dump_raise);
+      enter_state(state_dump_pull);
     }
   }
-
-  // raise bucket to dump
-  else if (robot.state==state_dump_raise)
-  {
-      enter_state(state_dump_pull);//2-19: Already in dump position
-  }
-  // Raise box
+  // Conveyor Belt Eject
   else if(robot.state==state_dump_pull)
   {
     int howfast=32;
     int cur=(signed short)robot.sensor.Rcount;
     int target=box_raise_max;
     if (!speed_limit(howfast,cur,target,+1)  || time_in_state>15.0)
-      enter_state(state_dump_rattle);
-    else
-      robot.power.roll=64+howfast; // forward
-  }
-  // Give dust time to flow out (maybe gentle rattle?)
-  else if (robot.state==state_dump_rattle)
-  {
-    robot.power.dump=(fmod(time_in_state,0.2)>0.1)?power_full_fw:power_full_bw; // empty out conveyor (and rattle)
-    if(time_in_state>2.0) {
-      enter_state(state_dump_push);
-    }
-  }
-  // Push box back down after dumping
-  else if(robot.state==state_dump_push)
-  {
-    int howfast=32;
-    int cur=(signed short)robot.sensor.Rcount;
-    int target=0;
-    if (!speed_limit(howfast,cur,target,-1)  || time_in_state>15.0)
       enter_state(state_drive_to_mine);
     else
-      robot.power.roll=64-howfast; // backward
+      robot.power.roll=power_full_fw; // converyor belt eject
   }
   else if (robot.state==state_stow)
   {
     if(mining_head_lowered)
       drive_posture();
     if(time_in_state<20)
-      robot.power.dump=127;
+      robot.power.dump=power_full_fw;
     enter_state(state_stowed);
 
   }
@@ -877,10 +814,11 @@ void robot_manager_t::update(void) {
   //Stop raise/lower if limit detected
   if (!robot.power.torqueControl) //Override limit switches in torque control
   {
-    if(robot.power.roll>64&&!can_raise_up)
-      robot.power.roll=64;
-    if(robot.power.roll<64&&!can_raise_down)
-      robot.power.roll=64;
+    // FIXME: Set a limit on mining head movement, head extend
+    // if(robot.power.roll>64&&!can_raise_up)
+    //   robot.power.roll=64;
+    // if(robot.power.roll<64&&!can_raise_down)
+    //   robot.power.roll=64;
   }
 
   // Send commands to Arduino
@@ -963,39 +901,6 @@ void robot_manager_t::update(void) {
     if (beacon_FOV>fabs(telemetry.autonomy.markers.beacon - view_robot_angle))
       locator.merged.percent+=10.0;
     locator.merged.percent=std::min(100.0,locator.merged.percent*(1.0-dt));
-      
-  /*
-    locator.merged=sim.loc; // blend(locator.merged,sim.loc,0.1);
-    if (fabs(sim.loc.angle)<40.0) // camera in view
-      locator.merged.percent+=10.0;
-    else // camera not in view
-      locator.merged.percent*=0.9;
-    locator.merged.percent*=0.9;
-
-    if (locator.merged.y>100 && locator.merged.y<500)
-    { // simulate angle drift
-      if ((rand()%300)==0) {
-        sim.loc.angle+=2.0;
-        robotPrintln("Injecting angle drift right\n");
-      }
-      if ((rand()%300)==0) {
-        sim.loc.angle-=2.0;
-        robotPrintln("Injecting angle drift left\n");
-      }
-      if ((rand()%300)==0) {
-        vec3 delta(0.0);
-        int del;
-        do { del = (rand()%3)-1; } while (del==0);
-        del*=5;
-        int axis=rand()%2;
-        robotPrintln("Injecting position drift by %d on axis %d\n", del,axis);
-        if (axis==0)
-          sim.loc.x+=del;
-        else
-          sim.loc.y+=del;
-      }
-    }
-    */
   }
   sim.simulate(robot.power,dt);
 }
