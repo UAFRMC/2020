@@ -105,6 +105,21 @@ struct drive_commands {
     float left;
     float right;
     
+    // Set left and right power to zero
+    void stop(void) {
+    	left=right=0.0f;
+    }
+    
+    // Return true if this value makes sense and obeys the limits
+    bool is_sane(void) const {
+    	const float limit=100.0f;
+    	if (left >= -limit && left <= limit
+    	 && right >= -limit && right <= limit)
+    		return true;
+    	else
+    		return false;
+    }
+    
     void print(FILE *f=stdout, const char *terminator="\n") const {
         fprintf(f,
             "drive: %5.1f L, %5.1f R%s", 
