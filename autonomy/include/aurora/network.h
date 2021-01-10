@@ -73,7 +73,7 @@ public:
 	robot_autonomy_state autonomy;
 	
 	// Works like a constructor, but can't have constructors, this is plain-old-data.
-	void initialize() { type='h'; count=0; state=state_STOP; }
+	robot_telemetry() { type='h'; count=0; state=state_STOP; }
 };
 
 /**

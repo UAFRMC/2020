@@ -92,6 +92,7 @@ public:
 	unsigned char dumpMode:1; // dock-and-dump mode
 
 	robot_power() { stop(); }
+	
 	void stop(void) {
 		left=right=mine=dump=roll=head_extend=conveyor_raise=drive_stop; // all-stop
 		high=dumpMode=mineMode=mineDump=mineEncoderReset=0;
