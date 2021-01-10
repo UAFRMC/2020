@@ -111,7 +111,7 @@ void arduino_runtime_exchange(robot_base &robot)
     nano.command[0].speed[1]=-robot.power.left;
     nano.command[0].speed[2]=-robot.power.right;
     nano.command[0].speed[3]=-robot.power.left;
-      
+
     exchange_nano_net.write_begin()=nano;
     exchange_nano_net.write_end();
 }
@@ -183,11 +183,6 @@ public:
   robot_simulator sim;
 
   robot_manager_t() {
-    // HACK: zero out main structures.
-    //  Can't do this to objects with internal parts, like comms or sim.
-    memset(&robot,0,sizeof(robot));
-    memset(&telemetry,0,sizeof(telemetry));
-    memset(&command,0,sizeof(command));
     robot.sensor.limit_top=1;
     robot.sensor.limit_bottom=1;
     
@@ -794,10 +789,6 @@ void robot_manager_t::update(void) {
   else if (robot.state>=state_autonomy) { // autonomous mode!
     autonomous_state();
   }
-
-  //Variables to determine if you can raise or lower box
-  bool can_raise_up=true;
-  bool can_raise_down=true;
 
   //Detect soft encoder limiters
   // if(robot.sensor.Rcount>=box_raise_max)
