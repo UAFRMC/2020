@@ -29,6 +29,7 @@ or implied, of Rafael Muñoz Salinas.
 #include "dictionary_based.h"
 
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/types_c.h>
 
 #include <bitset>
 #include <cmath>

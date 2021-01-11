@@ -34,6 +34,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <vector>
 #include <bitset>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/imgproc_c.h> /* for CV_AA */
 #include "markermap.h"
 #include <set>
 #include <stdexcept>
