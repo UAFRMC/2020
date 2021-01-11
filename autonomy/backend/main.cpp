@@ -181,6 +181,7 @@ public:
   robot_realsense_comms realsense_comms;
 
   robot_simulator sim;
+  int robot_insanity_counter = 0;
 
   robot_manager_t() {
     robot.sensor.limit_top=1;
@@ -356,26 +357,7 @@ private:
   //  Returns true once we're basically at the target location.
   bool autonomous_drive(const aurora::robot_navtarget &target) {
     if (!drive_posture()) return false; // don't drive yet
-    
-
-    //Read data from the localizer files?
-    // if(exchange_plan_current.updated())
-    // {
-    //   currentLocation = exchange_plan_current.read();
-    // }
-    // vec2 cur(currentLocation.x, currentLoction.y); // robot location
-    // float cur_angle=currentLocation.angle;
-
      vec2 cur(locator.merged.x,locator.merged.y); // robot location
-
-    // gl_draw_grid(autodriver.navigator.navigator.obstacles);
-
-/*
-    if (!simulate_only && fmod(cur_time,3.0)<2.0) {
-      return false; // periodic stop (for safety, and for re-localization)
-    }
-*/
-
     // Send off request to the path planner
     exchange_plan_target.write_begin()=target;
     exchange_plan_target.write_end();
@@ -391,6 +373,7 @@ private:
     }
     if (cur_time - last_drive_update<max_drive_seconds && last_drive.is_sane()) 
     {
+      robot_insanity_counter = 0;
       if(last_drive.left < 0 && last_drive.right < 0)
       {
         point_camera(180);
@@ -405,8 +388,15 @@ private:
     }
     else 
     { // Fall back to greedy local autonomous driving: set powers to drive toward this field X,Y location
-      robotPrintln("Path planner failed NO path can be found!!!!!");
-      enter_state(state_drive);
+      robotPrintln("Invalid drive command dectected increasing robot insanity counter");
+      robot_insanity_counter ++;
+      // Tune this value based on path planning time on pi.
+      if (robot_insanity_counter >= 10) 
+      {
+        robotPrintln("Robot insanity counter has reached 10.. exiting autonomy");
+        enter_state(state_drive);
+      }
+      
     }
 
     return target.matches(locator.merged); // we're basically there
@@ -424,15 +414,7 @@ private:
   // ToDo: Point camera to an appropriate angle as you turn
   bool autonomous_turn(double angle_target_deg=0.0,bool do_posture=true)
   {
-    if (do_posture) { if (!drive_posture()) return false; } // don't drive yet
-    // if(exchange_plan_current.updated())
-    // {
-    //   currentLocation = exchange_plan_current.read();
-    // }
-    // double angle_err_deg=currentLocation.angle-angle_target_deg;
-    // robotPrintln("Autonomous turn to %.0f from %.0f deg\n",
-      // angle_target_deg, currentLocation.angle);
-    
+    if (do_posture) { if (!drive_posture()) return false; } // don't drive yet 
     double angle_err_deg=locator.merged.angle-angle_target_deg;
     reduce_angle(angle_err_deg);
     robotPrintln("Autonomous turn to %.0f from %.0f deg\n",
@@ -447,15 +429,6 @@ private:
 
   // Make sure we're still facing the collection bin.  If not, pivot to face it.
   bool check_angle() {
-    // if(exchange_plan_current.updated())
-    // {
-    //   currentLocation = exchange_plan_current.read();
-    // } 
-    // if (currentLocation.percent<0.2) return true; // we don't know where we are--just keep driving?
-    // double target=180.0/M_PI*atan2(currentLocation.y+200.0,currentLocation.x);
-    // double err=currentLocation.angle-target;
-    // robotPrintln("check_angle: cur %.1f deg, target %.1f deg",currentLocation.angle,target);
-
     if (locator.merged.percent<20.0) return true; // we don't know where we are--just keep driving?
     double target=180.0/M_PI*atan2(locator.merged.y+200.0,locator.merged.x);
     double err=locator.merged.angle-target;
@@ -557,14 +530,6 @@ void robot_manager_t::autonomous_state()
       double target_Y=field_y_mine_start; // mining area distance (plus buffer)
       double distance=target_Y-locator.merged.y;
       point_camera(0);
-
-      // if(exchange_plan_current.updated())
-      // {
-      //   currentLocation = exchange_plan_current.read();
-      // }
-      // double target_Y=field_y_mine_start; // mining area distance (plus buffer)
-      // double distance=target_Y-currentLocation.y;
-
       if (autonomous_drive(mine_target_loc) ||
           distance<0.0)  // we're basically there now
       {
