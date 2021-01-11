@@ -43,7 +43,6 @@ public:
 	void update(void);
 	
 	robot_manager_t() {
-		telemetry.initialize();
 		last_telemetry_count=0;
 		last_telemetry_time=0;
 		last_command_time=0;

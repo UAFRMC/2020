@@ -170,8 +170,8 @@ public:
 		int n=recvfrom(socket, buf, sizeof(buf), 0,
 			&src_addr,&src_len);
 		if (n==sizeof(T)) {
-			memcpy(&t,buf,n);
-			memcpy(&last_recv_ip,&src_addr,sizeof(last_recv_ip));
+			memcpy((void *)&t,buf,n);
+			memcpy((void *)&last_recv_ip,&src_addr,sizeof(last_recv_ip));
 			last_recv_OK=true;
 			return true;
 		}
