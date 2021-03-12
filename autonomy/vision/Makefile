@@ -1,6 +1,8 @@
+include ../Makefile.inc
+
 OPTS=-O4
-CFLAGS=-Wall -I../include -std=c++11 $(OPTS)
-LIBS=-lpthread -laruco -lrealsense2 `pkg-config opencv --cflags --libs`
+CFLAGS=-Wall -I../include -std=c++11 $(OPTS) $(CVCFLAGS)
+LIBS=-laruco -lrealsense2 $(CVLINK)
 PROGS=vision
 
 all: $(PROGS)

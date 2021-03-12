@@ -1,6 +1,8 @@
+include ../Makefile.inc
+
 OPTS=-O4
-CFLAGS=-I../include -std=c++11 $(OPTS)
-LIBS=-lpthread  `pkg-config opencv --cflags --libs`
+CFLAGS=-I../include -std=c++11 $(OPTS) $(CVCFLAGS)
+LIBS=$(CVLINK)
 PROGS=cartographer
 
 all: $(PROGS)
