@@ -1,0 +1,49 @@
+Sensor is physically bigger than the D435.
+
+Includes an accelerometer by default.  Plugging it into an Ubuntu 20.04 box causes the screen to rotate (!) matching the camera orientation unless you hit start menu -> Lock screen rotation.
+
+Screen rotation happens because iio-sensor-proxy feeds the orientation into dbus.  See the readings with:
+    monitor-sensor
+Eliminate this with:
+    sudo apt-get purge iio-sensor-proxy
+
+Needs a recent RealSense 2 library install:
+    https://github.com/IntelRealSense/librealsense/releases
+The .tar.gz just works on Ubuntu 20.04, but takes about an hour to compile.
+    sudo apt-get install libusb-1.0-0-dev libgtk-3-dev libglfw3-dev libzmq3-dev cmake libssl-dev
+    tar xzvf librealsense*.tar.gz
+    cd librealsense*
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+
+Install the udev support in /dev/udev.d/rules.d/ with 
+    librealsense-2.44.0/scripts/setup_udev_rules.sh
+
+
+
+lsusb shows:
+Bus 002 Device 003: ID 8086:0b5c Intel Corp. Intel(R) RealSense(TM) Depth Camera 455 
+
+realsense-viewer 
+
+Depth:
+    Looks best at: 848 x 480 30fps - 90fps Z16
+    Works but has many more discontinuities: 720p at 30fps
+
+Color:
+    1280 x 720 30fps RGB8
+
+Motion module:
+    Accel: Motion_xyz32F
+    63fps or 250fps
+    Gyro: Motion_XYZ32F
+    200fps or 400fps
+
+
+
+
+
+
