@@ -1,7 +1,10 @@
 /**
-  Aurora Robotics frontend Code
+  Aurora Robotics frontend code:
+    This sends commands to drive the robot.
+    It interfaces with the pilot's keyboard and joystick (via aurora/ui.h).
+    It displays telemetry (via aurora/robot.cpp).
   
-  Orion Sky Lawlor, lawlor@alaska.edu, 2014-03-23 (Public Domain)
+  Aurora Robotics, UAF, 2014-2021
 */
 #define AURORA_IS_FRONTEND 1
 
@@ -52,12 +55,12 @@ robot_manager_t robot_manager;
 
 void robot_manager_t::update(void) {
 	double time=robotTime();
-	robotPrintln("Location %.0f,%0.0f,%0.0f",robot.loc.x,robot.loc.y,robot.loc.angle);
 	
 // Run UI
 	ui.update(oglKeyMap,robot);
-	robotPrintLines(ui.description);
-	if (time>=last_command_time+0.050) 
+	//robotPrintLines(ui.description);
+	
+	if (time>=last_command_time+0.030) 
 	{
 		if (robotState_requested<state_last)
 		{ // request to enter state
@@ -141,6 +144,8 @@ void robot_manager_t::update(void) {
 	else {
 		robotPrintln("NO TELEMETRY");
 	}*/
+	
+	robotPrintln("Location %.0f,%0.0f,%0.0f",robot.loc.x,robot.loc.y,robot.loc.angle);
 	
 	robot_display(robot.loc);
 	

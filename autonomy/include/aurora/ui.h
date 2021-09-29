@@ -19,6 +19,9 @@
 */
 class robot_ui {
 public:
+
+	float driveLimit=0.1; /* robot driving power (0.0 - 1.0) */
+	
 	robot_power power; // Last output power commands
 	robot_realsense_comms realsense_comms;
 	#ifdef MSL
@@ -148,7 +151,6 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	description="UI:\n";
 
 // Power limits:
-	float driveLimit=0.1;
 	float mineLimit=0.5;
 	float dumpLimit=1.0;
 	float rollLimit=0.5;
@@ -160,11 +162,6 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 		stop();
 		robotState_requested=state_STOP;
 		return; // don't do anything else.  Just stop.
-	}
-	if(power.high)
-	{
-           description+="  ULTRA POWER\n";
-           driveLimit=1.0;
 	}
 	// else spacebar not down--check other keys for manual control
 
@@ -253,7 +250,15 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 		description+="  RIGHT DRIVE STALLED\n";
 //Realsense beacon commands
 	realsense_comms.command = ' ';
+	
+	/* Use P + number keys to set drive power, in percent:
+	    P-1 = 10%, P-2=20%, etc. */
+	if (keys['p']||keys['P']) for (int num=1;num<=9;num++)
+	    if (keys['0'+num]) driveLimit=0.1f*num;
+	description+="\n  Drive power: "+std::to_string(driveLimit)+"\n";
+
 	float beacon_requested_angle=-1;
+	/*
 	if(keys['1'])
 		beacon_requested_angle=-60;
 	if(keys['2'])
@@ -264,6 +269,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 		beacon_requested_angle=45;
 	if(keys['5'])
 		beacon_requested_angle=60;
+    */
 
 	if (beacon_requested_angle != -1)	
 		{
@@ -401,7 +407,7 @@ void robot_ui::update(int keys[],const robot_base &robot) {
 	power.conveyor_raise=toMotor(conveyor_raise, converyor_raise_limit);
 
 	robotPrintln("Arduino Heartbeat: %d",robot.sensor.heartbeat);
-	robotPrintln("%s",description.c_str());
+	robotPrintLines(description);
 	printf("Robot raw power: %d %d %d %d %d %d\n",
 		power.left, power.right, power.mine, power.dump, power.roll, power.head_extend);
 }
