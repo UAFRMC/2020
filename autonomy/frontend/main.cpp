@@ -23,6 +23,9 @@
 #include "osl/porthread.h" /* for threading */
 #include "osl/porthread.cpp"
 
+#include "aurora/lunatic.h"
+
+
 /**
  This class represents everything the front end knows about the robot.
 */
@@ -60,7 +63,7 @@ void robot_manager_t::update(void) {
 	ui.update(oglKeyMap,robot);
 	//robotPrintLines(ui.description);
 	
-	if (time>=last_command_time+0.030) 
+	if (time>=last_command_time+0.050) 
 	{
 		if (robotState_requested<state_last)
 		{ // request to enter state
@@ -150,6 +153,10 @@ void robot_manager_t::update(void) {
 	robot_display(robot.loc);
 	
 	robot_display_autonomy(telemetry.autonomy);
+
+	    // Limit this loop to 100Hz (10ms/loop)
+        aurora::data_exchange_sleep(10);
+
 }
 
 extern "C" void display(void) {
