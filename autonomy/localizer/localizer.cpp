@@ -11,19 +11,22 @@
 const aurora::vision_marker_reports knownMarkers {
     aurora::vision_marker_report(field_x_trough_center, 00.0, 180.0, 13), //mullet thing
     aurora::vision_marker_report(field_x_trough_center, 30.0, 180.0, 14), //cat
+    //aurora::vision_marker_report(field_x_trough_center, 00.0, 180.0, 2), //fabric
     };
 
 void marker_update_robot_pos(aurora::robot_loc2D & currentPos, const aurora::robot_coord3D & currentReportCoord,const int32_t markerID){
     for(aurora::vision_marker_report known : knownMarkers){
          if ( markerID == known.markerID){
+            float weight=0.3; // <- blend in this much of the new report (higher=faster, more jitter).  FIXME: should depend on the confidence value or range.
+            
             vec3 diff = known.coords.origin - currentReportCoord.origin;
-            float diffwt = 0.1;
+            float diffwt = weight;
             currentPos.x += diff.x*diffwt;
             currentPos.y+= diff.y*diffwt;
 
             
             float anglediff = aurora::angle_signed_diff(known.coords.extract_angle(), currentReportCoord.extract_angle());
-            float anglediffwt = 0.1;
+            float anglediffwt = weight;
             currentPos.angle += anglediff*anglediffwt;
             std::cout << anglediff << "= angle diff \n";
             std::cout << known.coords.extract_angle() << " = known angle, " <<  currentReportCoord.extract_angle() << " = reported angle \n";
