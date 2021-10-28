@@ -112,7 +112,7 @@ struct drive_commands {
     
     // Return true if this value makes sense and obeys the limits
     bool is_sane(void) const {
-    	const float limit=100.0f;
+    	const float limit=150.0f;
     	if (left >= -limit && left <= limit
     	 && right >= -limit && right <= limit)
     		return true;
