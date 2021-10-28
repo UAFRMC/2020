@@ -31,7 +31,7 @@ enum {
 	field_y_size=680, // Y-length of field, in centimeters
 //	field_y_size=500, // Y-length of field, in centimeters for the test arena
 	field_y_start_zone=140, // y end of start area, in centimeters
-	field_y_mine_zone=field_y_start_zone+220, // y where mining area starts
+	field_y_mine_zone=field_y_start_zone+320, // y where mining area starts
 	field_y_mine_start=field_y_mine_zone+30, // y where it's safe to start mining
 	
   field_x_size=250, // X-width of field, in cm
