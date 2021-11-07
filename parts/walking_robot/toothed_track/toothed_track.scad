@@ -7,7 +7,7 @@ inch=25.4; // file units are mm
 
 include <../../gear_library.scad>;
 $fs=0.1;
-$fa=5;
+$fa=2;
 wall=3.6;
 clearance=0.2;
 
@@ -15,15 +15,15 @@ drive_OD=61; // output gear outside diameter
 drive_OD_clear=66; // total space around drive gear
 
 bearing_OD=7/8*inch+clearance; // 608 style bearing
-bearing_Z=7+2*clearance;
-bearing_wallZ=1.5; // material retaining bearing
-bearing_wallR=2; // material retaining bearing
+bearing_Z=7.5+clearance;
+bearing_wallZ=2; // material retaining bearing
+bearing_wallR=3; // material retaining bearing
 bearing_slideOD=bearing_OD+0.2; // clearance for bearing to slide around.
 
 motorout_ht=12; // height of output gear (plus a little wiggle room)
 gearout_ht=8; // height of drive gear
 axle_OD=3/8*inch+2*clearance;
-axlecap_OD=9/16*inch/cos(30)+2*clearance; // hex head on axle
+axlecap_OD=9/16*inch/cos(30)+clearance; // hex head on axle
 axlecap_Z=7.5-bearing_wallZ; // clearance for head travel
 
 
@@ -32,7 +32,7 @@ gear_pitch = 10; // mm per gear tooth, along pressure plane
 geartype_rack = [ gear_pitch, 12.0, 20, 0.35, 0.35 ]; 
 
 travel_updown=50;
-travel_leftright=80;
+travel_leftright=50;
 
 gear_motor = gear_create(geartype_rack,8);
 motorR=gear_R(gear_motor);
@@ -106,7 +106,7 @@ module axlecap_slot_2D() {
 }
 //axlecap_slot_2D();
 
-zstart=-20;
+zstart=-18; // bottom of entire part
 module track_3D(illustrate=0) {
     difference() {
         union() {
@@ -122,14 +122,20 @@ module track_3D(illustrate=0) {
         
         // space for bearing
         translate([0,0,-bearing_wallZ-bearing_Z])
+        difference()
+        {
             linear_extrude(height=bearing_Z,convexity=4)
-            difference()
-            {
                 bearing_slot_2D();
-                // Leave a thin wall to support the bearing lip
-                if (!illustrate)
-                    bearing_slot_2D(bearing_wallR-0.3);
+            
+            // Leave a thin wall to support the bearing lip during printing
+            if (!illustrate)
+            translate([0,0,0.25])
+            linear_extrude(height=bearing_Z-0.5,convexity=4)
+            difference() {
+                bearing_slot_2D(bearing_wallR-0.9);
+                bearing_slot_2D(bearing_wallR-0.3);
             }
+        }
         
         // Tiny wall holds bearing in place
         translate([0,0,-bearing_wallZ-bearing_Z-bearing_wallZ])
@@ -138,7 +144,7 @@ module track_3D(illustrate=0) {
         
         // Circular cut to insert bearing
         translate([gearbetween/2,-(ringR+axlecenterR),-bearing_wallZ-0.01])
-            cylinder(d=bearing_slideOD+1,h=bearing_wallZ+0.1);
+            cylinder(d=bearing_slideOD+clearance,h=bearing_wallZ+0.1);
         
         // Slot for axle hex cap
         translate([0,0,-bearing_wallZ-bearing_Z-bearing_wallZ-axlecap_Z])
@@ -155,7 +161,8 @@ module track_3D(illustrate=0) {
             
             // Ribs:
             translate([gearbetween/2,0,0])
-                for (r=[-90,-45,0,+45]) rotate([0,0,r])
+                for (r=[-90,0//,-45,+45
+                    ]) rotate([0,0,r])
                     square([2,1000],center=true);
         }
         
@@ -164,7 +171,7 @@ module track_3D(illustrate=0) {
             translate([0,0,-500]) cube([1000,1000,1000]);
     }
 }
-track_3D();
+track_3D(0);
 
 //cylinder(d=bearing_OD,h=bearing_Z); // bearing in slot
 //translate([0,ringR-motorR,0]) drivegear_3D();
